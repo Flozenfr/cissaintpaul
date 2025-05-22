@@ -6,3 +6,29 @@ window.onload = () => {
              .register('./sw.js');
   }
 }
+let deferredPrompt;
+const installPrompt = document.getElementById('installPrompt');
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installPrompt) installPrompt.classList.add('show');
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('L’utilisateur a accepté l’installation');
+        } else {
+          console.log('L’utilisateur a refusé l’installation');
+        }
+        deferredPrompt = null;
+        installPrompt.classList.remove('show');
+      });
+    }
+  });
+}
