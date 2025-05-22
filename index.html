@@ -24,6 +24,12 @@
     <div class="overlay" id="page-overlay"></div>
 
     <header id="app-header">
+      <div id="installPopup" style="display:none; position: fixed; bottom: 20px; right: 20px; background: white; padding: 20px; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+  <p>Installer cette application ?</p>
+  <button id="installBtn">Installer</button>
+  <button onclick="hideInstallPopup()">Non merci</button>
+</div>
+
         <div class="logo-container">
             <img src="images/banniere-la-tenaille.jpg" alt="Logo La Tenaille" id="logo-img">
             <span id="logo-text">La Tenaille <span class="pro-badge">CLOUD</span></span>
