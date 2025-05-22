@@ -1,6 +1,6 @@
 {
-  "name": "Hello World",
-  "short_name": "Hello",
+  "name": "La Tenaille",
+  "short_name": "La Tenaille",
   "icons": [{
     "src": "images/hello-icon-128.png",
       "sizes": "128x128",
@@ -26,7 +26,7 @@
       "sizes": "512x512",
       "type": "image/png"
     }],
-  "lang": "en-US",
+  "lang": "fr-FR",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "white",
