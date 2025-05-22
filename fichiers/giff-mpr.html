@@ -3097,10 +3097,10 @@
                         score = assignments.total || 0;
                     }
                 }
-                return { 
-                    ...p, 
-                    assignmentScore: score + (Math.random() * 0.01) // Add jitter for tie-breaking
-                };
+                return { 
+                    ...p, 
+                    assignmentScore: score // No jitter (REMOVED JITTER)
+                };
             }).sort((a, b) => a.assignmentScore - b.assignmentScore); 
         }
 
