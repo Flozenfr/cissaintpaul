@@ -32,3 +32,11 @@ if (installBtn) {
     }
   });
 }
+const dismissBtn = document.getElementById('dismissBtn');
+
+if (dismissBtn) {
+  dismissBtn.addEventListener('click', () => {
+    installPrompt.classList.remove('show');
+    deferredPrompt = null;
+  });
+}
