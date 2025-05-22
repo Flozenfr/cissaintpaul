@@ -1,0 +1,52 @@
+/* install-prompt.css */
+#installPrompt {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--elevation-2);
+  color: var(--accent-text);
+  border: 1px solid var(--fire-red-light);
+  border-radius: var(--border-radius-md);
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 10000;
+  max-width: 300px;
+}
+
+#installPrompt.show {
+  display: block;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+#installPrompt h4 {
+  margin-top: 0;
+  font-family: var(--font-secondary);
+}
+
+#installPrompt button {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: var(--fire-red);
+  color: var(--accent-text);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+#installPrompt button:hover {
+  background-color: var(--fire-red-light);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
