@@ -209,6 +209,29 @@
                 });
             });
 
+            document.getElementById('installBtn').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('Utilisateur a accepté l’installation');
+    } else {
+      console.log('Utilisateur a refusé l’installation');
+    }
+    deferredPrompt = null;
+    hideInstallPopup();
+  }
+});
+
+function showInstallPopup() {
+  document.getElementById('installPopup').style.display = 'block';
+}
+
+function hideInstallPopup() {
+  document.getElementById('installPopup').style.display = 'none';
+}
+
+          
             const currentYearEl = document.getElementById('current-year');
             if (currentYearEl) {
                 currentYearEl.textContent = new Date().getFullYear();
