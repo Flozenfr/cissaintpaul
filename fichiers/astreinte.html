@@ -1,0 +1,3267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gestion des Astreintes Pompiers</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+  <style>
+    :root {
+      --primary: #dc3545; /* Rouge pompier */
+      --primary-light: #e4606d;
+      --primary-lighter: rgba(220, 53, 69, 0.1);
+      --secondary: #0d6efd;
+      --success: #198754;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --white: #ffffff;
+      
+      --border-radius: 12px;
+      --border-radius-sm: 8px;
+      --box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      --box-shadow-sm: 0 5px 10px rgba(0,0,0,0.05);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      
+      --morning-color: #4361ee;
+      --afternoon-color: #3f37c9;
+      --replacement-color: #4cc9f0;
+      --request-color: #7209b7;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: var(--dark);
+      line-height: 1.6;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: 60px; /* Espace pour le menu en bas */
+    }
+    
+    .app-container {
+      max-width: 100%;
+      background-color: var(--white);
+      padding: 1rem;
+      margin: 0 auto;
+    }
+    
+    .app-header {
+      text-align: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .app-title {
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+    }
+    
+    /* Menu en bas pour mobile */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--white);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: var(--transition);
+      flex: 1;
+    }
+    
+    .bottom-nav-item.active {
+      color: var(--primary);
+    }
+    
+    .bottom-nav-item i {
+      font-size: 1.2rem;
+      margin-bottom: 0.2rem;
+    }
+    
+    .tab-content {
+      padding: 1rem 0;
+    }
+    
+    /* Calendrier optimisé pour mobile */
+    .calendar-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    
+    .calendar-title {
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin: 0;
+      color: var(--dark);
+      text-align: center;
+    }
+    
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .calendar-nav button {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      color: var(--gray);
+      touch-action: manipulation;
+    }
+    
+    .calendar-nav button:hover {
+      background-color: var(--primary-lighter);
+      color: var(--primary);
+    }
+    
+    .calendar-nav .today-btn {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 50px;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      background-color: transparent;
+      font-weight: 500;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+    }
+    
+    .calendar-day-header {
+      text-align: center;
+      font-weight: 600;
+      padding: 0.5rem 0.25rem;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+    }
+    
+    .calendar-day {
+      min-height: 60px;
+      border-radius: var(--border-radius-sm);
+      padding: 0.25rem;
+      background-color: white;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-size: 0.85rem;
+    }
+    
+    .calendar-day.today .calendar-day-number {
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    .calendar-day.today {
+      background-color: rgba(220, 53, 69, 0.05);
+      border: 2px solid var(--primary);
+    }
+    
+    .calendar-day.other-month {
+      opacity: 0.5;
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    .calendar-day.weekend {
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    .calendar-day-number {
+      font-weight: 600;
+      margin-bottom: 0.1rem;
+      color: var(--dark);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    
+    .astreinte-slot {
+      font-size: 0.6rem;
+      padding: 0.15rem 0.2rem;
+      margin-bottom: 0.1rem;
+      border-radius: 3px;
+      color: white;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+    
+    .astreinte-slot.morning {
+      background-color: var(--morning-color);
+    }
+    
+    .astreinte-slot.afternoon {
+      background-color: var(--afternoon-color);
+    }
+    
+    .astreinte-slot.replacement {
+      background-color: var(--replacement-color);
+    }
+    
+    .astreinte-slot.request {
+      background-color: var(--request-color);
+    }
+    
+    /* Boutons optimisés pour mobile */
+    .btn {
+      font-weight: 600;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--border-radius-sm);
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+      touch-action: manipulation;
+    }
+    
+    .btn-sm {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    /* Modals optimisés pour mobile */
+    .modal-dialog {
+      margin: 0.5rem auto;
+    }
+    
+    .modal-content {
+      border-radius: var(--border-radius);
+      border: none;
+      box-shadow: var(--box-shadow);
+    }
+    
+    .modal-header {
+      border-bottom: none;
+      background-color: var(--primary);
+      color: white;
+      border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+      padding: 1rem;
+    }
+    
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    
+    .modal-body {
+      padding: 1rem;
+      max-height: 70vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Formulaire optimisé pour mobile */
+    .form-label {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+      border-radius: var(--border-radius-sm);
+      padding: 0.5rem 0.75rem;
+      border: 1px solid rgba(0,0,0,0.1);
+      transition: var(--transition);
+      font-size: 0.9rem;
+    }
+    
+    /* Sélecteur de période optimisé */
+    .period-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .period-option {
+      flex: 1;
+      text-align: center;
+    }
+    
+    .period-option input[type="radio"], 
+    .period-option input[type="checkbox"] {
+      display: none;
+    }
+    
+    .period-option label {
+      display: block;
+      padding: 0.5rem;
+      border: 2px solid #dee2e6;
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    
+    /* Style pour les options de période */
+    .morning-option {
+      background-color: rgba(67, 97, 238, 0.1);
+      border-color: var(--morning-color) !important;
+    }
+    
+    .afternoon-option {
+      background-color: rgba(63, 55, 201, 0.1);
+      border-color: var(--afternoon-color) !important;
+    }
+    
+    .replacement-option {
+      background-color: rgba(76, 201, 240, 0.1);
+      border-color: var(--replacement-color) !important;
+    }
+    
+    .request-option {
+      background-color: rgba(114, 9, 183, 0.1);
+      border-color: var(--request-color) !important;
+    }
+    
+    .period-option input[type="radio"]:checked + label,
+    .period-option input[type="checkbox"]:checked + label {
+      font-weight: bold;
+    }
+    
+    .period-option input[type="radio"]:checked + .morning-option {
+      background-color: var(--morning-color);
+      color: white;
+    }
+    
+    .period-option input[type="radio"]:checked + .afternoon-option {
+      background-color: var(--afternoon-color);
+      color: white;
+    }
+    
+    .period-option input[type="radio"]:checked + .replacement-option {
+      background-color: var(--replacement-color);
+      color: white;
+    }
+    
+    .period-option input[type="radio"]:checked + .request-option {
+      background-color: var(--request-color);
+      color: white;
+    }
+    
+    /* Tableau responsive */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Toast optimisé */
+    .toast-container {
+      position: fixed;
+      bottom: 4rem;
+      right: 1rem;
+      left: 1rem;
+      z-index: 1100;
+    }
+    
+    .toast {
+      border-radius: var(--border-radius-sm);
+      border: none;
+      box-shadow: var(--box-shadow);
+      width: auto;
+      max-width: 100%;
+    }
+    
+    /* État chargement */
+    .loading-state {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255,255,255,0.8);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 5px solid var(--primary-lighter);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Swipe pour changer de mois */
+    .calendar-wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .calendar-swipe-area {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 20%;
+      z-index: 10;
+    }
+    
+    .calendar-swipe-area.prev {
+      left: 0;
+    }
+    
+    .calendar-swipe-area.next {
+      right: 0;
+    }
+    
+    /* Badge de notification */
+    .notification-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background-color: var(--primary);
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      font-size: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Style pour les remplacements */
+    .replacement-info {
+      background-color: #f8f9fa;
+      border-left: 3px solid #4cc9f0;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+    }
+    
+    /* Style pour le mot de passe */
+    .password-container {
+      max-width: 400px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+    }
+    
+    /* Style pour les créneaux horaires */
+    .time-slot {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: rgba(0,0,0,0.03);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .time-slot-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+    
+    .time-inputs {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .time-inputs .form-control {
+      padding: 0.4rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    /* Mode paysage */
+    @media (orientation: landscape) {
+      .calendar-day {
+        min-height: 50px;
+      }
+      
+      .modal-body {
+        max-height: 60vh;
+      }
+    }
+    
+    /* Tablettes et plus grands écrans */
+    @media (min-width: 768px) {
+      body {
+        padding-bottom: 0;
+      }
+      
+      .bottom-nav {
+        display: none;
+      }
+      
+      .app-container {
+        padding: 1.5rem;
+        max-width: 95%;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin: 1rem auto;
+      }
+      
+      .calendar-day {
+        min-height: 80px;
+      }
+      
+      /* Onglets pour desktop */
+      .nav-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        border-bottom: 2px solid #dee2e6;
+      }
+      
+      .nav-tabs .nav-link {
+        border: none;
+        color: var(--gray);
+        font-weight: 600;
+        padding: 0.75rem 1.25rem;
+        transition: var(--transition);
+      }
+      
+      .nav-tabs .nav-link.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--primary);
+        background-color: transparent;
+      }
+      
+      .toast-container {
+        bottom: 1rem;
+      }
+    }
+    
+    /* Grands écrans */
+    @media (min-width: 992px) {
+      .app-container {
+        max-width: 1400px;
+        padding: 2rem;
+        margin: 2rem auto;
+      }
+      
+      .calendar-day {
+        min-height: 100px;
+      }
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    /* Amélioration du focus pour navigation au clavier */
+    button:focus, input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--primary-light);
+      outline-offset: 2px;
+    }
+    
+    /* Amélioration des performances de défilement */
+    .calendar-grid, .tab-content {
+      will-change: transform;
+    }
+    
+    /* Quick add form */
+    .quick-add-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-sm);
+    }
+    
+    .quick-add-form .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .quick-add-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+    
+    /* Onglet demandes de remplacement */
+    .request-card {
+      border-left: 4px solid var(--request-color);
+      margin-bottom: 1rem;
+      transition: var(--transition);
+    }
+    
+    .request-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--box-shadow-sm);
+    }
+    
+    .request-status-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
+    
+    .request-status-pending {
+      background-color: #ffc107;
+      color: #212529;
+    }
+    
+    .request-status-approved {
+      background-color: #198754;
+      color: white;
+    }
+    
+    .request-status-rejected {
+      background-color: #dc3545;
+      color: white;
+    }
+    
+    .request-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- État de chargement -->
+  <div class="loading-state" id="loadingState">
+    <div class="loading-spinner"></div>
+    <div class="mt-3 text-primary">Chargement...</div>
+  </div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <h1 class="app-title">
+        <i class="bi bi-calendar-heart"></i> 
+        Astreintes Pompiers
+      </h1>
+    </header>
+    
+    <!-- Onglets pour desktop (cachés sur mobile) -->
+    <ul class="nav nav-tabs d-none d-md-flex" id="desktopTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="desktop-calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar-tab-pane" type="button" role="tab">
+          <i class="bi bi-calendar3"></i> Calendrier
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="desktop-add-tab" data-bs-toggle="tab" data-bs-target="#add-tab-pane" type="button" role="tab">
+          <i class="bi bi-plus-circle"></i> Ajout rapide
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="desktop-recap-tab" data-bs-toggle="tab" data-bs-target="#recap-tab-pane" type="button" role="tab">
+          <i class="bi bi-table"></i> Tableau
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="desktop-requests-tab" data-bs-toggle="tab" data-bs-target="#requests-tab-pane" type="button" role="tab">
+          <i class="bi bi-arrow-left-right"></i> Demandes
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="desktop-stats-tab" data-bs-toggle="tab" data-bs-target="#stats-tab-pane" type="button" role="tab">
+          <i class="bi bi-graph-up"></i> Stats
+        </button>
+      </li>
+    </ul>
+    
+    <div class="tab-content" id="mainTabsContent">
+      <!-- Onglet Calendrier -->
+      <div class="tab-pane fade show active" id="calendar-tab-pane" role="tabpanel" tabindex="0">
+        <div class="calendar-wrapper">
+          <div class="calendar">
+            <div class="calendar-header">
+              <h2 class="calendar-title" id="calendarMonthYear">Mois Année</h2>
+              <div class="calendar-nav">
+                <button id="prevYear" title="Année précédente"><i class="bi bi-chevron-double-left"></i></button>
+                <button id="prevMonth" title="Mois précédent"><i class="bi bi-chevron-left"></i></button>
+                <button id="today" class="today-btn">Aujourd'hui</button>
+                <button id="nextMonth" title="Mois suivant"><i class="bi bi-chevron-right"></i></button>
+                <button id="nextYear" title="Année suivante"><i class="bi bi-chevron-double-right"></i></button>
+              </div>
+            </div>
+            
+            <div class="calendar-grid" id="calendarDaysHeader">
+              <div class="calendar-day-header">Lun</div>
+              <div class="calendar-day-header">Mar</div>
+              <div class="calendar-day-header">Mer</div>
+              <div class="calendar-day-header">Jeu</div>
+              <div class="calendar-day-header">Ven</div>
+              <div class="calendar-day-header">Sam</div>
+              <div class="calendar-day-header">Dim</div>
+            </div>
+            
+            <div class="calendar-grid" id="calendarDays">
+              <!-- Jours seront générés ici -->
+            </div>
+          </div>
+          
+          <!-- Zones de swipe pour changer de mois -->
+          <div class="calendar-swipe-area prev" id="swipePrev"></div>
+          <div class="calendar-swipe-area next" id="swipeNext"></div>
+        </div>
+        
+        <!-- Résumé du mois -->
+        <div class="mt-3 p-3 bg-light rounded" id="monthSummary">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Ce mois:</strong>
+              <span id="monthAstreintesCount">0 astreintes</span>
+            </div>
+            <button class="btn btn-sm btn-outline-primary" id="viewAllThisMonth">
+              <i class="bi bi-eye"></i> Voir tout
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Onglet Ajout rapide -->
+      <div class="tab-pane fade" id="add-tab-pane" role="tabpanel" tabindex="0">
+        <div class="quick-add-form">
+          <form id="quickAddForm">
+            <div class="form-group">
+              <label for="quickDate" class="form-label">
+                <i class="bi bi-calendar-date"></i> Date
+              </label>
+              <input type="date" class="form-control" id="quickDate" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-clock"></i> Période
+              </label>
+              
+              <div class="period-selector">
+                <div class="period-option">
+                  <input type="radio" id="quickMorningPeriod" name="quickPeriod" value="morning" checked>
+                  <label for="quickMorningPeriod" class="morning-option">
+                    <i class="bi bi-sunrise"></i> Matin
+                  </label>
+                </div>
+                
+                <div class="period-option">
+                  <input type="radio" id="quickAfternoonPeriod" name="quickPeriod" value="afternoon">
+                  <label for="quickAfternoonPeriod" class="afternoon-option">
+                    <i class="bi bi-sunset"></i> Après-midi
+                  </label>
+                </div>
+                
+                <div class="period-option">
+                  <input type="radio" id="quickReplacementPeriod" name="quickPeriod" value="replacement">
+                  <label for="quickReplacementPeriod" class="replacement-option">
+                    <i class="bi bi-arrow-left-right"></i> Remplacement
+                  </label>
+                </div>
+              </div>
+              
+              <!-- Créneaux horaires pour l'ajout rapide -->
+              <div id="quickMorningTimeSlot" class="time-slot">
+                <div class="time-slot-badge small">Horaires matin</div>
+                <div class="time-inputs d-flex gap-2">
+                  <div class="flex-grow-1">
+                    <label for="quickMorningStart" class="form-label small">Début</label>
+                    <input type="time" class="form-control" id="quickMorningStart" value="07:00" required>
+                  </div>
+                  <div class="flex-grow-1">
+                    <label for="quickMorningEnd" class="form-label small">Fin</label>
+                    <input type="time" class="form-control" id="quickMorningEnd" value="13:00" required>
+                  </div>
+                </div>
+              </div>
+              
+              <div id="quickAfternoonTimeSlot" class="time-slot" style="display: none;">
+                <div class="time-slot-badge small">Horaires après-midi</div>
+                <div class="time-inputs d-flex gap-2">
+                  <div class="flex-grow-1">
+                    <label for="quickAfternoonStart" class="form-label small">Début</label>
+                    <input type="time" class="form-control" id="quickAfternoonStart" value="13:00" required>
+                  </div>
+                  <div class="flex-grow-1">
+                    <label for="quickAfternoonEnd" class="form-label small">Fin</label>
+                    <input type="time" class="form-control" id="quickAfternoonEnd" value="20:00" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="quickPompierName" class="form-label">
+                <i class="bi bi-person-badge"></i> Nom du pompier
+              </label>
+              <input type="text" class="form-control" id="quickPompierName" list="pompiersList" required>
+            </div>
+            
+            <div id="quickReplacementFields" style="display: none;">
+              <div class="form-group">
+                <label for="quickOriginalPompier" class="form-label">
+                  <i class="bi bi-person-x"></i> Remplaçant(e)
+                </label>
+                <input type="text" class="form-control" id="quickOriginalPompier" list="pompiersList">
+              </div>
+              
+              <div class="form-group">
+                <label for="quickReplacementReason" class="form-label">
+                  <i class="bi bi-chat-left-text"></i> Motif du remplacement
+                </label>
+                <input type="text" class="form-control" id="quickReplacementReason" placeholder="Raison du remplacement...">
+              </div>
+            </div>
+            
+            <button type="button" class="btn btn-primary quick-add-btn" id="quickAddBtn">
+              <i class="bi bi-plus-circle"></i> Ajouter rapidement
+            </button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Onglet Tableau des astreintes -->
+      <div class="tab-pane fade" id="recap-tab-pane" role="tabpanel" tabindex="0">
+        <div id="passwordProtected">
+          <div class="password-container">
+            <h3 class="text-center mb-4"><i class="bi bi-lock"></i> Accès protégé</h3>
+            <div class="mb-3">
+              <label for="passwordInput" class="form-label">Mot de passe</label>
+              <input type="password" class="form-control" id="passwordInput" placeholder="Entrez le mot de passe">
+            </div>
+            <button class="btn btn-primary w-100" id="unlockBtn">
+              <i class="bi bi-unlock"></i> Déverrouiller
+            </button>
+            <div class="text-danger mt-2" id="passwordError"></div>
+          </div>
+        </div>
+        
+        <div id="recapContent" style="display: none;">
+          <div class="filters-container mb-3">
+            <div class="accordion" id="filtersAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                    <i class="bi bi-funnel"></i> Filtres
+                  </button>
+                </h2>
+                <div id="filtersCollapse" class="accordion-collapse collapse" data-bs-parent="#filtersAccordion">
+                  <div class="accordion-body p-2">
+                    <div class="row g-2">
+                      <div class="col-12">
+                        <label class="form-label small">Pompier</label>
+                        <input type="text" class="form-control form-control-sm" id="filterPompier" placeholder="Rechercher...">
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label small">Période</label>
+                        <select class="form-select form-select-sm" id="filterPeriod">
+                          <option value="">Toutes périodes</option>
+                          <option value="morning">Matin</option>
+                          <option value="afternoon">Après-midi</option>
+                          <option value="replacement">Remplacement</option>
+                        </select>
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label small">Date début</label>
+                        <input type="date" class="form-control form-control-sm" id="filterStartDate">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label small">Date fin</label>
+                        <input type="date" class="form-control form-control-sm" id="filterEndDate">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            <button class="btn btn-sm btn-outline-primary" id="exportExcel">
+              <i class="bi bi-file-excel"></i> Excel
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="exportPdf">
+              <i class="bi bi-file-pdf"></i> PDF
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="exportPrint">
+              <i class="bi bi-printer"></i> Imprimer
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
+              <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+            </button>
+            <button class="btn btn-sm btn-outline-success" id="generatePlanning">
+              <i class="bi bi-calendar-plus"></i> Générer
+            </button>
+          </div>
+          
+          <div class="table-responsive">
+            <table id="recapTable" class="table table-hover table-sm" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Pompier</th>
+                  <th>Période</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Les données seront chargées dynamiquement -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Onglet Demandes de remplacement -->
+      <div class="tab-pane fade" id="requests-tab-pane" role="tabpanel" tabindex="0">
+        <div class="mb-3">
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="requestFilter" id="requestAll" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="requestAll">Toutes</label>
+            
+            <input type="radio" class="btn-check" name="requestFilter" id="requestPending" autocomplete="off">
+            <label class="btn btn-outline-warning" for="requestPending">En attente</label>
+            
+            <input type="radio" class="btn-check" name="requestFilter" id="requestApproved" autocomplete="off">
+            <label class="btn btn-outline-success" for="requestApproved">Acceptées</label>
+            
+            <input type="radio" class="btn-check" name="requestFilter" id="requestRejected" autocomplete="off">
+            <label class="btn btn-outline-danger" for="requestRejected">Refusées</label>
+          </div>
+        </div>
+        
+        <div id="requestsList">
+          <!-- Les demandes seront chargées ici -->
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2">Chargement des demandes...</p>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary w-100 mt-3" id="newRequestBtn">
+          <i class="bi bi-plus-circle"></i> Nouvelle demande
+        </button>
+      </div>
+      
+      <!-- Onglet Statistiques -->
+      <div class="tab-pane fade" id="stats-tab-pane" role="tabpanel" tabindex="0">
+        <div class="mb-3">
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="statsPeriod" id="statsMonth" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="statsMonth">Mois</label>
+            
+            <input type="radio" class="btn-check" name="statsPeriod" id="statsYear" autocomplete="off">
+            <label class="btn btn-outline-primary" for="statsYear">Année</label>
+          </div>
+        </div>
+        
+        <div class="card mb-3">
+          <div class="card-header bg-primary text-white">
+            <i class="bi bi-bar-chart"></i> Répartition
+          </div>
+          <div class="card-body p-2">
+            <canvas id="periodChart" height="200"></canvas>
+          </div>
+        </div>
+        
+        <div class="card mb-3">
+          <div class="card-header bg-primary text-white">
+            <i class="bi bi-people"></i> Pompiers
+          </div>
+          <div class="card-body p-2">
+            <canvas id="pompiersChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu en bas pour mobile -->
+ <nav class="bottom-nav d-md-none">
+  <a href="#" class="bottom-nav-item active" onclick="switchTab('calendar-tab-pane', this)">
+    <i class="bi bi-calendar3"></i>
+    <span>Calendrier</span>
+  </a>
+  <a href="#" class="bottom-nav-item" onclick="switchTab('add-tab-pane', this)">
+    <i class="bi bi-plus-circle"></i>
+    <span>Ajout</span>
+  </a>
+  <a href="#" class="bottom-nav-item" onclick="switchTab('recap-tab-pane', this)">
+    <i class="bi bi-table"></i>
+    <span>Tableau</span>
+  </a>
+  <a href="#" class="bottom-nav-item" onclick="switchTab('requests-tab-pane', this)">
+    <i class="bi bi-arrow-left-right"></i>
+    <span>Demandes</span>
+  </a>
+  <a href="#" class="bottom-nav-item" onclick="switchTab('stats-tab-pane', this)">
+    <i class="bi bi-graph-up"></i>
+    <span>Stats</span>
+  </a>
+</nav>
+
+  <!-- Modal pour ajouter/modifier une astreinte -->
+  <div class="modal fade" id="astreinteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-plus-circle"></i> 
+            <span id="modalTitle">Nouvelle Astreinte</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="astreinteForm">
+            <div class="mb-3">
+              <label for="astreinteDate" class="form-label">
+                <i class="bi bi-calendar-date"></i> Date
+              </label>
+              <input type="date" class="form-control" id="astreinteDate" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-clock"></i> Période
+              </label>
+              
+              <div class="period-selector">
+                <div class="period-option">
+                  <input type="radio" id="morningPeriod" name="period" value="morning" checked>
+                  <label for="morningPeriod" class="morning-option">
+                    <i class="bi bi-sunrise"></i> Matin
+                  </label>
+                </div>
+                
+                <div class="period-option">
+                  <input type="radio" id="afternoonPeriod" name="period" value="afternoon">
+                  <label for="afternoonPeriod" class="afternoon-option">
+                    <i class="bi bi-sunset"></i> Après-midi
+                  </label>
+                </div>
+                
+                <div class="period-option">
+                  <input type="radio" id="replacementPeriod" name="period" value="replacement">
+                  <label for="replacementPeriod" class="replacement-option">
+                    <i class="bi bi-arrow-left-right"></i> Remplacement
+                  </label>
+                </div>
+              </div>
+              
+              <div class="time-slot" id="morningTimeSlot">
+                <div class="time-slot-badge small">Horaires matin</div>
+                <div class="time-inputs d-flex gap-2">
+                  <div class="flex-grow-1">
+                    <label for="morningStart" class="form-label small">Début</label>
+                    <input type="time" class="form-control" id="morningStart" value="07:00" required>
+                  </div>
+                  <div class="flex-grow-1">
+                    <label for="morningEnd" class="form-label small">Fin</label>
+                    <input type="time" class="form-control" id="morningEnd" value="13:00" required>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="time-slot" id="afternoonTimeSlot" style="display: none;">
+                <div class="time-slot-badge small">Horaires après-midi</div>
+                <div class="time-inputs d-flex gap-2">
+                  <div class="flex-grow-1">
+                    <label for="afternoonStart" class="form-label small">Début</label>
+                    <input type="time" class="form-control" id="afternoonStart" value="13:00" required>
+                  </div>
+                  <div class="flex-grow-1">
+                    <label for="afternoonEnd" class="form-label small">Fin</label>
+                    <input type="time" class="form-control" id="afternoonEnd" value="20:00" required>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="time-slot" id="replacementTimeSlot" style="display: none;">
+                <div class="time-slot-badge small">Horaires remplacement</div>
+                <div class="time-inputs d-flex gap-2">
+                  <div class="flex-grow-1">
+                    <label for="replacementStart" class="form-label small">Début</label>
+                    <input type="time" class="form-control" id="replacementStart" value="07:00" required>
+                  </div>
+                  <div class="flex-grow-1">
+                    <label for="replacementEnd" class="form-label small">Fin</label>
+                    <input type="time" class="form-control" id="replacementEnd" value="20:00" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="pompierName" class="form-label">
+                <i class="bi bi-person-badge"></i> Nom du pompier
+              </label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="pompierName" list="pompiersList" required>
+                <datalist id="pompiersList">
+                  <!-- Options seront ajoutées dynamiquement -->
+                </datalist>
+                <button class="btn btn-outline-secondary" type="button" id="addPompierBtn" title="Ajouter aux favoris">
+                  <i class="bi bi-star"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div id="replacementFields" style="display: none;">
+              <div class="mb-3">
+                <label for="originalPompier" class="form-label">
+                  <i class="bi bi-person-x"></i> Remplaçant(e)
+                </label>
+                <input type="text" class="form-control" id="originalPompier" list="pompiersList">
+              </div>
+              
+              <div class="mb-3">
+                <label for="replacementReason" class="form-label">
+                  <i class="bi bi-chat-left-text"></i> Motif du remplacement
+                </label>
+                <input type="text" class="form-control" id="replacementReason" placeholder="Raison du remplacement...">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="astreinteNotes" class="form-label">
+                <i class="bi bi-card-text"></i> Notes (optionnel)
+              </label>
+              <textarea class="form-control" id="astreinteNotes" rows="2" placeholder="Informations complémentaires..."></textarea>
+            </div>
+            
+            <input type="hidden" id="astreinteId">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveAstreinteBtn">
+            <i class="bi bi-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour voir les détails d'une astreinte -->
+  <div class="modal fade" id="viewAstreinteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-info-circle"></i> 
+            Détails de l'astreinte
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="viewAstreinteBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Fermer
+          </button>
+          <button type="button" class="btn btn-outline-primary" id="editAstreinteBtn">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+          <button type="button" class="btn btn-outline-danger" id="deleteAstreinteBtn">
+            <i class="bi bi-trash"></i> Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmation -->
+  <div class="modal fade confirmation-modal" id="confirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-exclamation-triangle"></i> 
+            <span id="confirmationModalTitle">Confirmation</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="confirmationModalBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-warning" id="confirmActionBtn">
+            <i class="bi bi-check-lg"></i> Confirmer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour générer un planning -->
+  <div class="modal fade" id="generatePlanningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-calendar-plus"></i> 
+            Générer un planning
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="generatePlanningForm">
+            <div class="mb-3">
+              <label for="planningStartDate" class="form-label">
+                <i class="bi bi-calendar-date"></i> Date de début
+              </label>
+              <input type="date" class="form-control" id="planningStartDate" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="planningEndDate" class="form-label">
+                <i class="bi bi-calendar-date"></i> Date de fin
+              </label>
+              <input type="date" class="form-control" id="planningEndDate" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-clock"></i> Périodes à générer
+              </label>
+              
+              <div class="period-selector">
+                <div class="period-option">
+                  <input type="checkbox" id="generateMorning" name="generatePeriods" value="morning" checked>
+                  <label for="generateMorning" class="morning-option">
+                    <i class="bi bi-sunrise"></i> Matin
+                  </label>
+                </div>
+                
+                <div class="period-option">
+                  <input type="checkbox" id="generateAfternoon" name="generatePeriods" value="afternoon" checked>
+                  <label for="generateAfternoon" class="afternoon-option">
+                    <i class="bi bi-sunset"></i> Après-midi
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="planningPompiers" class="form-label">
+                <i class="bi bi-people"></i> Pompiers disponibles
+              </label>
+              <select class="form-select" id="planningPompiers" multiple required>
+                <!-- Options seront ajoutées dynamiquement -->
+              </select>
+              <div class="form-text">Maintenez Ctrl/Cmd pour sélectionner plusieurs pompiers</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="planningAlgorithm" class="form-label">
+                <i class="bi bi-cpu"></i> Algorithme de répartition
+              </label>
+              <select class="form-select" id="planningAlgorithm" required>
+                <option value="round-robin">Tourniquet (équitable)</option>
+                <option value="random">Aléatoire</option>
+                <option value="weighted">Pondéré (selon disponibilités)</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="generatePlanningBtn">
+            <i class="bi bi-magic"></i> Générer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour les demandes de remplacement -->
+  <div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-arrow-left-right"></i> 
+            <span id="requestModalTitle">Nouvelle demande</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="requestForm">
+            <div class="mb-3">
+              <label for="requestDate" class="form-label">
+                <i class="bi bi-calendar-date"></i> Date
+              </label>
+              <input type="date" class="form-control" id="requestDate" required>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-clock"></i> Période
+              </label>
+              
+              <div class="period-selector">
+                <div class="period-option">
+                  <input type="radio" id="requestMorningPeriod" name="requestPeriod" value="morning" checked>
+                  <label for="requestMorningPeriod" class="morning-option">
+                    <i class="bi bi-sunrise"></i> Matin
+                  </label>
+                </div>
+                
+                <div class="period-option">
+                  <input type="radio" id="requestAfternoonPeriod" name="requestPeriod" value="afternoon">
+                  <label for="requestAfternoonPeriod" class="afternoon-option">
+                    <i class="bi bi-sunset"></i> Après-midi
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="requestPompier" class="form-label">
+                <i class="bi bi-person-badge"></i> Votre nom
+              </label>
+              <input type="text" class="form-control" id="requestPompier" list="pompiersList" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="requestReason" class="form-label">
+                <i class="bi bi-chat-left-text"></i> Motif de la demande
+              </label>
+              <textarea class="form-control" id="requestReason" rows="3" placeholder="Pourquoi demandez-vous un remplacement ?" required></textarea>
+            </div>
+            
+            <input type="hidden" id="requestId">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveRequestBtn">
+            <i class="bi bi-send"></i> Envoyer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour voir les détails d'une demande -->
+  <div class="modal fade" id="viewRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-arrow-left-right"></i> 
+            Détails de la demande
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="viewRequestBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Fermer
+          </button>
+          <button type="button" class="btn btn-outline-success" id="approveRequestBtn">
+            <i class="bi bi-check-lg"></i> Accepter
+          </button>
+          <button type="button" class="btn btn-outline-danger" id="rejectRequestBtn">
+            <i class="bi bi-x-lg"></i> Refuser
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Bibliothèques JavaScript -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  
+  <script>
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhzkcEWIWGIUvDSx0N6y2U4wV1o-FHkoU",
+      authDomain: "gestion-astreinte.firebaseapp.com",
+      projectId: "gestion-astreinte",
+      storageBucket: "gestion-astreinte.appspot.com",
+      messagingSenderId: "938871263068",
+      appId: "1:938871263068:web:3a4962016b805869997b99",
+      measurementId: "G-GYGLGLJSEJ"
+    };
+
+    // Initialisation Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // Variables globales
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let astreintes = {};
+    let currentEditingAstreinteId = null;
+    let currentEditingRequestId = null;
+    let recapTable = null;
+    let periodChart = null;
+    let pompiersChart = null;
+    let monthlyChart = null;
+    let favoritePompiers = [];
+    let allPompiers = new Set();
+    let hammerManager = null;
+    const PASSWORD = "Aspf66220*"; // Mot de passe pour accéder au tableau
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      initCalendar();
+      initDataTable();
+      loadFavoritePompiers();
+      loadAstreintes();
+      loadRequests();
+      setupEventListeners();
+      setupSwipeGestures();
+      setupTabSwitching();
+      
+      // Détecter le mode sombre du système
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark-mode');
+      }
+      
+      // Écouter les changements de mode sombre
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+        if (event.matches) {
+          document.body.classList.add('dark-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+        }
+      });
+    });
+    
+    // Initialisation des tooltips et popovers
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+
+// Initialisation des onglets
+var tabEls = document.querySelectorAll('a[data-bs-toggle="tab"]')
+tabEls.forEach(function(tabEl) {
+  new bootstrap.Tab(tabEl)
+})
+    
+    function setupTabSwitching() {
+      // Synchroniser les onglets desktop et mobile
+      const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+      tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const target = this.getAttribute('data-bs-target');
+          
+          // Mettre à jour l'état actif dans le menu mobile
+          document.querySelectorAll('.bottom-nav-item').forEach(item => {
+            item.classList.remove('active');
+          });
+          
+          if (this.id === 'mobile-calendar-tab' || this.id === 'desktop-calendar-tab') {
+            document.getElementById('mobile-calendar-tab').classList.add('active');
+          } else if (this.id === 'mobile-add-tab' || this.id === 'desktop-add-tab') {
+            document.getElementById('mobile-add-tab').classList.add('active');
+          } else if (this.id === 'mobile-recap-tab' || this.id === 'desktop-recap-tab') {
+            document.getElementById('mobile-recap-tab').classList.add('active');
+          } else if (this.id === 'mobile-requests-tab' || this.id === 'desktop-requests-tab') {
+            document.getElementById('mobile-requests-tab').classList.add('active');
+          } else if (this.id === 'mobile-stats-tab' || this.id === 'desktop-stats-tab') {
+            document.getElementById('mobile-stats-tab').classList.add('active');
+          }
+        });
+      });
+    }
+    
+    function showLoading(show) {
+      document.getElementById('loadingState').style.display = show ? 'flex' : 'none';
+    }
+    
+    function setupSwipeGestures() {
+      const calendarWrapper = document.querySelector('.calendar-wrapper');
+      hammerManager = new Hammer(calendarWrapper);
+      
+      hammerManager.on('swipeleft', function() {
+        nextMonth();
+      });
+      
+      hammerManager.on('swiperight', function() {
+        prevMonth();
+      });
+    }
+    
+    function initCalendar() {
+      updateCalendar();
+    }
+    
+    function initDataTable() {
+      recapTable = $('#recapTable').DataTable({
+        dom: '<"top"f>rt<"bottom"lip><"clear">',
+        language: {
+          url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/fr-FR.json'
+        },
+        columns: [
+          { 
+            data: 'date', 
+            type: 'date',
+            render: function(data) {
+              return new Date(data).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            }
+          },
+          { 
+            data: 'pompierName',
+            render: function(data, type, row) {
+              if (row.period === 'replacement' && row.originalPompier) {
+                return `${data} <small class="text-muted">(remplace ${row.originalPompier})</small>`;
+              }
+              return data;
+            }
+          },
+          { 
+            data: 'period', 
+            render: function(data, type, row) {
+              let periodText = data === 'morning' ? 'Matin' : 
+                             data === 'afternoon' ? 'Après-midi' : 'Remplacement';
+              
+              let badgeClass = data === 'morning' ? 'bg-primary' : 
+                              data === 'afternoon' ? 'bg-info' : 'bg-warning';
+              
+              return `<span class="badge ${badgeClass}">${periodText}</span>`;
+            }
+          },
+          { 
+            data: null, 
+            render: function(data, type, row) {
+              return `
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-primary view-btn" title="Voir">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-outline-secondary edit-btn" title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </div>
+              `;
+            }, 
+            orderable: false 
+          }
+        ],
+        responsive: true,
+        pageLength: 10,
+        lengthMenu: [5, 10, 20, 50],
+        order: [[0, 'asc']],
+        buttons: [
+          {
+            extend: 'excel',
+            text: '<i class="bi bi-file-excel"></i> Excel',
+            className: 'btn btn-sm btn-outline-primary',
+            title: 'Astreintes Pompiers',
+            exportOptions: {
+              columns: [0, 1, 2]
+            }
+          },
+          {
+            extend: 'pdf',
+            text: '<i class="bi bi-file-pdf"></i> PDF',
+            className: 'btn btn-sm btn-outline-primary',
+            title: 'Astreintes Pompiers',
+            exportOptions: {
+              columns: [0, 1, 2]
+            }
+          },
+          {
+            extend: 'print',
+            text: '<i class="bi bi-printer"></i> Imprimer',
+            className: 'btn btn-sm btn-outline-primary',
+            title: 'Astreintes Pompiers',
+            exportOptions: {
+              columns: [0, 1, 2]
+            }
+          }
+        ],
+        initComplete: function() {
+          this.api().buttons().container().appendTo('.export-buttons');
+        }
+      });
+      
+      // Gérer les clics sur les boutons dans la table
+      $('#recapTable tbody').on('click', '.view-btn', function() {
+        const data = recapTable.row($(this).parents('tr')).data();
+        viewAstreinte(data.id);
+      });
+      
+      $('#recapTable tbody').on('click', '.edit-btn', function() {
+        const data = recapTable.row($(this).parents('tr')).data();
+        editAstreinte(data.id);
+      });
+    }
+    
+    async function loadFavoritePompiers() {
+      try {
+        const snapshot = await db.collection('favoritePompiers').orderBy('name').get();
+        favoritePompiers = snapshot.docs.map(doc => doc.data().name);
+        updatePompiersList();
+      } catch (error) {
+        console.error("Erreur de chargement des pompiers favoris:", error);
+        showToast("Erreur de chargement des favoris", 'danger');
+      }
+    }
+    
+    function updatePompiersList() {
+      const pompiersList = document.getElementById('pompiersList');
+      pompiersList.innerHTML = '';
+      
+      // Ajouter les pompiers favoris en premier
+      favoritePompiers.forEach(pompier => {
+        const option = document.createElement('option');
+        option.value = pompier;
+        pompiersList.appendChild(option);
+      });
+      
+      // Ajouter tous les pompiers connus
+      allPompiers.forEach(pompier => {
+        if (!favoritePompiers.includes(pompier)) {
+          const option = document.createElement('option');
+          option.value = pompier;
+          pompiersList.appendChild(option);
+        }
+      });
+      
+      // Mettre à jour aussi le select du planning
+      const planningSelect = document.getElementById('planningPompiers');
+      planningSelect.innerHTML = '';
+      
+      const allPompiersArray = Array.from(allPompiers);
+      allPompiersArray.sort();
+      
+      allPompiersArray.forEach(pompier => {
+        const option = document.createElement('option');
+        option.value = pompier;
+        option.textContent = pompier;
+        planningSelect.appendChild(option);
+      });
+    }
+    
+    function updateCalendar() {
+      const calendarDays = document.getElementById('calendarDays');
+      calendarDays.innerHTML = '';
+      
+      // Mettre à jour le titre du mois/année
+      const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+      document.getElementById('calendarMonthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+      
+      // Premier jour du mois
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      // Dernier jour du mois
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+      // Jour de la semaine du premier jour (0=Dimanche, 1=Lundi, etc.)
+      const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Ajustement pour commencer par Lundi
+      
+      // Jours du mois précédent
+      const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+      
+      // Jours du mois suivant
+      const daysInMonth = lastDay.getDate();
+      
+      // Total des cases à afficher (6 lignes de 7 jours)
+      const totalDays = 42;
+      
+      // Aujourd'hui
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
+      
+      // Générer les jours du calendrier
+      for (let i = 0; i < totalDays; i++) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day fade-in';
+        
+        let dayNumber;
+        let isOtherMonth = false;
+        let dayDate;
+        
+        if (i < firstDayOfWeek) {
+          // Jours du mois précédent
+          dayNumber = prevMonthLastDay - (firstDayOfWeek - 1 - i);
+          isOtherMonth = true;
+          dayDate = new Date(currentYear, currentMonth - 1, dayNumber);
+        } else if (i >= firstDayOfWeek + daysInMonth) {
+          // Jours du mois suivant
+          dayNumber = i - (firstDayOfWeek + daysInMonth) + 1;
+          isOtherMonth = true;
+          dayDate = new Date(currentYear, currentMonth + 1, dayNumber);
+        } else {
+          // Jours du mois courant
+          dayNumber = i - firstDayOfWeek + 1;
+          dayDate = new Date(currentYear, currentMonth, dayNumber);
+        }
+        
+        if (isOtherMonth) {
+          dayElement.classList.add('other-month');
+        }
+        
+        // Vérifier si c'est aujourd'hui
+        if (isCurrentMonth && dayNumber === today.getDate()) {
+          dayElement.classList.add('today');
+        }
+        
+        // Vérifier si c'est un week-end
+        if (dayDate.getDay() === 0 || dayDate.getDay() === 6) {
+          dayElement.classList.add('weekend');
+        }
+        
+        dayElement.innerHTML = `<div class="calendar-day-number">${dayNumber}</div>`;
+        
+        // Ajouter les astreintes pour ce jour
+        const dateKey = formatDateKey(dayDate);
+        if (astreintes[dateKey]) {
+          astreintes[dateKey].forEach(astreinte => {
+            const slotElement = document.createElement('div');
+            slotElement.className = `astreinte-slot ${astreinte.period}`;
+            
+            let slotText = astreinte.pompierName.split(' ')[0];
+            if (astreinte.period === 'replacement' && astreinte.originalPompier) {
+              slotText = `R: ${slotText} (${astreinte.originalPompier.split(' ')[0]})`;
+            } else {
+              slotText = astreinte.period === 'morning' ? 'M: ' + slotText : 'A: ' + slotText;
+            }
+            
+            slotElement.innerHTML = slotText;
+            slotElement.setAttribute('data-id', astreinte.id);
+            dayElement.appendChild(slotElement);
+          });
+          
+          // Ajouter un badge de notification avec le nombre d'astreintes
+          if (astreintes[dateKey].length > 0) {
+            const badge = document.createElement('div');
+            badge.className = 'notification-badge';
+            badge.textContent = astreintes[dateKey].length;
+            dayElement.appendChild(badge);
+          }
+        }
+        
+        // Ajouter un événement de clic pour ajouter une astreinte
+        dayElement.addEventListener('click', function(e) {
+          if (e.target === dayElement || e.target.classList.contains('calendar-day-number')) {
+            openAddAstreinteModal(dayDate);
+          }
+        });
+        
+        // Ajouter un événement de clic pour voir les détails d'une astreinte
+        dayElement.addEventListener('click', function(e) {
+          if (e.target.classList.contains('astreinte-slot')) {
+            const astreinteId = e.target.getAttribute('data-id');
+            viewAstreinte(astreinteId);
+          }
+        });
+        
+        calendarDays.appendChild(dayElement);
+      }
+      
+      // Mettre à jour le résumé du mois
+      updateMonthSummary();
+    }
+    
+    function switchTab(tabId, clickedElement) {
+  // Désactiver tous les onglets
+  document.querySelectorAll('.tab-pane').forEach(tab => {
+    tab.classList.remove('show', 'active');
+  });
+  
+  // Désactiver tous les éléments du menu
+  document.querySelectorAll('.bottom-nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  // Activer l'onglet sélectionné
+  document.getElementById(tabId).classList.add('show', 'active');
+  
+  // Activer l'élément du menu cliqué
+  clickedElement.classList.add('active');
+  
+  // Empêcher le comportement par défaut du lien
+  return false;
+}
+    
+    function updateMonthSummary() {
+      let count = 0;
+      Object.keys(astreintes).forEach(date => {
+        count += astreintes[date].length;
+      });
+      
+      document.getElementById('monthAstreintesCount').textContent = `${count} astreinte${count > 1 ? 's' : ''}`;
+    }
+    
+    function openAddAstreinteModal(dayDate) {
+      currentEditingAstreinteId = null;
+      document.getElementById('modalTitle').textContent = 'Nouvelle Astreinte';
+      document.getElementById('astreinteForm').reset();
+      
+      // Définir la date par défaut
+      const dateStr = formatDateInput(dayDate);
+      document.getElementById('astreinteDate').value = dateStr;
+      
+      // Définir les heures par défaut
+      document.getElementById('morningStart').value = '07:00';
+      document.getElementById('morningEnd').value = '13:00';
+      document.getElementById('afternoonStart').value = '13:00';
+      document.getElementById('afternoonEnd').value = '20:00';
+      document.getElementById('replacementStart').value = '07:00';
+      document.getElementById('replacementEnd').value = '20:00';
+      
+      // Afficher le bon créneau horaire
+      document.getElementById('morningTimeSlot').style.display = 'flex';
+      document.getElementById('afternoonTimeSlot').style.display = 'none';
+      document.getElementById('replacementTimeSlot').style.display = 'none';
+      document.getElementById('replacementFields').style.display = 'none';
+      
+      const astreinteModal = new bootstrap.Modal(document.getElementById('astreinteModal'));
+      astreinteModal.show();
+      
+      // Focus sur le champ du nom du pompier
+      setTimeout(() => {
+        document.getElementById('pompierName').focus();
+      }, 500);
+    }
+    
+    function prevMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      updateCalendar();
+      loadAstreintes();
+    }
+    
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      updateCalendar();
+      loadAstreintes();
+    }
+    
+    function setupEventListeners() {
+      // Navigation du calendrier
+      document.getElementById('prevYear').addEventListener('click', function() {
+        currentYear--;
+        updateCalendar();
+        loadAstreintes();
+      });
+      
+      document.getElementById('prevMonth').addEventListener('click', prevMonth);
+      
+      document.getElementById('nextMonth').addEventListener('click', nextMonth);
+      
+      document.getElementById('nextYear').addEventListener('click', function() {
+        currentYear++;
+        updateCalendar();
+        loadAstreintes();
+      });
+      
+      document.getElementById('today').addEventListener('click', function() {
+        const today = new Date();
+        currentMonth = today.getMonth();
+        currentYear = today.getFullYear();
+        updateCalendar();
+        loadAstreintes();
+      });
+      
+      // Sélection de la période (matin/après-midi/remplacement)
+      document.getElementById('morningPeriod').addEventListener('change', function() {
+        if (this.checked) {
+          document.getElementById('morningTimeSlot').style.display = 'flex';
+          document.getElementById('afternoonTimeSlot').style.display = 'none';
+          document.getElementById('replacementTimeSlot').style.display = 'none';
+          document.getElementById('replacementFields').style.display = 'none';
+        }
+      });
+      
+      document.getElementById('afternoonPeriod').addEventListener('change', function() {
+        if (this.checked) {
+          document.getElementById('morningTimeSlot').style.display = 'none';
+          document.getElementById('afternoonTimeSlot').style.display = 'flex';
+          document.getElementById('replacementTimeSlot').style.display = 'none';
+          document.getElementById('replacementFields').style.display = 'none';
+        }
+      });
+      
+      document.getElementById('replacementPeriod').addEventListener('change', function() {
+        if (this.checked) {
+          document.getElementById('morningTimeSlot').style.display = 'none';
+          document.getElementById('afternoonTimeSlot').style.display = 'none';
+          document.getElementById('replacementTimeSlot').style.display = 'flex';
+          document.getElementById('replacementFields').style.display = 'block';
+        }
+      });
+      
+      // Sélection de la période dans le formulaire rapide
+      document.getElementById('quickMorningPeriod').addEventListener('change', function() {
+        if (this.checked) {
+          document.getElementById('quickMorningTimeSlot').style.display = 'flex';
+          document.getElementById('quickAfternoonTimeSlot').style.display = 'none';
+          document.getElementById('quickReplacementFields').style.display = 'none';
+        }
+      });
+      
+      document.getElementById('quickAfternoonPeriod').addEventListener('change', function() {
+        if (this.checked) {
+          document.getElementById('quickMorningTimeSlot').style.display = 'none';
+          document.getElementById('quickAfternoonTimeSlot').style.display = 'flex';
+          document.getElementById('quickReplacementFields').style.display = 'none';
+        }
+      });
+      
+      document.getElementById('quickReplacementPeriod').addEventListener('change', function() {
+        if (this.checked) {
+          document.getElementById('quickMorningTimeSlot').style.display = 'none';
+          document.getElementById('quickAfternoonTimeSlot').style.display = 'none';
+          document.getElementById('quickReplacementFields').style.display = 'block';
+        }
+      });
+      
+      // Sauvegarder une astreinte
+      document.getElementById('saveAstreinteBtn').addEventListener('click', async function() {
+        const date = document.getElementById('astreinteDate').value;
+        const pompierName = document.getElementById('pompierName').value.trim();
+        const notes = document.getElementById('astreinteNotes').value.trim();
+        const period = document.querySelector('input[name="period"]:checked').value;
+        
+        let startTime, endTime, originalPompier, replacementReason;
+        
+        if (period === 'morning') {
+          startTime = document.getElementById('morningStart').value;
+          endTime = document.getElementById('morningEnd').value;
+        } else if (period === 'afternoon') {
+          startTime = document.getElementById('afternoonStart').value;
+          endTime = document.getElementById('afternoonEnd').value;
+        } else {
+          startTime = document.getElementById('replacementStart').value;
+          endTime = document.getElementById('replacementEnd').value;
+          originalPompier = document.getElementById('originalPompier').value.trim();
+          replacementReason = document.getElementById('replacementReason').value.trim();
+        }
+        
+        if (!date || !pompierName || !startTime || !endTime) {
+          showToast('Veuillez remplir tous les champs obligatoires', 'danger');
+          return;
+        }
+        
+        // Vérifier si le créneau horaire est valide
+        if (startTime >= endTime) {
+          showToast('L\'heure de fin doit être après l\'heure de début', 'danger');
+          return;
+        }
+        
+        // Pour un remplacement, vérifier que le pompier remplacé est spécifié
+        if (period === 'replacement' && !originalPompier) {
+          showToast('Veuillez spécifier le pompier à remplacer', 'danger');
+          return;
+        }
+        
+        const astreinteData = {
+          date,
+          period,
+          startTime,
+          endTime,
+          pompierName,
+          notes,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Ajouter les infos spécifiques au remplacement
+        if (period === 'replacement') {
+          astreinteData.originalPompier = originalPompier;
+          astreinteData.replacementReason = replacementReason;
+        }
+        
+        try {
+          showLoading(true);
+          
+          if (currentEditingAstreinteId) {
+            // Modification
+            await db.collection('astreintes').doc(currentEditingAstreinteId).update(astreinteData);
+            showToast('Astreinte mise à jour avec succès', 'success');
+          } else {
+            // Nouvelle astreinte
+            astreinteData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('astreintes').add(astreinteData);
+            showToast('Astreinte enregistrée avec succès', 'success');
+          }
+          
+          // Fermer le modal automatiquement après l'enregistrement
+          const astreinteModal = bootstrap.Modal.getInstance(document.getElementById('astreinteModal'));
+          astreinteModal.hide();
+          
+          // Recharger les données
+          loadAstreintes();
+        } catch (error) {
+          showToast("Erreur: " + error.message, 'danger');
+          console.error("Erreur Firebase:", error);
+        } finally {
+          showLoading(false);
+        }
+      });
+      
+      // Ajout rapide d'astreinte
+      document.getElementById('quickAddBtn').addEventListener('click', async function() {
+        const date = document.getElementById('quickDate').value;
+        const pompierName = document.getElementById('quickPompierName').value.trim();
+        const period = document.querySelector('input[name="quickPeriod"]:checked').value;
+        
+        let startTime, endTime, originalPompier, replacementReason;
+        
+        if (period === 'morning') {
+          startTime = document.getElementById('quickMorningStart').value;
+          endTime = document.getElementById('quickMorningEnd').value;
+        } else if (period === 'afternoon') {
+          startTime = document.getElementById('quickAfternoonStart').value;
+          endTime = document.getElementById('quickAfternoonEnd').value;
+        } else {
+          startTime = '07:00';
+          endTime = '20:00';
+          originalPompier = document.getElementById('quickOriginalPompier').value.trim();
+          replacementReason = document.getElementById('quickReplacementReason').value.trim();
+        }
+        
+        if (!date || !pompierName || !startTime || !endTime) {
+          showToast('Veuillez remplir tous les champs obligatoires', 'danger');
+          return;
+        }
+        
+        // Vérifier si le créneau horaire est valide
+        if (startTime >= endTime) {
+          showToast('L\'heure de fin doit être après l\'heure de début', 'danger');
+          return;
+        }
+        
+        // Pour un remplacement, vérifier que le pompier remplacé est spécifié
+        if (period === 'replacement' && !originalPompier) {
+          showToast('Veuillez spécifier le pompier à remplacer', 'danger');
+          return;
+        }
+        
+        const astreinteData = {
+          date,
+          period,
+          startTime,
+          endTime,
+          pompierName,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Ajouter les infos spécifiques au remplacement
+        if (period === 'replacement') {
+          astreinteData.originalPompier = originalPompier;
+          astreinteData.replacementReason = replacementReason;
+        }
+        
+        try {
+          showLoading(true);
+          await db.collection('astreintes').add(astreinteData);
+          showToast('Astreinte ajoutée avec succès', 'success');
+          
+          // Réinitialiser le formulaire rapide
+          document.getElementById('quickDate').value = '';
+          document.getElementById('quickPompierName').value = '';
+          document.getElementById('quickOriginalPompier').value = '';
+          document.getElementById('quickReplacementReason').value = '';
+          document.getElementById('quickMorningPeriod').checked = true;
+          document.getElementById('quickMorningStart').value = '07:00';
+          document.getElementById('quickMorningEnd').value = '13:00';
+          document.getElementById('quickReplacementFields').style.display = 'none';
+          
+          // Recharger les données
+          loadAstreintes();
+        } catch (error) {
+          showToast("Erreur: " + error.message, 'danger');
+          console.error("Erreur Firebase:", error);
+        } finally {
+          showLoading(false);
+        }
+      });
+      
+      // Bouton Modifier dans le modal de visualisation
+      document.getElementById('editAstreinteBtn').addEventListener('click', function() {
+        const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewAstreinteModal'));
+        viewModal.hide();
+        
+        editAstreinte(currentEditingAstreinteId);
+      });
+      
+      // Bouton Supprimer dans le modal de visualisation
+      document.getElementById('deleteAstreinteBtn').addEventListener('click', async function() {
+        showConfirmation(
+          "Supprimer l'astreinte",
+          "Êtes-vous sûr de vouloir supprimer cette astreinte ? Cette action est irréversible.",
+          async function() {
+            try {
+              showLoading(true);
+              await db.collection('astreintes').doc(currentEditingAstreinteId).delete();
+              showToast('Astreinte supprimée', 'success');
+              
+              const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewAstreinteModal'));
+              viewModal.hide();
+              
+              // Recharger les données
+              loadAstreintes();
+            } catch (error) {
+              showToast("Erreur: " + error.message, 'danger');
+            } finally {
+              showLoading(false);
+            }
+          }
+        );
+      });
+      
+      // Bouton pour ajouter un pompier aux favoris
+      document.getElementById('addPompierBtn').addEventListener('click', async function() {
+        const pompierName = document.getElementById('pompierName').value.trim();
+        
+        if (!pompierName) {
+          showToast('Veuillez entrer un nom de pompier', 'warning');
+          return;
+        }
+        
+        if (favoritePompiers.includes(pompierName)) {
+          showToast('Ce pompier est déjà dans vos favoris', 'info');
+          return;
+        }
+        
+        try {
+          showLoading(true);
+          await db.collection('favoritePompiers').add({
+            name: pompierName,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          
+          favoritePompiers.push(pompierName);
+          favoritePompiers.sort();
+          updatePompiersList();
+          
+          showToast(`${pompierName} ajouté aux favoris`, 'success');
+        } catch (error) {
+          showToast("Erreur: " + error.message, 'danger');
+        } finally {
+          showLoading(false);
+        }
+      });
+      
+      // Filtres du tableau
+      document.getElementById('filterPeriod').addEventListener('change', function() {
+        recapTable.column(2).search(this.value).draw();
+      });
+      
+      document.getElementById('filterPompier').addEventListener('keyup', function() {
+        recapTable.column(1).search(this.value).draw();
+      });
+      
+      document.getElementById('filterStartDate').addEventListener('change', function() {
+        filterByDateRange();
+      });
+      
+      document.getElementById('filterEndDate').addEventListener('change', function() {
+        filterByDateRange();
+      });
+      
+      // Boutons d'export
+      document.getElementById('exportExcel').addEventListener('click', function() {
+        recapTable.button('.buttons-excel').trigger();
+      });
+      
+      document.getElementById('exportPdf').addEventListener('click', function() {
+        recapTable.button('.buttons-pdf').trigger();
+      });
+      
+      document.getElementById('exportPrint').addEventListener('click', function() {
+        recapTable.button('.buttons-print').trigger();
+      });
+      
+      document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('filterPeriod').value = '';
+        document.getElementById('filterPompier').value = '';
+        document.getElementById('filterStartDate').value = '';
+        document.getElementById('filterEndDate').value = '';
+        recapTable.search('').columns().search('').draw();
+      });
+      
+      // Bouton pour générer un planning
+      document.getElementById('generatePlanning').addEventListener('click', function() {
+        const today = new Date();
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        
+        document.getElementById('planningStartDate').value = formatDateInput(today);
+        document.getElementById('planningEndDate').value = formatDateInput(nextMonth);
+        
+        const planningModal = new bootstrap.Modal(document.getElementById('generatePlanningModal'));
+        planningModal.show();
+      });
+      
+      // Bouton pour générer le planning
+      document.getElementById('generatePlanningBtn').addEventListener('click', async function() {
+        const startDate = document.getElementById('planningStartDate').value;
+        const endDate = document.getElementById('planningEndDate').value;
+        const pompiers = Array.from(document.getElementById('planningPompiers').selectedOptions).map(opt => opt.value);
+        const algorithm = document.getElementById('planningAlgorithm').value;
+        
+        const generateMorning = document.getElementById('generateMorning').checked;
+        const generateAfternoon = document.getElementById('generateAfternoon').checked;
+        
+        if (!startDate || !endDate || pompiers.length === 0 || (!generateMorning && !generateAfternoon)) {
+          showToast('Veuillez remplir tous les champs obligatoires', 'danger');
+          return;
+        }
+        
+        if (new Date(startDate) >= new Date(endDate)) {
+          showToast('La date de fin doit être après la date de début', 'danger');
+          return;
+        }
+        
+        if (pompiers.length < 2) {
+          showToast('Veuillez sélectionner au moins 2 pompiers', 'warning');
+          return;
+        }
+        
+        showConfirmation(
+          "Générer le planning",
+          `Vous êtes sur le point de générer un planning du ${new Date(startDate).toLocaleDateString('fr-FR')} au ${new Date(endDate).toLocaleDateString('fr-FR')} pour ${pompiers.length} pompiers. Confirmez-vous cette action ?`,
+          async function() {
+            try {
+              showLoading(true);
+              const planningModal = bootstrap.Modal.getInstance(document.getElementById('generatePlanningModal'));
+              planningModal.hide();
+              
+              showToast('Génération du planning en cours...', 'info');
+              
+              // Générer le planning selon l'algorithme sélectionné
+              const generatedAstreintes = generatePlanning(
+                new Date(startDate),
+                new Date(endDate),
+                pompiers,
+                algorithm,
+                generateMorning,
+                generateAfternoon
+              );
+              
+              // Enregistrer les astreintes générées
+              const batch = db.batch();
+              const astreintesRef = db.collection('astreintes');
+              
+              generatedAstreintes.forEach(astreinte => {
+                const newAstreinteRef = astreintesRef.doc();
+                batch.set(newAstreinteRef, {
+                  ...astreinte,
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  autoGenerated: true
+                });
+              });
+              
+              await batch.commit();
+              
+              showToast(`Planning généré avec succès (${generatedAstreintes.length} astreintes créées)`, 'success');
+              loadAstreintes();
+            } catch (error) {
+              showToast("Erreur: " + error.message, 'danger');
+            } finally {
+              showLoading(false);
+            }
+          }
+        );
+      });
+      
+      // Voir toutes les astreintes du mois en cours
+      document.getElementById('viewAllThisMonth').addEventListener('click', function() {
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        
+        document.getElementById('filterStartDate').value = formatDateInput(firstDay);
+        document.getElementById('filterEndDate').value = formatDateInput(lastDay);
+        
+        // Basculer sur l'onglet tableau
+        document.getElementById('mobile-recap-tab').click();
+        
+        // Appliquer les filtres
+        filterByDateRange();
+      });
+      
+      // Gestion du mot de passe pour l'onglet tableau
+      document.getElementById('unlockBtn').addEventListener('click', function() {
+        const passwordInput = document.getElementById('passwordInput').value;
+        
+        if (passwordInput === PASSWORD) {
+          document.getElementById('passwordProtected').style.display = 'none';
+          document.getElementById('recapContent').style.display = 'block';
+        } else {
+          document.getElementById('passwordError').textContent = 'Mot de passe incorrect';
+        }
+      });
+      
+      // Gestion de la touche Entrée pour le mot de passe
+      document.getElementById('passwordInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('unlockBtn').click();
+        }
+      });
+      
+      // Gestion du mode stats
+      document.getElementById('statsMonth').addEventListener('change', function() {
+        if (this.checked) {
+          updateCharts(getCurrentMonthData());
+        }
+      });
+      
+      document.getElementById('statsYear').addEventListener('change', function() {
+        if (this.checked) {
+          updateCharts(getCurrentYearData());
+        }
+      });
+      
+      // Gestion des demandes de remplacement
+      document.getElementById('newRequestBtn').addEventListener('click', function() {
+        currentEditingRequestId = null;
+        document.getElementById('requestModalTitle').textContent = 'Nouvelle demande';
+        document.getElementById('requestForm').reset();
+        
+        // Définir la date par défaut à aujourd'hui
+        document.getElementById('requestDate').value = formatDateInput(new Date());
+        
+        const requestModal = new bootstrap.Modal(document.getElementById('requestModal'));
+        requestModal.show();
+      });
+      
+      document.getElementById('saveRequestBtn').addEventListener('click', async function() {
+        const date = document.getElementById('requestDate').value;
+        const pompierName = document.getElementById('requestPompier').value.trim();
+        const reason = document.getElementById('requestReason').value.trim();
+        const period = document.querySelector('input[name="requestPeriod"]:checked').value;
+        
+        if (!date || !pompierName || !reason) {
+          showToast('Veuillez remplir tous les champs obligatoires', 'danger');
+          return;
+        }
+        
+        const requestData = {
+          date,
+          period,
+          pompierName,
+          reason,
+          status: 'pending',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        try {
+          showLoading(true);
+          
+          if (currentEditingRequestId) {
+            // Modification
+            await db.collection('requests').doc(currentEditingRequestId).update(requestData);
+            showToast('Demande mise à jour avec succès', 'success');
+          } else {
+            // Nouvelle demande
+            requestData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await db.collection('requests').add(requestData);
+            showToast('Demande envoyée avec succès', 'success');
+          }
+          
+          // Fermer le modal automatiquement après l'enregistrement
+          const requestModal = bootstrap.Modal.getInstance(document.getElementById('requestModal'));
+          requestModal.hide();
+          
+          // Recharger les demandes
+          loadRequests();
+        } catch (error) {
+          showToast("Erreur: " + error.message, 'danger');
+          console.error("Erreur Firebase:", error);
+        } finally {
+          showLoading(false);
+        }
+      });
+      
+      // Filtres des demandes
+      document.getElementById('requestAll').addEventListener('change', function() {
+        if (this.checked) loadRequests();
+      });
+      
+      document.getElementById('requestPending').addEventListener('change', function() {
+        if (this.checked) loadRequests('pending');
+      });
+      
+      document.getElementById('requestApproved').addEventListener('change', function() {
+        if (this.checked) loadRequests('approved');
+      });
+      
+      document.getElementById('requestRejected').addEventListener('change', function() {
+        if (this.checked) loadRequests('rejected');
+      });
+    }
+    
+    function generatePlanning(startDate, endDate, pompiers, algorithm, includeMorning, includeAfternoon) {
+      const astreintes = [];
+      const currentDate = new Date(startDate);
+      let pompiersIndex = 0;
+      
+      // Pour l'algorithme pondéré, nous aurions besoin de données historiques
+      // mais pour cet exemple, nous allons simplement utiliser un tourniquet
+      
+      while (currentDate <= endDate) {
+        if (includeMorning) {
+          astreintes.push({
+            date: formatDateInput(currentDate),
+            period: 'morning',
+            startTime: '07:00',
+            endTime: '13:00',
+            pompierName: pompiers[pompiersIndex % pompiers.length],
+            notes: 'Généré automatiquement'
+          });
+          pompiersIndex++;
+        }
+        
+        if (includeAfternoon) {
+          astreintes.push({
+            date: formatDateInput(currentDate),
+            period: 'afternoon',
+            startTime: '13:00',
+            endTime: '20:00',
+            pompierName: pompiers[pompiersIndex % pompiers.length],
+            notes: 'Généré automatiquement'
+          });
+          pompiersIndex++;
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      return astreintes;
+    }
+    
+    function showConfirmation(title, message, callback) {
+      document.getElementById('confirmationModalTitle').textContent = title;
+      document.getElementById('confirmationModalBody').textContent = message;
+      
+      const confirmBtn = document.getElementById('confirmActionBtn');
+      confirmBtn.onclick = function() {
+        callback();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+        modal.hide();
+      };
+      
+      const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+      modal.show();
+    }
+    
+    function filterByDateRange() {
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+      
+      if (startDate || endDate) {
+        $.fn.dataTable.ext.search.push(
+          function(settings, data, dataIndex) {
+            const rowDate = new Date(data[0]);
+            const min = startDate ? new Date(startDate) : null;
+            const max = endDate ? new Date(endDate) : null;
+            
+            // Ignorer si la date est invalide
+            if (isNaN(rowDate.getTime())) return true;
+            
+            if (min && max) {
+              return rowDate >= min && rowDate <= max;
+            } else if (min) {
+              return rowDate >= min;
+            } else if (max) {
+              return rowDate <= max;
+            }
+            return true;
+          }
+        );
+        
+        recapTable.draw();
+        $.fn.dataTable.ext.search.pop();
+      } else {
+        recapTable.draw();
+      }
+    }
+    
+    async function loadAstreintes() {
+      try {
+        showLoading(true);
+        // Charger les astreintes pour le mois en cours
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        
+        const snapshot = await db.collection('astreintes')
+          .where('date', '>=', formatDateInput(firstDay))
+          .where('date', '<=', formatDateInput(lastDay))
+          .orderBy('date')
+          .orderBy('period')
+          .get();
+        
+        // Organiser les astreintes par date
+        astreintes = {};
+        const allAstreintes = [];
+        allPompiers = new Set(); // Réinitialiser la liste des pompiers
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const dateKey = formatDateKey(new Date(data.date));
+          
+          if (!astreintes[dateKey]) {
+            astreintes[dateKey] = [];
+          }
+          
+          const astreinte = {
+            id: doc.id,
+            ...data
+          };
+          
+          astreintes[dateKey].push(astreinte);
+          allAstreintes.push(astreinte);
+          
+          // Ajouter le pompier à la liste des pompiers connus
+          if (data.pompierName) {
+            allPompiers.add(data.pompierName);
+          }
+          if (data.originalPompier) {
+            allPompiers.add(data.originalPompier);
+          }
+        });
+        
+        updateCalendar();
+        updateDataTable(allAstreintes);
+        updateCharts(allAstreintes);
+        updatePompiersList();
+      } catch (error) {
+        showToast("Erreur de chargement: " + error.message, 'danger');
+        console.error("Erreur Firebase:", error);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    async function loadRequests(status = null) {
+      try {
+        showLoading(true);
+        let query = db.collection('requests').orderBy('createdAt', 'desc');
+        
+        if (status) {
+          query = query.where('status', '==', status);
+        }
+        
+        const snapshot = await query.get();
+        
+        const requestsList = document.getElementById('requestsList');
+        requestsList.innerHTML = '';
+        
+        if (snapshot.empty) {
+          requestsList.innerHTML = `
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> Aucune demande trouvée
+            </div>
+          `;
+          return;
+        }
+        
+        snapshot.forEach(doc => {
+          const request = doc.data();
+          const date = new Date(request.date);
+          
+          let statusBadgeClass = '';
+          let statusText = '';
+          
+          if (request.status === 'pending') {
+            statusBadgeClass = 'request-status-pending';
+            statusText = 'En attente';
+          } else if (request.status === 'approved') {
+            statusBadgeClass = 'request-status-approved';
+            statusText = 'Acceptée';
+          } else {
+            statusBadgeClass = 'request-status-rejected';
+            statusText = 'Refusée';
+          }
+          
+          const periodText = request.period === 'morning' ? 'Matin' : 'Après-midi';
+          
+          const requestElement = document.createElement('div');
+          requestElement.className = 'card request-card mb-2';
+          requestElement.innerHTML = `
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h6 class="card-title mb-1">${request.pompierName}</h6>
+                  <p class="card-text small mb-1">
+                    <i class="bi bi-calendar-date"></i> ${date.toLocaleDateString('fr-FR')}
+                    <span class="mx-2">|</span>
+                    <i class="bi bi-clock"></i> ${periodText}
+                  </p>
+                </div>
+                <span class="badge request-status-badge ${statusBadgeClass}">${statusText}</span>
+              </div>
+              <p class="card-text mt-2">${request.reason}</p>
+              
+              <div class="request-actions">
+                <button class="btn btn-sm btn-outline-primary view-request-btn" data-id="${doc.id}">
+                  <i class="bi bi-eye"></i> Voir
+                </button>
+                ${request.status === 'pending' ? `
+                <button class="btn btn-sm btn-outline-secondary edit-request-btn" data-id="${doc.id}">
+                  <i class="bi bi-pencil"></i> Modifier
+                </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+          
+          requestsList.appendChild(requestElement);
+        });
+        
+        // Gérer les clics sur les boutons de demande
+        document.querySelectorAll('.view-request-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            viewRequest(this.getAttribute('data-id'));
+          });
+        });
+        
+        document.querySelectorAll('.edit-request-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            editRequest(this.getAttribute('data-id'));
+          });
+        });
+      } catch (error) {
+        showToast("Erreur de chargement des demandes: " + error.message, 'danger');
+        console.error("Erreur Firebase:", error);
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    function updateDataTable(astreintesData = []) {
+      if (!recapTable) return;
+      
+      // Convertir les données pour DataTables
+      const tableData = astreintesData.map(astreinte => ({
+        id: astreinte.id,
+        date: astreinte.date,
+        period: astreinte.period,
+        startTime: astreinte.startTime,
+        endTime: astreinte.endTime,
+        pompierName: astreinte.pompierName,
+        originalPompier: astreinte.originalPompier || '',
+        replacementReason: astreinte.replacementReason || '',
+        notes: astreinte.notes || ''
+      }));
+      
+      recapTable.clear().rows.add(tableData).draw();
+    }
+    
+    function updateCharts(astreintesData = []) {
+      // Détruire les anciens graphiques s'ils existent
+      if (periodChart) periodChart.destroy();
+      if (pompiersChart) pompiersChart.destroy();
+      if (monthlyChart) monthlyChart.destroy();
+      
+      // Préparer les données pour les graphiques
+      const periodCounts = {
+        morning: 0,
+        afternoon: 0,
+        replacement: 0
+      };
+      
+      const pompierCounts = {};
+      
+      astreintesData.forEach(astreinte => {
+        // Compter par période
+        periodCounts[astreinte.period]++;
+        
+        // Compter par pompier
+        if (!pompierCounts[astreinte.pompierName]) {
+          pompierCounts[astreinte.pompierName] = 0;
+        }
+        pompierCounts[astreinte.pompierName]++;
+      });
+      
+      // Trier les pompiers par nombre d'astreintes
+      const sortedPompiers = Object.entries(pompierCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5); // Prendre les 5 premiers
+      
+      // Graphique des périodes
+      const periodCtx = document.getElementById('periodChart').getContext('2d');
+      periodChart = new Chart(periodCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Matin', 'Après-midi', 'Remplacement'],
+          datasets: [{
+            data: [periodCounts.morning, periodCounts.afternoon, periodCounts.replacement],
+            backgroundColor: ['#4361ee', '#3f37c9', '#4cc9f0'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+      
+      // Graphique des pompiers
+      const pompiersCtx = document.getElementById('pompiersChart').getContext('2d');
+      pompiersChart = new Chart(pompiersCtx, {
+        type: 'bar',
+        data: {
+          labels: sortedPompiers.map(p => p[0]),
+          datasets: [{
+            label: 'Nombre d\'astreintes',
+            data: sortedPompiers.map(p => p[1]),
+            backgroundColor: '#dc3545',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    function getCurrentMonthData() {
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+      
+      return Object.values(astreintes).flat().filter(a => {
+        const date = new Date(a.date);
+        return date >= firstDay && date <= lastDay;
+      });
+    }
+    
+    function getCurrentYearData() {
+      const firstDay = new Date(currentYear, 0, 1);
+      const lastDay = new Date(currentYear, 11, 31);
+      
+      // Nous devrions charger toutes les données de l'année
+      // Pour l'exemple, nous utilisons seulement les données du mois courant
+      return Object.values(astreintes).flat();
+    }
+    
+    async function viewAstreinte(astreinteId) {
+      try {
+        showLoading(true);
+        const doc = await db.collection('astreintes').doc(astreinteId).get();
+        
+        if (!doc.exists) {
+          showToast("Astreinte non trouvée", 'danger');
+          return;
+        }
+        
+        currentEditingAstreinteId = astreinteId;
+        const astreinte = doc.data();
+        
+        const date = new Date(astreinte.date);
+        const formattedDate = date.toLocaleDateString('fr-FR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+        
+        let periodBadgeClass = '';
+        let periodText = '';
+        
+        if (astreinte.period === 'morning') {
+          periodBadgeClass = 'bg-primary';
+          periodText = 'Matin';
+        } else if (astreinte.period === 'afternoon') {
+          periodBadgeClass = 'bg-info';
+          periodText = 'Après-midi';
+        } else {
+          periodBadgeClass = 'bg-warning';
+          periodText = 'Remplacement';
+        }
+        
+        let replacementInfo = '';
+        if (astreinte.period === 'replacement' && astreinte.originalPompier) {
+          replacementInfo = `
+            <div class="replacement-info">
+              <div class="fw-bold">Remplaçant(e):</div>
+              <div>${astreinte.originalPompier}</div>
+              ${astreinte.replacementReason ? `
+              <div class="fw-bold mt-1">Motif:</div>
+              <div>${astreinte.replacementReason}</div>
+              ` : ''}
+            </div>
+          `;
+        }
+        
+        document.getElementById('viewAstreinteBody').innerHTML = `
+          <div class="mb-3">
+            <div class="fw-bold">Date:</div>
+            <div>${formattedDate}</div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Période:</div>
+            <div class="badge ${periodBadgeClass}">
+              ${periodText} (${astreinte.startTime}-${astreinte.endTime})
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Pompier:</div>
+            <div>${astreinte.pompierName}</div>
+          </div>
+          
+          ${replacementInfo}
+          
+          ${astreinte.notes ? `
+          <div class="mb-3">
+            <div class="fw-bold">Notes:</div>
+            <div>${astreinte.notes}</div>
+          </div>` : ''}
+          
+          <div class="mb-3">
+            <div class="fw-bold">Enregistrée le:</div>
+            <div>${new Date(astreinte.createdAt?.toDate()).toLocaleString('fr-FR')}</div>
+          </div>
+          
+          ${astreinte.updatedAt ? `
+          <div class="mb-3">
+            <div class="fw-bold">Modifiée le:</div>
+            <div>${new Date(astreinte.updatedAt?.toDate()).toLocaleString('fr-FR')}</div>
+          </div>` : ''}
+          
+          ${astreinte.autoGenerated ? `
+          <div class="alert alert-warning mt-3">
+            <i class="bi bi-robot"></i> Cette astreinte a été générée automatiquement
+          </div>` : ''}
+        `;
+        
+        const viewModal = new bootstrap.Modal(document.getElementById('viewAstreinteModal'));
+        viewModal.show();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    async function editAstreinte(astreinteId) {
+      try {
+        showLoading(true);
+        const doc = await db.collection('astreintes').doc(astreinteId).get();
+        
+        if (!doc.exists) {
+          showToast("Astreinte non trouvée", 'danger');
+          return;
+        }
+        
+        currentEditingAstreinteId = astreinteId;
+        const astreinte = doc.data();
+        
+        document.getElementById('modalTitle').textContent = 'Modifier Astreinte';
+        document.getElementById('astreinteDate').value = astreinte.date;
+        document.getElementById('pompierName').value = astreinte.pompierName;
+        document.getElementById('astreinteNotes').value = astreinte.notes || '';
+        
+        // Sélectionner la période
+        if (astreinte.period === 'morning') {
+          document.getElementById('morningPeriod').checked = true;
+          document.getElementById('morningTimeSlot').style.display = 'flex';
+          document.getElementById('afternoonTimeSlot').style.display = 'none';
+          document.getElementById('replacementTimeSlot').style.display = 'none';
+          document.getElementById('replacementFields').style.display = 'none';
+          document.getElementById('morningStart').value = astreinte.startTime;
+          document.getElementById('morningEnd').value = astreinte.endTime;
+        } else if (astreinte.period === 'afternoon') {
+          document.getElementById('afternoonPeriod').checked = true;
+          document.getElementById('morningTimeSlot').style.display = 'none';
+          document.getElementById('afternoonTimeSlot').style.display = 'flex';
+          document.getElementById('replacementTimeSlot').style.display = 'none';
+          document.getElementById('replacementFields').style.display = 'none';
+          document.getElementById('afternoonStart').value = astreinte.startTime;
+          document.getElementById('afternoonEnd').value = astreinte.endTime;
+        } else {
+          document.getElementById('replacementPeriod').checked = true;
+          document.getElementById('morningTimeSlot').style.display = 'none';
+          document.getElementById('afternoonTimeSlot').style.display = 'none';
+          document.getElementById('replacementTimeSlot').style.display = 'flex';
+          document.getElementById('replacementFields').style.display = 'block';
+          document.getElementById('replacementStart').value = astreinte.startTime;
+          document.getElementById('replacementEnd').value = astreinte.endTime;
+          document.getElementById('originalPompier').value = astreinte.originalPompier || '';
+          document.getElementById('replacementReason').value = astreinte.replacementReason || '';
+        }
+        
+        const astreinteModal = new bootstrap.Modal(document.getElementById('astreinteModal'));
+        astreinteModal.show();
+        
+        // Focus sur le champ du nom du pompier
+        setTimeout(() => {
+          document.getElementById('pompierName').focus();
+        }, 500);
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    async function viewRequest(requestId) {
+      try {
+        showLoading(true);
+        const doc = await db.collection('requests').doc(requestId).get();
+        
+        if (!doc.exists) {
+          showToast("Demande non trouvée", 'danger');
+          return;
+        }
+        
+        currentEditingRequestId = requestId;
+        const request = doc.data();
+        const date = new Date(request.date);
+        
+        let statusBadgeClass = '';
+        let statusText = '';
+        
+        if (request.status === 'pending') {
+          statusBadgeClass = 'bg-warning';
+          statusText = 'En attente';
+        } else if (request.status === 'approved') {
+          statusBadgeClass = 'bg-success';
+          statusText = 'Acceptée';
+        } else {
+          statusBadgeClass = 'bg-danger';
+          statusText = 'Refusée';
+        }
+        
+        const periodText = request.period === 'morning' ? 'Matin' : 'Après-midi';
+        
+        document.getElementById('viewRequestBody').innerHTML = `
+          <div class="mb-3">
+            <div class="fw-bold">Date:</div>
+            <div>${date.toLocaleDateString('fr-FR')}</div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Période:</div>
+            <div>${periodText}</div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Pompier:</div>
+            <div>${request.pompierName}</div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Statut:</div>
+            <div class="badge ${statusBadgeClass}">${statusText}</div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Motif:</div>
+            <div>${request.reason}</div>
+          </div>
+          
+          <div class="mb-3">
+            <div class="fw-bold">Envoyée le:</div>
+            <div>${new Date(request.createdAt?.toDate()).toLocaleString('fr-FR')}</div>
+          </div>
+          
+          ${request.updatedAt ? `
+          <div class="mb-3">
+            <div class="fw-bold">Modifiée le:</div>
+            <div>${new Date(request.updatedAt?.toDate()).toLocaleString('fr-FR')}</div>
+          </div>` : ''}
+        `;
+        
+        // Afficher ou masquer les boutons d'action selon le statut
+        document.getElementById('approveRequestBtn').style.display = request.status === 'pending' ? 'block' : 'none';
+        document.getElementById('rejectRequestBtn').style.display = request.status === 'pending' ? 'block' : 'none';
+        
+        const viewModal = new bootstrap.Modal(document.getElementById('viewRequestModal'));
+        viewModal.show();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    async function editRequest(requestId) {
+      try {
+        showLoading(true);
+        const doc = await db.collection('requests').doc(requestId).get();
+        
+        if (!doc.exists) {
+          showToast("Demande non trouvée", 'danger');
+          return;
+        }
+        
+        currentEditingRequestId = requestId;
+        const request = doc.data();
+        
+        document.getElementById('requestModalTitle').textContent = 'Modifier demande';
+        document.getElementById('requestDate').value = request.date;
+        document.getElementById('requestPompier').value = request.pompierName;
+        document.getElementById('requestReason').value = request.reason;
+        
+        // Sélectionner la période
+        if (request.period === 'morning') {
+          document.getElementById('requestMorningPeriod').checked = true;
+        } else {
+          document.getElementById('requestAfternoonPeriod').checked = true;
+        }
+        
+        const requestModal = new bootstrap.Modal(document.getElementById('requestModal'));
+        requestModal.show();
+        
+        // Focus sur le champ du motif
+        setTimeout(() => {
+          document.getElementById('requestReason').focus();
+        }, 500);
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    async function approveRequest() {
+      try {
+        showLoading(true);
+        await db.collection('requests').doc(currentEditingRequestId).update({
+          status: 'approved',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Demande acceptée', 'success');
+        
+        const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewRequestModal'));
+        viewModal.hide();
+        
+        loadRequests();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    async function rejectRequest() {
+      try {
+        showLoading(true);
+        await db.collection('requests').doc(currentEditingRequestId).update({
+          status: 'rejected',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showToast('Demande refusée', 'success');
+        
+        const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewRequestModal'));
+        viewModal.hide();
+        
+        loadRequests();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      } finally {
+        showLoading(false);
+      }
+    }
+    
+    // Boutons pour approuver/rejeter les demandes
+    document.getElementById('approveRequestBtn').addEventListener('click', function() {
+      showConfirmation(
+        "Accepter la demande",
+        "Êtes-vous sûr de vouloir accepter cette demande de remplacement ?",
+        approveRequest
+      );
+    });
+    
+    document.getElementById('rejectRequestBtn').addEventListener('click', function() {
+      showConfirmation(
+        "Refuser la demande",
+        "Êtes-vous sûr de vouloir refuser cette demande de remplacement ?",
+        rejectRequest
+      );
+    });
+    
+    function formatDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    function formatDateInput(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    function showToast(message, type) {
+      const toastContainer = document.getElementById('toastContainer');
+      const toastId = 'toast-' + Date.now();
+      
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = `toast show align-items-center text-white bg-${type} border-0`;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'danger' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Supprimer après 5 secondes
+      setTimeout(() => {
+        const toastElement = document.getElementById(toastId);
+        if (toastElement) {
+          toastElement.classList.remove('show');
+          setTimeout(() => toastElement.remove(), 300);
+        }
+      }, 5000);
+    }
+    
+    // Écoute des changements en temps réel
+    db.collection('astreintes').onSnapshot((snapshot) => {
+      // Recharger les astreintes pour le mois en cours
+      loadAstreintes();
+    }, (error) => {
+      console.error("Erreur Firestore:", error);
+    });
+    
+    db.collection('requests').onSnapshot((snapshot) => {
+      // Recharger les demandes
+      loadRequests();
+    }, (error) => {
+      console.error("Erreur Firestore:", error);
+    });
+    
+    // Gestion de l'installation PWA
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      const installToast = showToast('Installer cette application pour une meilleure expérience', 'info');
+      
+      installToast.addEventListener('click', () => {
+        e.prompt();
+      });
+    });
+    
+    // Détection de la connexion
+    window.addEventListener('online', () => {
+      showToast('Connexion rétablie', 'success');
+      loadAstreintes();
+      loadRequests();
+    });
+    
+    window.addEventListener('offline', () => {
+      showToast('Vous êtes hors ligne', 'warning');
+    });
+  </script>
+</body>
+</html>

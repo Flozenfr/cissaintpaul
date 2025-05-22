@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud de la Tenaille | Pompiers Saint-Paul-de-Fenouillet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #e30613;
+            --primary-dark: #a50021;
+            --primary-light: rgba(227, 6, 19, 0.2);
+            --secondary: #0a0a0a;
+            --light: #ffffff;
+            --gold: #FFD700;
+            --platinum: #e5e4e2;
+            --fire-gradient: linear-gradient(45deg, #ff2800, #e30613, #ff7b00);
+            --fire-glow: 0 0 15px rgba(227, 6, 19, 0.7);
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            --metal-gradient: linear-gradient(145deg, #c0c0c0 0%, #e0e0e0 50%, #a0a0a0 100%);
+            --deep-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--secondary);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            touch-action: manipulation;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Hero Section - Mobile Optimized */
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: var(--light);
+            overflow: hidden;
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, rgba(10, 0, 5, 0.95) 0%, rgba(165, 0, 33, 0.6) 100%);
+            z-index: 1;
+        }
+
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            filter: brightness(0.7) contrast(1.2);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            max-width: 95%;
+            padding: 1.5rem;
+            animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+        }
+
+        .hero h1 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            text-shadow: var(--text-shadow), 0 0 20px rgba(227, 6, 19, 0.8);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: var(--fire-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: fireText 4s infinite alternate;
+            line-height: 1.1;
+            -webkit-text-stroke: 0.5px rgba(255,255,255,0.3);
+        }
+
+        .hero h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 4px;
+            background: var(--fire-gradient);
+            border-radius: 4px;
+            filter: blur(4px);
+            animation: fireWidth 5s infinite alternate-reverse;
+            box-shadow: var(--fire-glow);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin: 2rem 0 3rem;
+            text-shadow: var(--text-shadow);
+            font-weight: 600;
+            background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(165,0,33,0.5) 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 30px;
+            display: inline-block;
+            border: 2px solid var(--primary);
+            box-shadow: var(--fire-glow);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            border-left-color: var(--gold);
+            border-right-color: var(--gold);
+        }
+
+        .scroll-down {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--light);
+            font-size: 2rem;
+            animation: bounce 2.5s infinite, pulse 3s infinite;
+            cursor: pointer;
+            z-index: 3;
+            background: var(--fire-gradient);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 3px solid var(--gold);
+            box-shadow: var(--fire-glow), 0 0 0 8px rgba(227, 6, 19, 0.3);
+            transition: var(--transition);
+        }
+
+        .scroll-down:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        /* Content Section - Mobile Optimized */
+        .content {
+            padding: 4rem 1rem;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            background: radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 100%);
+            margin-top: -80px;
+        }
+
+        section {
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        h2 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.2rem;
+            color: var(--light);
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: var(--text-shadow);
+            padding: 0 1.5rem;
+        }
+
+        h2 span {
+            display: inline-block;
+            background: var(--fire-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding: 0 1rem;
+        }
+
+        h2 span::before, h2 span::after {
+            content: '✧';
+            position: absolute;
+            top: 45%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 2rem;
+            animation: spin 10s linear infinite;
+            text-shadow: 0 0 10px rgba(227, 6, 19, 0.9);
+        }
+
+        h2 span::before {
+            left: -15px;
+        }
+
+        h2 span::after {
+            right: -15px;
+            animation-direction: reverse;
+        }
+
+        /* Team Cards - Mobile Optimized */
+        .team-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            margin-top: 3rem;
+            padding: 0 0.5rem;
+        }
+
+        .team {
+            background: linear-gradient(145deg, #1e1e1e 0%, #141414 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--deep-shadow),
+                        0 0 0 2px rgba(255, 255, 255, 0.05),
+                        inset 0 0 20px rgba(227, 6, 19, 0.3);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            border-top: 6px solid var(--primary);
+            min-height: auto;
+        }
+
+        .team h3 {
+            font-family: 'Barlow Condensed', sans-serif;
+            color: var(--light);
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: var(--text-shadow);
+        }
+
+        .team h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--fire-gradient);
+            border-radius: 3px;
+            box-shadow: var(--fire-glow);
+            animation: fireWidth 5s infinite alternate;
+        }
+
+        .team ul {
+            list-style: none;
+        }
+
+        .team li {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: linear-gradient(90deg, rgba(30, 30, 30, 0.8) 0%, rgba(50, 50, 50, 0.5) 100%);
+            border-radius: 12px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            border-left: 4px solid transparent;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            font-size: 1rem;
+        }
+
+        .team li:active {
+            background: linear-gradient(90deg, rgba(227, 6, 19, 0.3) 0%, rgba(30, 30, 30, 0.8) 100%);
+            color: var(--light);
+            border-left: 4px solid var(--primary);
+        }
+
+        .team li i {
+            color: var(--primary);
+            transition: var(--transition);
+            font-size: 1.3rem;
+            text-shadow: 0 0 10px rgba(227, 6, 19, 0.9);
+            min-width: 30px;
+            text-align: center;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 3px 10px rgba(0,0,0,0.2);
+            border: 1px solid rgba(227, 6, 19, 0.5);
+        }
+
+        /* Fire Badge - Mobile Optimized */
+        .fire-badge {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            background: var(--metal-gradient);
+            color: var(--primary);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6),
+                        inset 0 3px 10px rgba(255, 255, 255, 0.7),
+                        inset 0 -3px 10px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+            border: 3px solid var(--gold);
+            animation: badgeFloat 8s ease-in-out infinite;
+            filter: drop-shadow(0 0 5px rgba(227, 6, 19, 0.7));
+        }
+
+        /* Social Media Section */
+        .social-media {
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: -2rem;
+        }
+
+        .social-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.8rem;
+            color: var(--light);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--fire-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--light);
+            transition: var(--transition);
+            width: 80px;
+        }
+
+        .social-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: var(--metal-gradient);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3),
+                        inset 0 2px 5px rgba(255, 255, 255, 0.7),
+                        inset 0 -2px 5px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--gold);
+            transition: var(--transition);
+        }
+
+        .social-link:hover .social-icon {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .social-link i {
+            transition: var(--transition);
+        }
+
+        .social-link:hover i {
+            transform: scale(1.1);
+        }
+
+        .facebook-icon {
+            color: #1877f2;
+        }
+
+        .instagram-icon {
+            color: #e4405f;
+            background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .tiktok-icon {
+            color: #000000;
+        }
+
+        .website-icon {
+            color: var(--primary);
+        }
+
+        .social-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-shadow: var(--text-shadow);
+        }
+
+        /* Website Link */
+        .website-link {
+            margin-top: 2rem;
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: var(--fire-gradient);
+            color: white;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(227, 6, 19, 0.4);
+            transition: var(--transition);
+            border: 2px solid var(--gold);
+        }
+
+        .website-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(227, 6, 19, 0.6);
+        }
+
+        /* Animations - Optimized for Mobile */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) translateX(-50%);
+            }
+            40% {
+                transform: translateY(-20px) translateX(-50%);
+            }
+            60% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+        }
+
+        @keyframes fireText {
+            0% {
+                background-position: 0% 50%;
+                text-shadow: var(--text-shadow), 0 0 20px rgba(227, 6, 19, 0.8);
+            }
+            100% {
+                background-position: 100% 50%;
+                text-shadow: var(--text-shadow), 0 0 30px rgba(227, 6, 19, 0.9);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(227, 6, 19, 0.7), 0 0 0 0 rgba(227, 6, 19, 0.3);
+            }
+            70% {
+                box-shadow: 0 0 0 20px rgba(227, 6, 19, 0), 0 0 0 10px rgba(227, 6, 19, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(227, 6, 19, 0), 0 0 0 0 rgba(227, 6, 19, 0);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: translateY(-50%) rotate(0deg);
+            }
+            to {
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
+        @keyframes badgeFloat {
+            0%, 100% {
+                transform: rotate(0deg) translateY(0) translateX(0);
+            }
+            25% {
+                transform: rotate(5deg) translateY(-8px) translateX(3px);
+            }
+            50% {
+                transform: rotate(0deg) translateY(0) translateX(0);
+            }
+            75% {
+                transform: rotate(-5deg) translateY(-5px) translateX(-3px);
+            }
+        }
+
+        @keyframes fireWidth {
+            0% {
+                width: 80px;
+            }
+            100% {
+                width: 120px;
+            }
+        }
+
+        /* Very Small Screens */
+        @media (max-width: 400px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            h2 {
+                font-size: 1.8rem;
+            }
+            
+            h2 span::before, h2 span::after {
+                font-size: 1.5rem;
+            }
+            
+            .team {
+                padding: 1.5rem;
+            }
+            
+            .team h3 {
+                font-size: 1.7rem;
+            }
+            
+            .team li {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+            
+            .team li i {
+                width: 35px;
+                height: 35px;
+                font-size: 1.1rem;
+            }
+            
+            .fire-badge {
+                width: 50px;
+                height: 50px;
+                font-size: 1.7rem;
+                top: -15px;
+                right: -15px;
+            }
+            
+            .scroll-down {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .social-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .social-link {
+                width: 70px;
+            }
+
+            .social-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Landscape Orientation */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .hero {
+                height: auto;
+                min-height: 100vh;
+                padding: 2rem 0;
+            }
+            
+            .hero-content {
+                padding: 2rem 0.5rem;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+                margin: 1rem 0;
+            }
+            
+            .scroll-down {
+                bottom: 20px;
+            }
+
+            .social-links {
+                gap: 1rem;
+            }
+
+            .social-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+
+            .social-link {
+                width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <video autoplay muted loop playsinline class="hero-video">
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-firefighters-battling-a-flame-21841-large.mp4" type="video/mp4">
+        </video>
+        <div class="hero-content">
+            <h1>Cloud de la Tenaille</h1>
+            <p>Courage & Dévouement</p>
+        </div>
+        <div class="scroll-down" onclick="document.querySelector('.content').scrollIntoView({ behavior: 'smooth' })">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </div>
+    
+    <div class="content">
+        <section class="teams">
+            <h2><span>Nos Équipes</span></h2>
+            <div class="team-container">
+                <div class="team">
+                    <div class="fire-badge">
+                        <i class="fas fa-fire-extinguisher"></i>
+                    </div>
+                    <h3>Équipe Alpha</h3>
+                    <ul>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Romain Algrin</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Florian Kerwich</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Cindy Orliac</span></li>
+                    </ul>
+                </div>
+                <div class="team">
+                    <div class="fire-badge">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <h3>Équipe Bravo</h3>
+                    <ul>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Sophie Durand</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Marc Lefevre</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Claire Moreau</span></li>
+                    </ul>
+                </div>
+                <div class="team">
+                    <div class="fire-badge">
+                        <i class="fas fa-hose"></i>
+                    </div>
+                    <h3>Équipe Charlie</h3>
+                    <ul>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Pauline Roux</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Antoine Chevalier</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Julie Simon</span></li>
+                    </ul>
+                </div>
+                <div class="team">
+                    <div class="fire-badge">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Équipe Delta</h3>
+                    <ul>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Nicolas Dubois</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Élodie Mercier</span></li>
+                        <li><i class="fas fa-helmet-safety"></i> <span>Thomas Blanc</span></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="social-media">
+            <h3 class="social-title">Suivez-nous</h3>
+            <div class="social-links">
+                <a href="https://www.facebook.com/" class="social-link" target="_blank" rel="noopener">
+                    <div class="social-icon">
+                        <i class="fab fa-facebook-f facebook-icon"></i>
+                    </div>
+                    <span class="social-label">Facebook</span>
+                </a>
+                <a href="https://www.instagram.com/" class="social-link" target="_blank" rel="noopener">
+                    <div class="social-icon">
+                        <i class="fab fa-instagram instagram-icon"></i>
+                    </div>
+                    <span class="social-label">Instagram</span>
+                </a>
+                <a href="https://www.tiktok.com/" class="social-link" target="_blank" rel="noopener">
+                    <div class="social-icon">
+                        <i class="fab fa-tiktok tiktok-icon"></i>
+                    </div>
+                    <span class="social-label">TikTok</span>
+                </a>
+                <a href="https://cissaintpaul.fr" class="social-link" target="_blank" rel="noopener">
+                    <div class="social-icon">
+                        <i class="fas fa-globe website-icon"></i>
+                    </div>
+                    <span class="social-label">Site Web</span>
+                </a>
+            </div>
+            <a href="https://cissaintpaul.fr" class="website-link" target="_blank" rel="noopener">
+                Visitez cissaintpaul.fr
+            </a>
+        </section>
+    </div>
+
+    <script>
+        // Optimized Mobile JavaScript
+        document.addEventListener('DOMContentLoaded', () => {
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Team cards animation
+            const teams = document.querySelectorAll('.team');
+            const teamObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.opacity = 1;
+                            entry.target.style.transform = 'translateY(0)';
+                        }, index * 150);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            teams.forEach(team => {
+                team.style.opacity = 0;
+                team.style.transform = 'translateY(30px)';
+                team.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                teamObserver.observe(team);
+            });
+
+            // Disable video autoplay on mobile to save data
+            if (/Mobi|Android/i.test(navigator.userAgent)) {
+                const video = document.querySelector('.hero-video');
+                video.autoplay = false;
+                video.load();
+                
+                // Play video only when in viewport
+                const videoObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            video.play().catch(e => console.log("Video autoplay prevented:", e));
+                        } else {
+                            video.pause();
+                        }
+                    });
+                }, { threshold: 0.5 });
+                
+                videoObserver.observe(video);
+            }
+
+            // Optimized touch feedback
+            document.querySelectorAll('.team li').forEach(item => {
+                item.addEventListener('touchstart', function() {
+                    this.classList.add('active');
+                }, { passive: true });
+                
+                item.addEventListener('touchend', function() {
+                    this.classList.remove('active');
+                }, { passive: true });
+            });
+
+            // Prevent zooming on double-tap
+            document.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+
+            // Optimized scroll performance
+            let lastScrollY = 0;
+            let ticking = false;
+            
+            window.addEventListener('scroll', () => {
+                lastScrollY = window.scrollY;
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        // Any scroll-based animations would go here
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+        });
+
+        // Load critical resources first
+        function loadCriticalResources() {
+            const fonts = document.createElement('link');
+            fonts.href = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap';
+            fonts.rel = 'stylesheet';
+            document.head.appendChild(fonts);
+            
+            const icons = document.createElement('link');
+            icons.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+            icons.rel = 'stylesheet';
+            document.head.appendChild(icons);
+        }
+        
+        // Start loading critical resources early
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadCriticalResources);
+        } else {
+            loadCriticalResources();
+        }
+    </script>
+</body>
+</html>

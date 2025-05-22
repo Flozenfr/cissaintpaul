@@ -1,0 +1,3464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Habillement Pompiers | VSAV</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4895ef;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --info: #4895ef;
+      --warning: #f8961e;
+      --danger: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --white: #ffffff;
+      
+      --border-radius: 12px;
+      --box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f5f7ff;
+      color: var(--dark);
+      line-height: 1.6;
+      padding-bottom: 70px; /* Espace pour le menu mobile */
+    }
+    
+    .container-app {
+      max-width: 1400px;
+      background-color: var(--white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 1rem;
+      margin: 1rem auto;
+      min-height: calc(100vh - 2rem - 70px); /* Ajustement pour le menu mobile */
+    }
+    
+    .app-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .app-title {
+      font-weight: 700;
+      color: var(--secondary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      font-size: 1.5rem;
+    }
+    
+    /* Menu principal - version desktop */
+    .main-nav {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid rgba(0,0,0,0.05);
+    }
+    
+    .main-nav .nav-link {
+      color: var(--gray);
+      font-weight: 600;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      transition: var(--transition);
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    
+    .main-nav .nav-link:hover {
+      color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .main-nav .nav-link.active {
+      color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.1);
+      border: none;
+      position: relative;
+    }
+    
+    .main-nav .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--primary);
+    }
+    
+    /* Menu mobile - version mobile */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--white);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      padding: 0.5rem;
+    }
+    
+    .mobile-nav-container {
+      display: flex;
+      justify-content: space-around;
+    }
+    
+    .mobile-nav-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem;
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 0.75rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+    }
+    
+    .mobile-nav-link.active {
+      color: var(--primary);
+      background-color: rgba(67, 97, 238, 0.1);
+    }
+    
+    .mobile-nav-link i {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .tab-content {
+      padding: 1rem 0;
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      border: 1px solid rgba(0,0,0,0.1);
+      transition: var(--transition);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    }
+    
+    .badge {
+      font-weight: 500;
+      padding: 0.5em 0.75em;
+      border-radius: 50px;
+    }
+    
+    .badge-en-cours { 
+      background-color: var(--primary); 
+      color: white;
+    }
+    .badge-termine { 
+      background-color: var(--success); 
+      color: white;
+    }
+    .badge-en-attente { 
+      background-color: var(--warning); 
+      color: var(--dark); 
+    }
+    .badge-refuse { 
+      background-color: var(--danger); 
+      color: white; 
+    }
+    
+    .photo-thumbnail {
+      max-height: 120px;
+      cursor: pointer;
+      transition: var(--transition);
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(0,0,0,0.1);
+      object-fit: cover;
+    }
+    
+    .photo-thumbnail:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--box-shadow);
+    }
+    
+    .table {
+      --bs-table-bg: transparent;
+      --bs-table-striped-bg: rgba(0,0,0,0.02);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+    
+    .table th {
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      padding: 1rem;
+      vertical-align: middle;
+    }
+    
+    .table td {
+      padding: 1rem;
+      vertical-align: middle;
+      border-color: rgba(0,0,0,0.05);
+    }
+    
+    .btn {
+      font-weight: 600;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-sm {
+      padding: 0.5rem 0.75rem;
+    }
+    
+    .btn i {
+      font-size: 1.1em;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--secondary);
+      border-color: var(--secondary);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .btn-outline-primary:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .status-select {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.1);
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      min-width: 120px;
+    }
+    
+    .status-select:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+    }
+    
+    .sortable-header {
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+    
+    .sortable-header:hover {
+      color: white;
+      opacity: 0.8;
+    }
+    
+    .search-box {
+      position: relative;
+      margin-bottom: 1.5rem;
+      max-width: 400px;
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+    
+    .search-box input {
+      padding-left: 2.5rem;
+      border-radius: 50px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .stats-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--box-shadow);
+      border-left: 4px solid var(--primary);
+      transition: var(--transition);
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stats-card h5 {
+      color: var(--gray);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .stats-card p {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 0;
+    }
+    
+    .stats-card.en-cours { border-left-color: var(--primary); }
+    .stats-card.termine { border-left-color: var(--success); }
+    .stats-card.en-attente { border-left-color: var(--warning); }
+    .stats-card.refuse { border-left-color: var(--danger); }
+    
+    .toast-container {
+      position: fixed;
+      bottom: 5rem;
+      right: 1rem;
+      z-index: 1100;
+    }
+    
+    .toast {
+      border-radius: var(--border-radius);
+      border: none;
+      box-shadow: var(--box-shadow);
+    }
+    
+    .material-item {
+      background-color: rgba(0,0,0,0.03);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    
+    .material-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .remove-material {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 1.25rem;
+    }
+    
+    .material-photo-preview {
+      max-height: 100px;
+      border-radius: var(--border-radius);
+      margin-top: 0.5rem;
+      cursor: pointer;
+    }
+    
+    .comment-bubble {
+      background-color: rgba(0,0,0,0.05);
+      border-radius: var(--border-radius);
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      position: relative;
+    }
+    
+    .comment-bubble:before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 20px;
+      border-width: 0 10px 10px;
+      border-style: solid;
+      border-color: rgba(0,0,0,0.05) transparent;
+    }
+    
+    .comment-author {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--primary);
+    }
+    
+    .comment-date {
+      font-size: 0.75rem;
+      color: var(--gray);
+    }
+    
+    .archived {
+      opacity: 0.7;
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    .archived:hover {
+      opacity: 1;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    
+    /* Styles pour le menu déroulant des filtres */
+    .filter-dropdown .dropdown-menu {
+      padding: 0.5rem;
+      min-width: 200px;
+    }
+    
+    .filter-dropdown .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.25rem;
+    }
+    
+    .filter-dropdown .dropdown-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .filter-dropdown .dropdown-item.active {
+      background-color: rgba(67, 97, 238, 0.1);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    
+    /* Styles spécifiques pour mobile */
+    @media (max-width: 768px) {
+      .container-app {
+        padding: 0.75rem;
+        margin: 0.75rem;
+        min-height: calc(100vh - 1.5rem - 70px);
+      }
+      
+      .app-title {
+        font-size: 1.25rem;
+      }
+      
+      .main-nav {
+        display: none;
+      }
+      
+      .mobile-nav {
+        display: block;
+      }
+      
+      .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .search-box {
+        max-width: 100%;
+      }
+      
+      .filter-dropdown .btn {
+        width: 100%;
+      }
+      
+      .filter-dropdown .dropdown-menu {
+        width: 100%;
+      }
+      
+      .stats-card {
+        padding: 1rem;
+      }
+      
+      .stats-card p {
+        font-size: 1.5rem;
+      }
+      
+      .toast-container {
+        bottom: 6rem;
+        right: 0.5rem;
+        left: 0.5rem;
+      }
+      
+      .toast {
+        width: auto;
+      }
+    }
+    
+    /* Styles spécifiques pour très petits écrans */
+    @media (max-width: 400px) {
+      .container-app {
+        padding: 0.5rem;
+        margin: 0.5rem;
+      }
+      
+      .app-title {
+        font-size: 1.1rem;
+      }
+      
+      .mobile-nav-link {
+        font-size: 0.65rem;
+        padding: 0.5rem 0.25rem;
+      }
+      
+      .mobile-nav-link i {
+        font-size: 1rem;
+      }
+    }
+    
+    /* Style pour le type de demande */
+    .demande-type {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 0.5rem;
+      background-color: rgba(0,0,0,0.03);
+      border-radius: var(--border-radius);
+    }
+    
+    .demande-type-btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      background-color: rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid transparent;
+    }
+    
+    .demande-type-btn.active {
+      background-color: rgba(67, 97, 238, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    /* Style pour les équipements actuels */
+    .current-equipment {
+      background-color: rgba(0,0,0,0.03);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .current-equipment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .current-equipment-title {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    /* Style pour les champs de recherche rapide */
+    .quick-search {
+      margin-bottom: 1rem;
+    }
+    
+    /* Style pour les cartes de demande sur mobile */
+    .demande-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--box-shadow);
+      border-left: 4px solid var(--primary);
+    }
+    
+    .demande-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .demande-card-title {
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .demande-card-body {
+      font-size: 0.9rem;
+    }
+    
+    .demande-card-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+    
+    /* Masquer le tableau sur mobile et afficher les cartes */
+    @media (max-width: 768px) {
+      .table-responsive {
+        display: none;
+      }
+      
+      .demande-cards-container {
+        display: block;
+      }
+    }
+    
+    @media (min-width: 769px) {
+      .demande-cards-container {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container-app">
+    <header class="app-header">
+      <h1 class="app-title">
+        <i class="bi bi-person-vcard"></i> 
+        Gestion Habillement
+      </h1>
+    </header>
+    
+    <!-- Menu principal - version desktop -->
+    <ul class="nav main-nav" id="habillementTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#form" type="button" role="tab">
+          <i class="bi bi-plus-circle"></i> Nouvelle Demande
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="current-tab" data-bs-toggle="tab" data-bs-target="#current" type="button" role="tab">
+          <i class="bi bi-list-task"></i> Demandes Actives
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="archive-tab" data-bs-toggle="tab" data-bs-target="#archive" type="button" role="tab">
+          <i class="bi bi-archive"></i> Archives
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">
+          <i class="bi bi-bar-chart"></i> Statistiques
+        </button>
+      </li>
+    </ul>
+    
+    <div class="tab-content" id="habillementTabsContent">
+      <!-- Formulaire de demande -->
+      <div class="tab-pane fade show active" id="form" role="tabpanel">
+        <form id="habillementForm" class="row g-3 needs-validation" novalidate>
+          <div class="col-md-4">
+            <label for="nom" class="form-label">
+              <i class="bi bi-person"></i> Nom
+            </label>
+            <input type="text" class="form-control" id="nom" required>
+            <div class="invalid-feedback">Veuillez saisir votre nom.</div>
+          </div>
+          <div class="col-md-4">
+            <label for="prenom" class="form-label">
+              <i class="bi bi-person"></i> Prénom
+            </label>
+            <input type="text" class="form-control" id="prenom" required>
+            <div class="invalid-feedback">Veuillez saisir votre prénom.</div>
+          </div>
+          <div class="col-md-4">
+            <label for="matricule" class="form-label">
+              <i class="bi bi-123"></i> Matricule
+            </label>
+            <input type="text" class="form-control" id="matricule" required>
+            <div class="invalid-feedback">Veuillez saisir votre matricule.</div>
+          </div>
+          
+          <div class="col-12">
+            <div class="demande-type">
+              <div class="demande-type-btn active" data-type="remplacement">
+                <i class="bi bi-arrow-repeat"></i> Remplacement
+              </div>
+              <div class="demande-type-btn" data-type="nouveau">
+                <i class="bi bi-plus-lg"></i> Nouvel équipement
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-12 current-equipment" id="currentEquipmentSection">
+            <div class="current-equipment-header">
+              <span class="current-equipment-title">
+                <i class="bi bi-info-circle"></i> Équipement actuel
+              </span>
+            </div>
+            <div id="currentEquipmentContainer">
+              <!-- Les équipements actuels seront ajoutés ici -->
+              <div class="material-item" data-index="0">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="current_article_0" class="form-label">Article</label>
+                    <select class="form-select" id="current_article_0" required>
+                      <option value="" selected disabled>Choisir un article</option>
+                      <option value="Veste">Veste</option>
+                      <option value="Pantalon">Pantalon</option>
+                      <option value="T-shirt">T-shirt</option>
+                      <option value="Chaussures">Chaussures</option>
+                      <option value="Casque">Casque</option>
+                      <option value="Gants">Gants</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="current_numero_0" class="form-label">N° d'étiquette</label>
+                    <input type="text" class="form-control" id="current_numero_0" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="current_taille_0" class="form-label">Taille</label>
+                    <input type="text" class="form-control" id="current_taille_0" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="current_etat_0" class="form-label">État</label>
+                    <select class="form-select" id="current_etat_0" required>
+                      <option value="" selected disabled>État actuel</option>
+                      <option value="Bon état">Bon état</option>
+                      <option value="Usé">Usé</option>
+                      <option value="Endommagé">Endommagé</option>
+                      <option value="Déchiré">Déchiré</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label for="current_photo_0" class="form-label">Photo de l'état actuel</label>
+                    <input class="form-control" type="file" id="current_photo_0" accept="image/*">
+                    <div id="current_photoPreview_0" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-2">
+              <button type="button" class="btn btn-sm btn-outline-primary" id="addCurrentEquipment">
+                <i class="bi bi-plus-lg"></i> Ajouter un équipement
+              </button>
+            </div>
+          </div>
+          
+          <div class="col-12">
+            <h5 class="mt-4 mb-3 d-flex align-items-center">
+              <i class="bi bi-t-shirt me-2"></i> Nouvel équipement demandé
+            </h5>
+            <div id="articlesContainer">
+              <!-- Les articles seront ajoutés ici dynamiquement -->
+              <div class="material-item" data-index="0">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="article_0" class="form-label">Article</label>
+                    <select class="form-select" id="article_0" required>
+                      <option value="" selected disabled>Choisir un article</option>
+                      <option value="Veste">Veste</option>
+                      <option value="Pantalon">Pantalon</option>
+                      <option value="T-shirt">T-shirt</option>
+                      <option value="Chaussures">Chaussures</option>
+                      <option value="Casque">Casque</option>
+                      <option value="Gants">Gants</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="numero_0" class="form-label">N° d'étiquette</label>
+                    <input type="text" class="form-control" id="numero_0" placeholder="Nouveau">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="taille_0" class="form-label">Taille</label>
+                    <input type="text" class="form-control" id="taille_0" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="remplacement_0" class="form-label">Motif</label>
+                    <input type="text" class="form-control" id="remplacement_0" required>
+                  </div>
+                  <div class="col-12">
+                    <label for="commentaire_0" class="form-label">Commentaire</label>
+                    <textarea class="form-control" id="commentaire_0" rows="2"></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label for="photo_0" class="form-label">Photo (si nécessaire)</label>
+                    <input class="form-control" type="file" id="photo_0" accept="image/*">
+                    <div id="photoPreview_0" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-3">
+              <button type="button" class="btn btn-outline-primary" id="addArticle">
+                <i class="bi bi-plus-lg"></i> Ajouter un article
+              </button>
+            </div>
+          </div>
+          
+          <div class="col-12 d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-send"></i> Envoyer la demande
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="resetForm">
+              <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+            </button>
+          </div>
+          <input type="hidden" id="demandeId">
+          <input type="hidden" id="demandeType" value="remplacement">
+        </form>
+      </div>
+      
+      <!-- Demandes en cours -->
+      <div class="tab-pane fade" id="current" role="tabpanel">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+          <div class="search-box flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input type="text" id="currentSearch" class="form-control" placeholder="Rechercher une demande...">
+          </div>
+          
+          <!-- Menu déroulant des filtres -->
+          <div class="filter-dropdown dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-funnel"></i> Filtrer
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="filterDropdown">
+              <li>
+                <a class="dropdown-item ${!currentFilterStatus ? 'active' : ''}" href="#" data-filter="all">
+                  <i class="bi bi-collection"></i> Toutes les demandes
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'En cours' ? 'active' : ''}" href="#" data-filter="En cours">
+                  <i class="bi bi-hourglass-split"></i> En cours
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'Terminé' ? 'active' : ''}" href="#" data-filter="Terminé">
+                  <i class="bi bi-check-circle"></i> Terminé
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'En attente' ? 'active' : ''}" href="#" data-filter="En attente">
+                  <i class="bi bi-pause-circle"></i> En attente
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'Refusé' ? 'active' : ''}" href="#" data-filter="Refusé">
+                  <i class="bi bi-x-circle"></i> Refusé
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th class="sortable-header" data-sort="nom">
+                  Nom <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="prenom">
+                  Prénom <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="matricule">
+                  Matricule <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th>Articles</th>
+                <th class="sortable-header" data-sort="statut">
+                  Statut <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="createdAt">
+                  Date <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="currentDemandes">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Version mobile - cartes -->
+        <div class="demande-cards-container" id="currentDemandesCards">
+          <!-- Rempli dynamiquement -->
+        </div>
+        
+        <div class="d-flex justify-content-center mt-4">
+          <nav aria-label="Pagination">
+            <ul class="pagination" id="currentPagination">
+              <!-- Rempli dynamiquement -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+      
+      <!-- Archives -->
+      <div class="tab-pane fade" id="archive" role="tabpanel">
+        <div class="search-box mb-4">
+          <i class="bi bi-search"></i>
+          <input type="text" id="archiveSearch" class="form-control" placeholder="Rechercher dans les archives...">
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th class="sortable-header" data-sort="nom">
+                  Nom <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="prenom">
+                  Prénom <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="matricule">
+                  Matricule <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th>Articles</th>
+                <th class="sortable-header" data-sort="statut">
+                  Statut <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="createdAt">
+                  Date <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="archivedDemandes">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Version mobile - cartes -->
+        <div class="demande-cards-container" id="archivedDemandesCards">
+          <!-- Rempli dynamiquement -->
+        </div>
+        
+        <div class="d-flex justify-content-center mt-4">
+          <nav aria-label="Pagination">
+            <ul class="pagination" id="archivePagination">
+              <!-- Rempli dynamiquement -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+      
+      <!-- Statistiques -->
+      <div class="tab-pane fade" id="stats" role="tabpanel">
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stats-card en-cours">
+              <h5><i class="bi bi-hourglass-split"></i> En cours</h5>
+              <p id="stats-en-cours">0</p>
+              <small class="text-muted">Demandes en cours</small>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stats-card termine">
+              <h5><i class="bi bi-check-circle"></i> Terminé</h5>
+              <p id="stats-termine">0</p>
+              <small class="text-muted">Demandes terminées</small>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stats-card en-attente">
+              <h5><i class="bi bi-pause-circle"></i> En attente</h5>
+              <p id="stats-en-attente">0</p>
+              <small class="text-muted">Demandes en attente</small>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stats-card refuse">
+              <h5><i class="bi bi-x-circle"></i> Refusées</h5>
+              <p id="stats-refuse">0</p>
+              <small class="text-muted">Demandes refusées</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-calendar-week"></i> Demandes par mois</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="monthlyChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-pie-chart"></i> Répartition par statut</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="statusChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-t-shirt"></i> Articles les plus demandés</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="articlesChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-activity"></i> Évolution des demandes</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="evolutionChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu mobile - version mobile -->
+  <nav class="mobile-nav">
+    <div class="mobile-nav-container">
+      <a href="#" class="mobile-nav-link active" data-bs-toggle="tab" data-bs-target="#form">
+        <i class="bi bi-plus-circle"></i>
+        <span>Nouvelle</span>
+      </a>
+      <a href="#" class="mobile-nav-link" data-bs-toggle="tab" data-bs-target="#current">
+        <i class="bi bi-list-task"></i>
+        <span>Actives</span>
+      </a>
+      <a href="#" class="mobile-nav-link" data-bs-toggle="tab" data-bs-target="#archive">
+        <i class="bi bi-archive"></i>
+        <span>Archives</span>
+      </a>
+      <a href="#" class="mobile-nav-link" data-bs-toggle="tab" data-bs-target="#stats">
+        <i class="bi bi-bar-chart"></i>
+        <span>Stats</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Modal pour afficher les détails -->
+  <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-info-circle-fill"></i> Détails de la demande
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour gérer la demande -->
+  <div class="modal fade" id="manageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-gear-fill"></i> Gérer la demande
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="manageBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveStatus">
+            <i class="bi bi-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour modifier la demande -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-pencil-fill"></i> Modifier la demande
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="editBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveEdit">
+            <i class="bi bi-save"></i> Enregistrer les modifications
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal pour afficher la photo en grand -->
+  <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-image-fill"></i> Photo de l'article
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center p-0">
+          <img id="fullPhoto" src="" class="img-fluid" style="max-height: 80vh; width: auto;">
+        </div>
+        <div class="modal-footer border-0 justify-content-center">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Luxon pour les dates -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0"></script>
+  <!-- Chart.js plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  
+  <script>
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDLyuDHExc6IsRipwVBgI2-V8Hu8OYTrKQ",
+      authDomain: "formulaire-habillement.firebaseapp.com",
+      databaseURL: "https://formulaire-habillement-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "formulaire-habillement",
+      storageBucket: "formulaire-habillement.appspot.com",
+      messagingSenderId: "204346750898",
+      appId: "1:204346750898:web:27d017fc591842709b96ab",
+      measurementId: "G-VCQ36RY19T"
+    };
+
+    // Initialisation Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // Variables globales
+    let currentEditingId = null;
+    const MAX_PHOTO_SIZE = 15 * 1024 * 1024; // 15MB
+    let currentSortField = 'createdAt';
+    let currentSortDirection = 'desc';
+    let currentFilterStatus = null;
+    let currentPage = 1;
+    let archivePage = 1;
+    const ITEMS_PER_PAGE = 10;
+    let monthlyChart = null;
+    let statusChart = null;
+    let articlesChart = null;
+    let evolutionChart = null;
+    let allDemandes = {};
+    let currentManagingId = null;
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      initForm();
+      loadDemandes();
+      setupRealtime();
+      setupSearch();
+      setupSorting();
+      setupFilters();
+      setupMobileNav();
+    });
+    
+    function initForm() {
+      // Gestion du type de demande (remplacement/nouveau)
+      document.querySelectorAll('.demande-type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.demande-type-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const type = this.getAttribute('data-type');
+          document.getElementById('demandeType').value = type;
+          
+          if (type === 'nouveau') {
+            document.getElementById('currentEquipmentSection').style.display = 'none';
+            document.querySelectorAll('[id^="current_"]').forEach(el => el.required = false);
+          } else {
+            document.getElementById('currentEquipmentSection').style.display = 'block';
+            document.querySelectorAll('[id^="current_"]').forEach(el => el.required = true);
+          }
+        });
+      });
+      
+      // Ajouter un équipement actuel
+      document.getElementById('addCurrentEquipment').addEventListener('click', function() {
+        addCurrentEquipmentItem();
+      });
+      
+      // Validation du formulaire
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', function(event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          
+          form.classList.add('was-validated');
+        }, false);
+      });
+
+      // Ajouter un nouvel article
+      document.getElementById('addArticle').addEventListener('click', function() {
+        addArticleItem();
+      });
+
+      // Soumission du formulaire
+      document.getElementById('habillementForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!this.checkValidity()) {
+          return;
+        }
+        
+        const nom = document.getElementById('nom').value.trim();
+        const prenom = document.getElementById('prenom').value.trim();
+        const matricule = document.getElementById('matricule').value.trim();
+        const demandeType = document.getElementById('demandeType').value;
+        
+        // Récupérer les équipements actuels (pour les remplacements)
+        const currentEquipment = [];
+        if (demandeType === 'remplacement') {
+          const equipmentItems = document.querySelectorAll('#currentEquipmentContainer .material-item');
+          
+          for (const item of equipmentItems) {
+            const index = item.getAttribute('data-index');
+            const article = document.getElementById(`current_article_${index}`).value;
+            const numero = document.getElementById(`current_numero_${index}`).value.trim();
+            const taille = document.getElementById(`current_taille_${index}`).value.trim();
+            const etat = document.getElementById(`current_etat_${index}`).value;
+            const photoPreview = document.getElementById(`current_photoPreview_${index}`);
+            const photoBase64 = photoPreview.querySelector('img')?.src || null;
+            
+            currentEquipment.push({
+              article,
+              numero,
+              taille,
+              etat,
+              photo: photoBase64
+            });
+          }
+        }
+        
+        // Récupérer tous les articles demandés
+        const articles = [];
+        const articleItems = document.querySelectorAll('#articlesContainer .material-item');
+        
+        for (const item of articleItems) {
+          const index = item.getAttribute('data-index');
+          const article = document.getElementById(`article_${index}`).value;
+          const numero = document.getElementById(`numero_${index}`).value.trim();
+          const taille = document.getElementById(`taille_${index}`).value.trim();
+          const remplacement = document.getElementById(`remplacement_${index}`).value.trim();
+          const commentaire = document.getElementById(`commentaire_${index}`).value.trim();
+          const photoPreview = document.getElementById(`photoPreview_${index}`);
+          const photoBase64 = photoPreview.querySelector('img')?.src || null;
+          
+          articles.push({
+            article,
+            numero,
+            taille,
+            remplacement,
+            commentaire,
+            photo: photoBase64
+          });
+        }
+        
+        const demandeData = {
+          nom,
+          prenom,
+          matricule,
+          type: demandeType,
+          currentEquipment: demandeType === 'remplacement' ? currentEquipment : null,
+          articles,
+          statut: 'En attente',
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP,
+          archived: false
+        };
+        
+        try {
+          if (currentEditingId) {
+            await database.ref('demandes/' + currentEditingId).update(demandeData);
+            showToast('Demande mise à jour avec succès', 'success');
+          } else {
+            await database.ref('demandes').push().set(demandeData);
+            showToast('Demande créée avec succès', 'success');
+          }
+          resetForm();
+        } catch (error) {
+          showToast("Erreur: " + error.message, 'danger');
+          console.error("Erreur Firebase:", error);
+        }
+      });
+      
+      // Réinitialisation du formulaire
+      document.getElementById('resetForm').addEventListener('click', resetForm);
+    }
+    
+    function addCurrentEquipmentItem() {
+      const container = document.getElementById('currentEquipmentContainer');
+      const index = document.querySelectorAll('#currentEquipmentContainer .material-item').length;
+      
+      const equipmentItem = document.createElement('div');
+      equipmentItem.className = 'material-item';
+      equipmentItem.setAttribute('data-index', index);
+      
+      equipmentItem.innerHTML = `
+        <i class="bi bi-x-lg remove-material" data-index="${index}"></i>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="current_article_${index}" class="form-label">Article</label>
+            <select class="form-select" id="current_article_${index}" required>
+              <option value="" selected disabled>Choisir un article</option>
+              <option value="Veste">Veste</option>
+              <option value="Pantalon">Pantalon</option>
+              <option value="T-shirt">T-shirt</option>
+              <option value="Chaussures">Chaussures</option>
+              <option value="Casque">Casque</option>
+              <option value="Gants">Gants</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="current_numero_${index}" class="form-label">N° d'étiquette</label>
+            <input type="text" class="form-control" id="current_numero_${index}" required>
+          </div>
+          <div class="col-md-2">
+            <label for="current_taille_${index}" class="form-label">Taille</label>
+            <input type="text" class="form-control" id="current_taille_${index}" required>
+          </div>
+          <div class="col-md-4">
+            <label for="current_etat_${index}" class="form-label">État</label>
+            <select class="form-select" id="current_etat_${index}" required>
+              <option value="" selected disabled>État actuel</option>
+              <option value="Bon état">Bon état</option>
+              <option value="Usé">Usé</option>
+              <option value="Endommagé">Endommagé</option>
+              <option value="Déchiré">Déchiré</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="current_photo_${index}" class="form-label">Photo de l'état actuel</label>
+            <input class="form-control" type="file" id="current_photo_${index}" accept="image/*">
+            <div id="current_photoPreview_${index}" class="mt-2"></div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(equipmentItem);
+      
+      // Gestion de la suppression d'un équipement
+      equipmentItem.querySelector('.remove-material').addEventListener('click', function() {
+        if (document.querySelectorAll('#currentEquipmentContainer .material-item').length > 1) {
+          equipmentItem.remove();
+        } else {
+          showToast("Vous devez avoir au moins un équipement", 'warning');
+        }
+      });
+      
+      // Prévisualisation photo
+      document.getElementById(`current_photo_${index}`).addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > MAX_PHOTO_SIZE) {
+          showToast("La photo ne doit pas dépasser 15MB", 'danger');
+          this.value = '';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          document.getElementById(`current_photoPreview_${index}`).innerHTML = `
+            <img src="${event.target.result}" class="img-thumbnail material-photo-preview mb-2">
+            <button class="btn btn-sm btn-danger" id="removeCurrentPhoto_${index}">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          `;
+          
+          document.getElementById(`removeCurrentPhoto_${index}`).addEventListener('click', function() {
+            document.getElementById(`current_photoPreview_${index}`).innerHTML = '';
+            document.getElementById(`current_photo_${index}`).value = '';
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    function addArticleItem() {
+      const container = document.getElementById('articlesContainer');
+      const index = document.querySelectorAll('#articlesContainer .material-item').length;
+      
+      const articleItem = document.createElement('div');
+      articleItem.className = 'material-item';
+      articleItem.setAttribute('data-index', index);
+      
+      articleItem.innerHTML = `
+        <i class="bi bi-x-lg remove-material" data-index="${index}"></i>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="article_${index}" class="form-label">Article</label>
+            <select class="form-select" id="article_${index}" required>
+              <option value="" selected disabled>Choisir un article</option>
+              <option value="Veste">Veste</option>
+              <option value="Pantalon">Pantalon</option>
+              <option value="T-shirt">T-shirt</option>
+              <option value="Chaussures">Chaussures</option>
+              <option value="Casque">Casque</option>
+              <option value="Gants">Gants</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="numero_${index}" class="form-label">N° d'étiquette</label>
+            <input type="text" class="form-control" id="numero_${index}" placeholder="Nouveau">
+          </div>
+          <div class="col-md-2">
+            <label for="taille_${index}" class="form-label">Taille</label>
+            <input type="text" class="form-control" id="taille_${index}" required>
+          </div>
+          <div class="col-md-4">
+            <label for="remplacement_${index}" class="form-label">Motif</label>
+            <input type="text" class="form-control" id="remplacement_${index}" required>
+          </div>
+          <div class="col-12">
+            <label for="commentaire_${index}" class="form-label">Commentaire</label>
+            <textarea class="form-control" id="commentaire_${index}" rows="2"></textarea>
+          </div>
+          <div class="col-12">
+            <label for="photo_${index}" class="form-label">Photo (si nécessaire)</label>
+            <input class="form-control" type="file" id="photo_${index}" accept="image/*">
+            <div id="photoPreview_${index}" class="mt-2"></div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(articleItem);
+      
+      // Gestion de la suppression d'un article
+      articleItem.querySelector('.remove-material').addEventListener('click', function() {
+        if (document.querySelectorAll('#articlesContainer .material-item').length > 1) {
+          articleItem.remove();
+        } else {
+          showToast("Vous devez avoir au moins un article", 'warning');
+        }
+      });
+      
+      // Prévisualisation photo
+      document.getElementById(`photo_${index}`).addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > MAX_PHOTO_SIZE) {
+          showToast("La photo ne doit pas dépasser 15MB", 'danger');
+          this.value = '';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          document.getElementById(`photoPreview_${index}`).innerHTML = `
+            <img src="${event.target.result}" class="img-thumbnail material-photo-preview mb-2">
+            <button class="btn btn-sm btn-danger" id="removePhoto_${index}">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          `;
+          
+          document.getElementById(`removePhoto_${index}`).addEventListener('click', function() {
+            document.getElementById(`photoPreview_${index}`).innerHTML = '';
+            document.getElementById(`photo_${index}`).value = '';
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    function resetForm() {
+      const form = document.getElementById('habillementForm');
+      form.reset();
+      form.classList.remove('was-validated');
+      
+      // Réinitialiser les équipements actuels (garder seulement le premier)
+      const currentContainer = document.getElementById('currentEquipmentContainer');
+      currentContainer.innerHTML = '';
+      addCurrentEquipmentItem();
+      
+      // Réinitialiser les articles (garder seulement le premier)
+      const articlesContainer = document.getElementById('articlesContainer');
+      articlesContainer.innerHTML = '';
+      addArticleItem();
+      
+      // Réinitialiser le type de demande
+      document.querySelector('.demande-type-btn[data-type="remplacement"]').classList.add('active');
+      document.querySelector('.demande-type-btn[data-type="nouveau"]').classList.remove('active');
+      document.getElementById('demandeType').value = 'remplacement';
+      document.getElementById('currentEquipmentSection').style.display = 'block';
+      
+      currentEditingId = null;
+    }
+    
+    async function loadDemandes() {
+      try {
+        const snapshot = await database.ref('demandes').once('value');
+        allDemandes = snapshot.val() || {};
+        displayDemandes(allDemandes);
+        updateStats(allDemandes);
+        updateCharts(allDemandes);
+      } catch (error) {
+        showToast("Erreur de chargement: " + error.message, 'danger');
+        console.error("Erreur Firebase:", error);
+      }
+    }
+    
+    function displayDemandes(demandes) {
+      const currentContainer = document.getElementById('currentDemandes');
+      const archiveContainer = document.getElementById('archivedDemandes');
+      const currentCardsContainer = document.getElementById('currentDemandesCards');
+      const archiveCardsContainer = document.getElementById('archivedDemandesCards');
+      
+      currentContainer.innerHTML = '';
+      archiveContainer.innerHTML = '';
+      currentCardsContainer.innerHTML = '';
+      archiveCardsContainer.innerHTML = '';
+      
+      // Convertir en tableau et trier
+      let demandesArray = Object.entries(demandes).map(([id, data]) => ({ id, ...data }));
+      
+      // Trier
+      demandesArray.sort((a, b) => {
+        if (a[currentSortField] < b[currentSortField]) {
+          return currentSortDirection === 'asc' ? -1 : 1;
+        }
+        if (a[currentSortField] > b[currentSortField]) {
+          return currentSortDirection === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+      
+      // Filtrer
+      const currentDemandes = demandesArray.filter(d => !d.archived);
+      const archivedDemandes = demandesArray.filter(d => d.archived);
+      
+      // Appliquer le filtre de statut si défini
+      const filteredCurrent = currentFilterStatus 
+        ? currentDemandes.filter(d => d.statut === currentFilterStatus)
+        : currentDemandes;
+      
+      // Pagination pour les demandes actuelles
+      const currentTotalPages = Math.ceil(filteredCurrent.length / ITEMS_PER_PAGE);
+      const currentStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const currentPaginated = filteredCurrent.slice(currentStartIndex, currentStartIndex + ITEMS_PER_PAGE);
+      
+      // Pagination pour les archives
+      const archiveTotalPages = Math.ceil(archivedDemandes.length / ITEMS_PER_PAGE);
+      const archiveStartIndex = (archivePage - 1) * ITEMS_PER_PAGE;
+      const archivePaginated = archivedDemandes.slice(archiveStartIndex, archiveStartIndex + ITEMS_PER_PAGE);
+      
+      // Afficher les demandes actuelles (tableau)
+      currentPaginated.forEach(demande => {
+        currentContainer.innerHTML += createDemandeRow(demande);
+      });
+      
+      // Afficher les archives (tableau)
+      archivePaginated.forEach(demande => {
+        archiveContainer.innerHTML += createDemandeRow(demande);
+      });
+      
+      // Afficher les demandes actuelles (cartes)
+      currentPaginated.forEach(demande => {
+        currentCardsContainer.innerHTML += createDemandeCard(demande);
+      });
+      
+      // Afficher les archives (cartes)
+      archivePaginated.forEach(demande => {
+        archiveCardsContainer.innerHTML += createDemandeCard(demande);
+      });
+      
+      // Mettre à jour la pagination
+      updatePagination('currentPagination', currentPage, currentTotalPages, 'current');
+      updatePagination('archivePagination', archivePage, archiveTotalPages, 'archive');
+      
+      // Ajouter les événements
+      addDemandeEvents();
+      
+      // Mettre à jour le menu déroulant des filtres
+      updateFilterDropdown();
+    }
+    
+    function createDemandeRow(demande) {
+      const articlesCount = demande.articles?.length || 0;
+      const photosCount = demande.articles?.filter(a => a.photo).length || 0;
+      
+      return `
+        <tr class="${demande.archived ? 'archived' : ''}" data-id="${demande.id}">
+          <td>${demande.nom}</td>
+          <td>${demande.prenom}</td>
+          <td>${demande.matricule}</td>
+          <td>
+            ${articlesCount} article${articlesCount > 1 ? 's' : ''}
+            ${photosCount > 0 ? ` <span class="badge bg-info">${photosCount} photo${photosCount > 1 ? 's' : ''}</span>` : ''}
+          </td>
+          <td>
+            <span class="badge ${getStatusBadgeClass(demande.statut)}">${demande.statut}</span>
+          </td>
+          <td>
+            ${formatDate(demande.createdAt)}
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-outline-primary view-btn" data-id="${demande.id}" title="Voir les détails">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary edit-btn" data-id="${demande.id}" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </button>
+              ${!demande.archived ? `
+                <button class="btn btn-sm btn-outline-warning manage-btn" data-id="${demande.id}" title="Gérer">
+                  <i class="bi bi-gear"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger archive-btn" data-id="${demande.id}" title="Archiver">
+                  <i class="bi bi-archive"></i>
+                </button>
+              ` : `
+                <button class="btn btn-sm btn-outline-success unarchive-btn" data-id="${demande.id}" title="Désarchiver">
+                  <i class="bi bi-box-arrow-up"></i>
+                </button>
+              `}
+              <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${demande.id}" title="Supprimer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    
+    function createDemandeCard(demande) {
+      const articlesCount = demande.articles?.length || 0;
+      const photosCount = demande.articles?.filter(a => a.photo).length || 0;
+      const currentEquipmentCount = demande.currentEquipment?.length || 0;
+      
+      return `
+        <div class="demande-card ${demande.archived ? 'archived' : ''}" data-id="${demande.id}">
+          <div class="demande-card-header">
+            <h6 class="demande-card-title">${demande.prenom} ${demande.nom}</h6>
+            <span class="badge ${getStatusBadgeClass(demande.statut)}">${demande.statut}</span>
+          </div>
+          <div class="demande-card-body">
+            <p><strong>Matricule:</strong> ${demande.matricule}</p>
+            <p><strong>Type:</strong> ${demande.type === 'remplacement' ? 'Remplacement' : 'Nouvel équipement'}</p>
+            <p><strong>Articles:</strong> ${articlesCount} ${photosCount > 0 ? `(${photosCount} photo${photosCount > 1 ? 's' : ''})` : ''}</p>
+            ${demande.type === 'remplacement' ? `<p><strong>Équipements actuels:</strong> ${currentEquipmentCount}</p>` : ''}
+          </div>
+          <div class="demande-card-footer">
+            <span>${formatDate(demande.createdAt)}</span>
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-outline-primary view-btn" data-id="${demande.id}" title="Voir les détails">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary edit-btn" data-id="${demande.id}" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </button>
+              ${!demande.archived ? `
+                <button class="btn btn-sm btn-outline-warning manage-btn" data-id="${demande.id}" title="Gérer">
+                  <i class="bi bi-gear"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger archive-btn" data-id="${demande.id}" title="Archiver">
+                  <i class="bi bi-archive"></i>
+                </button>
+              ` : `
+                <button class="btn btn-sm btn-outline-success unarchive-btn" data-id="${demande.id}" title="Désarchiver">
+                  <i class="bi bi-box-arrow-up"></i>
+                </button>
+              `}
+              <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${demande.id}" title="Supprimer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function addDemandeEvents() {
+      // Bouton Voir
+      document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          showDetailsModal(id);
+        });
+      });
+      
+      // Bouton Modifier
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          showEditModal(id);
+        });
+      });
+      
+      // Bouton Gérer
+      document.querySelectorAll('.manage-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          showManageModal(id);
+        });
+      });
+      
+      // Bouton Archiver
+      document.querySelectorAll('.archive-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const id = this.getAttribute('data-id');
+          if (confirm("Voulez-vous vraiment archiver cette demande ?")) {
+            try {
+              await database.ref('demandes/' + id).update({ 
+                archived: true,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+              });
+              showToast('Demande archivée', 'success');
+            } catch (error) {
+              showToast("Erreur: " + error.message, 'danger');
+            }
+          }
+        });
+      });
+      
+      // Bouton Désarchiver
+      document.querySelectorAll('.unarchive-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const id = this.getAttribute('data-id');
+          try {
+            await database.ref('demandes/' + id).update({ 
+              archived: false,
+              updatedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+            showToast('Demande désarchivée', 'success');
+          } catch (error) {
+            showToast("Erreur: " + error.message, 'danger');
+          }
+        });
+      });
+      
+      // Bouton Supprimer
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const id = this.getAttribute('data-id');
+          if (confirm("Voulez-vous vraiment supprimer définitivement cette demande ?")) {
+            try {
+              await database.ref('demandes/' + id).remove();
+              showToast('Demande supprimée', 'success');
+            } catch (error) {
+              showToast("Erreur: " + error.message, 'danger');
+            }
+          }
+        });
+      });
+    }
+    
+    async function showDetailsModal(id) {
+      try {
+        const snapshot = await database.ref('demandes/' + id).once('value');
+        const demande = snapshot.val();
+        
+        if (!demande) {
+          showToast("Demande non trouvée", 'danger');
+          return;
+        }
+        
+        // Formatage des équipements actuels (pour les remplacements)
+        let currentEquipmentHtml = '';
+        if (demande.type === 'remplacement' && demande.currentEquipment && demande.currentEquipment.length > 0) {
+          currentEquipmentHtml = demande.currentEquipment.map(equipment => `
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">${equipment.article} (actuel)</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3">
+                    <p class="mb-1"><strong>N° d'étiquette:</strong></p>
+                    <p>${equipment.numero}</p>
+                  </div>
+                  <div class="col-md-3">
+                    <p class="mb-1"><strong>Taille:</strong></p>
+                    <p>${equipment.taille}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-1"><strong>État:</strong></p>
+                    <p>${equipment.etat}</p>
+                  </div>
+                  ${equipment.photo ? `
+                    <div class="col-12">
+                      <p class="mb-1"><strong>Photo de l'état actuel:</strong></p>
+                      <img src="${equipment.photo}" class="img-thumbnail photo-thumbnail" style="max-height: 200px;">
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else if (demande.type === 'remplacement') {
+          currentEquipmentHtml = '<p class="text-muted">Aucun équipement actuel renseigné</p>';
+        }
+        
+        // Formatage des articles demandés
+        let articlesHtml = '';
+        if (demande.articles && demande.articles.length > 0) {
+          articlesHtml = demande.articles.map(article => `
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <h6 class="mb-0">${article.article} ${demande.type === 'remplacement' ? '(nouveau)' : ''}</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3">
+                    <p class="mb-1"><strong>N° d'étiquette:</strong></p>
+                    <p>${article.numero || 'Nouveau'}</p>
+                  </div>
+                  <div class="col-md-3">
+                    <p class="mb-1"><strong>Taille:</strong></p>
+                    <p>${article.taille}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-1"><strong>Motif:</strong></p>
+                    <p>${article.remplacement}</p>
+                  </div>
+                  <div class="col-12">
+                    <p class="mb-1"><strong>Commentaire:</strong></p>
+                    <p>${article.commentaire || 'Aucun commentaire'}</p>
+                  </div>
+                  ${article.photo ? `
+                    <div class="col-12">
+                      <p class="mb-1"><strong>Photo:</strong></p>
+                      <img src="${article.photo}" class="img-thumbnail photo-thumbnail" style="max-height: 200px;">
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          articlesHtml = '<p class="text-muted">Aucun article dans cette demande</p>';
+        }
+        
+        // Formatage des commentaires admin
+        let commentsHtml = '';
+        if (demande.comments && demande.comments.length > 0) {
+          commentsHtml = demande.comments.map(comment => `
+            <div class="comment-bubble">
+              <div class="d-flex justify-content-between">
+                <span class="comment-author">${comment.auteur || 'Administrateur'}</span>
+                <span class="comment-date">${formatDate(comment.date)}</span>
+              </div>
+              <p class="mb-0 mt-1">${comment.text}</p>
+            </div>
+          `).join('');
+        } else {
+          commentsHtml = '<p class="text-muted">Aucun commentaire administratif</p>';
+        }
+        
+        document.getElementById('modalBody').innerHTML = `
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <h6 class="text-muted">Demandeur</h6>
+                <p>${demande.prenom} ${demande.nom} (${demande.matricule})</p>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Type de demande</h6>
+                <p>${demande.type === 'remplacement' ? 'Remplacement d\'équipement' : 'Nouvel équipement'}</p>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Statut</h6>
+                <span class="badge ${getStatusBadgeClass(demande.statut)}">${demande.statut}</span>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Date de création</h6>
+                <p>${formatDate(demande.createdAt)}</p>
+              </div>
+              <div class="mb-3">
+                <h6 class="text-muted">Dernière mise à jour</h6>
+                <p>${formatDate(demande.updatedAt)}</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <h6 class="text-muted">Commentaires administratifs</h6>
+                ${commentsHtml}
+              </div>
+            </div>
+            <div class="col-12">
+              ${demande.type === 'remplacement' ? `
+                <h6 class="text-muted mt-4">Équipements actuels (à remplacer)</h6>
+                ${currentEquipmentHtml}
+              ` : ''}
+              <h6 class="text-muted mt-4">${demande.type === 'remplacement' ? 'Nouveaux équipements demandés' : 'Équipements demandés'}</h6>
+              ${articlesHtml}
+            </div>
+          </div>
+        `;
+        
+        // Ajouter l'événement pour les photos
+        document.querySelectorAll('#modalBody .photo-thumbnail').forEach(img => {
+          img.addEventListener('click', function() {
+            document.getElementById('fullPhoto').src = this.src;
+            const photoModal = new bootstrap.Modal(document.getElementById('photoModal'));
+            photoModal.show();
+          });
+        });
+        
+        const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        detailsModal.show();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      }
+    }
+    
+    async function showEditModal(id) {
+      try {
+        currentEditingId = id;
+        const snapshot = await database.ref('demandes/' + id).once('value');
+        const demande = snapshot.val();
+
+        if (!demande) {
+          showToast("Demande non trouvée", 'danger');
+          return;
+        }
+
+        let editHtml = `
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="editNom" class="form-label">Nom</label>
+                <input type="text" class="form-control" id="editNom" value="${demande.nom || ''}" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="editPrenom" class="form-label">Prénom</label>
+                <input type="text" class="form-control" id="editPrenom" value="${demande.prenom || ''}" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label for="editMatricule" class="form-label">Matricule</label>
+                <input type="text" class="form-control" id="editMatricule" value="${demande.matricule || ''}" required>
+              </div>
+            </div>
+            
+            <div class="col-12">
+              <div class="demande-type">
+                <div class="demande-type-btn ${demande.type === 'remplacement' ? 'active' : ''}" data-type="remplacement">
+                  <i class="bi bi-arrow-repeat"></i> Remplacement
+                </div>
+                <div class="demande-type-btn ${demande.type === 'nouveau' ? 'active' : ''}" data-type="nouveau">
+                  <i class="bi bi-plus-lg"></i> Nouvel équipement
+                </div>
+              </div>
+              <input type="hidden" id="editDemandeType" value="${demande.type}">
+            </div>
+        `;
+
+        // Section pour les équipements actuels (si remplacement)
+        if (demande.type === 'remplacement') {
+          editHtml += `
+            <div class="col-12 current-equipment" id="editCurrentEquipmentSection">
+              <div class="current-equipment-header">
+                <span class="current-equipment-title">
+                  <i class="bi bi-info-circle"></i> Équipement actuel
+                </span>
+              </div>
+              <div id="editCurrentEquipmentContainer">
+          `;
+
+          if (demande.currentEquipment && demande.currentEquipment.length > 0) {
+            demande.currentEquipment.forEach((equipment, index) => {
+              editHtml += `
+                <div class="material-item" data-index="${index}">
+                  <i class="bi bi-x-lg remove-material" data-index="${index}"></i>
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label for="editCurrent_article_${index}" class="form-label">Article</label>
+                      <select class="form-select" id="editCurrent_article_${index}" required>
+                        <option value="" disabled>Choisir un article</option>
+                        <option value="Veste" ${equipment.article === 'Veste' ? 'selected' : ''}>Veste</option>
+                        <option value="Pantalon" ${equipment.article === 'Pantalon' ? 'selected' : ''}>Pantalon</option>
+                        <option value="T-shirt" ${equipment.article === 'T-shirt' ? 'selected' : ''}>T-shirt</option>
+                        <option value="Chaussures" ${equipment.article === 'Chaussures' ? 'selected' : ''}>Chaussures</option>
+                        <option value="Casque" ${equipment.article === 'Casque' ? 'selected' : ''}>Casque</option>
+                        <option value="Gants" ${equipment.article === 'Gants' ? 'selected' : ''}>Gants</option>
+                        <option value="Autre" ${equipment.article === 'Autre' ? 'selected' : ''}>Autre</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <label for="editCurrent_numero_${index}" class="form-label">N° d'étiquette</label>
+                      <input type="text" class="form-control" id="editCurrent_numero_${index}" value="${equipment.numero || ''}" required>
+                    </div>
+                    <div class="col-md-2">
+                      <label for="editCurrent_taille_${index}" class="form-label">Taille</label>
+                      <input type="text" class="form-control" id="editCurrent_taille_${index}" value="${equipment.taille || ''}" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label for="editCurrent_etat_${index}" class="form-label">État</label>
+                      <select class="form-select" id="editCurrent_etat_${index}" required>
+                        <option value="" disabled>État actuel</option>
+                        <option value="Bon état" ${equipment.etat === 'Bon état' ? 'selected' : ''}>Bon état</option>
+                        <option value="Usé" ${equipment.etat === 'Usé' ? 'selected' : ''}>Usé</option>
+                        <option value="Endommagé" ${equipment.etat === 'Endommagé' ? 'selected' : ''}>Endommagé</option>
+                        <option value="Déchiré" ${equipment.etat === 'Déchiré' ? 'selected' : ''}>Déchiré</option>
+                        <option value="Autre" ${equipment.etat === 'Autre' ? 'selected' : ''}>Autre</option>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <label for="editCurrent_photo_${index}" class="form-label">Photo de l'état actuel</label>
+                      <input class="form-control" type="file" id="editCurrent_photo_${index}" accept="image/*">
+                      <div id="editCurrent_photoPreview_${index}" class="mt-2">
+              `;
+
+              if (equipment.photo) {
+                editHtml += `
+                  <img src="${equipment.photo}" class="img-thumbnail material-photo-preview mb-2">
+                  <button class="btn btn-sm btn-danger remove-photo" data-index="${index}" data-type="current">
+                    <i class="bi bi-trash"></i> Supprimer
+                  </button>
+                `;
+              }
+
+              editHtml += `
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+          } else {
+            editHtml += `
+              <div class="material-item" data-index="0">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="editCurrent_article_0" class="form-label">Article</label>
+                    <select class="form-select" id="editCurrent_article_0" required>
+                      <option value="" selected disabled>Choisir un article</option>
+                      <option value="Veste">Veste</option>
+                      <option value="Pantalon">Pantalon</option>
+                      <option value="T-shirt">T-shirt</option>
+                      <option value="Chaussures">Chaussures</option>
+                      <option value="Casque">Casque</option>
+                      <option value="Gants">Gants</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="editCurrent_numero_0" class="form-label">N° d'étiquette</label>
+                    <input type="text" class="form-control" id="editCurrent_numero_0" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="editCurrent_taille_0" class="form-label">Taille</label>
+                    <input type="text" class="form-control" id="editCurrent_taille_0" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="editCurrent_etat_0" class="form-label">État</label>
+                    <select class="form-select" id="editCurrent_etat_0" required>
+                      <option value="" selected disabled>État actuel</option>
+                      <option value="Bon état">Bon état</option>
+                      <option value="Usé">Usé</option>
+                      <option value="Endommagé">Endommagé</option>
+                      <option value="Déchiré">Déchiré</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label for="editCurrent_photo_0" class="form-label">Photo de l'état actuel</label>
+                    <input class="form-control" type="file" id="editCurrent_photo_0" accept="image/*">
+                    <div id="editCurrent_photoPreview_0" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          editHtml += `
+              </div>
+              
+              <div class="d-flex justify-content-end mt-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addEditCurrentEquipment">
+                  <i class="bi bi-plus-lg"></i> Ajouter un équipement
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        // Section pour les articles demandés
+        editHtml += `
+            <div class="col-12">
+              <h5 class="mt-4 mb-3 d-flex align-items-center">
+                <i class="bi bi-t-shirt me-2"></i> ${demande.type === 'remplacement' ? 'Nouvel équipement demandé' : 'Équipement demandé'}
+              </h5>
+              <div id="editArticlesContainer">
+        `;
+
+        // Ajouter les articles existants
+        if (demande.articles && demande.articles.length > 0) {
+          demande.articles.forEach((article, index) => {
+            editHtml += `
+              <div class="material-item" data-index="${index}">
+                <i class="bi bi-x-lg remove-material" data-index="${index}"></i>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="editArticle_${index}" class="form-label">Article</label>
+                    <select class="form-select" id="editArticle_${index}" required>
+                      <option value="" disabled>Choisir un article</option>
+                      <option value="Veste" ${article.article === 'Veste' ? 'selected' : ''}>Veste</option>
+                      <option value="Pantalon" ${article.article === 'Pantalon' ? 'selected' : ''}>Pantalon</option>
+                      <option value="T-shirt" ${article.article === 'T-shirt' ? 'selected' : ''}>T-shirt</option>
+                      <option value="Chaussures" ${article.article === 'Chaussures' ? 'selected' : ''}>Chaussures</option>
+                      <option value="Casque" ${article.article === 'Casque' ? 'selected' : ''}>Casque</option>
+                      <option value="Gants" ${article.article === 'Gants' ? 'selected' : ''}>Gants</option>
+                      <option value="Autre" ${article.article === 'Autre' ? 'selected' : ''}>Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="editNumero_${index}" class="form-label">N° d'étiquette</label>
+                    <input type="text" class="form-control" id="editNumero_${index}" value="${article.numero || ''}">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="editTaille_${index}" class="form-label">Taille</label>
+                    <input type="text" class="form-control" id="editTaille_${index}" value="${article.taille || ''}" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="editRemplacement_${index}" class="form-label">Motif</label>
+                    <input type="text" class="form-control" id="editRemplacement_${index}" value="${article.remplacement || ''}" required>
+                  </div>
+                  <div class="col-12">
+                    <label for="editCommentaire_${index}" class="form-label">Commentaire</label>
+                    <textarea class="form-control" id="editCommentaire_${index}" rows="2">${article.commentaire || ''}</textarea>
+                  </div>
+                  <div class="col-12">
+                    <label for="editPhoto_${index}" class="form-label">Photo (si nécessaire)</label>
+                    <input class="form-control" type="file" id="editPhoto_${index}" accept="image/*">
+                    <div id="editPhotoPreview_${index}" class="mt-2">
+            `;
+
+            if (article.photo) {
+              editHtml += `
+                <img src="${article.photo}" class="img-thumbnail material-photo-preview mb-2">
+                <button class="btn btn-sm btn-danger remove-photo" data-index="${index}" data-type="article">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              `;
+            }
+
+            editHtml += `
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          editHtml += `
+            <div class="material-item" data-index="0">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="editArticle_0" class="form-label">Article</label>
+                  <select class="form-select" id="editArticle_0" required>
+                    <option value="" selected disabled>Choisir un article</option>
+                    <option value="Veste">Veste</option>
+                    <option value="Pantalon">Pantalon</option>
+                    <option value="T-shirt">T-shirt</option>
+                    <option value="Chaussures">Chaussures</option>
+                    <option value="Casque">Casque</option>
+                    <option value="Gants">Gants</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label for="editNumero_0" class="form-label">N° d'étiquette</label>
+                  <input type="text" class="form-control" id="editNumero_0">
+                </div>
+                <div class="col-md-2">
+                  <label for="editTaille_0" class="form-label">Taille</label>
+                  <input type="text" class="form-control" id="editTaille_0" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="editRemplacement_0" class="form-label">Motif</label>
+                  <input type="text" class="form-control" id="editRemplacement_0" required>
+                </div>
+                <div class="col-12">
+                  <label for="editCommentaire_0" class="form-label">Commentaire</label>
+                  <textarea class="form-control" id="editCommentaire_0" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                  <label for="editPhoto_0" class="form-label">Photo (si nécessaire)</label>
+                  <input class="form-control" type="file" id="editPhoto_0" accept="image/*">
+                  <div id="editPhotoPreview_0" class="mt-2"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        editHtml += `
+              </div>
+              
+              <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-outline-primary" id="addEditArticle">
+                  <i class="bi bi-plus-lg"></i> Ajouter un article
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('editBody').innerHTML = editHtml;
+
+        // Gestion du type de demande
+        document.querySelectorAll('#editBody .demande-type-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('#editBody .demande-type-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const type = this.getAttribute('data-type');
+            document.getElementById('editDemandeType').value = type;
+            
+            const currentSection = document.getElementById('editCurrentEquipmentSection');
+            if (type === 'nouveau') {
+              if (currentSection) currentSection.style.display = 'none';
+              document.querySelectorAll('#editCurrentEquipmentContainer [id^="editCurrent_"]').forEach(el => el.required = false);
+            } else {
+              if (!currentSection) {
+                // Créer la section si elle n'existe pas
+                const sectionHtml = `
+                  <div class="col-12 current-equipment" id="editCurrentEquipmentSection">
+                    <div class="current-equipment-header">
+                      <span class="current-equipment-title">
+                        <i class="bi bi-info-circle"></i> Équipement actuel
+                      </span>
+                    </div>
+                    <div id="editCurrentEquipmentContainer">
+                      <div class="material-item" data-index="0">
+                        <div class="row g-3">
+                          <div class="col-md-4">
+                            <label for="editCurrent_article_0" class="form-label">Article</label>
+                            <select class="form-select" id="editCurrent_article_0" required>
+                              <option value="" selected disabled>Choisir un article</option>
+                              <option value="Veste">Veste</option>
+                              <option value="Pantalon">Pantalon</option>
+                              <option value="T-shirt">T-shirt</option>
+                              <option value="Chaussures">Chaussures</option>
+                              <option value="Casque">Casque</option>
+                              <option value="Gants">Gants</option>
+                              <option value="Autre">Autre</option>
+                            </select>
+                          </div>
+                          <div class="col-md-2">
+                            <label for="editCurrent_numero_0" class="form-label">N° d'étiquette</label>
+                            <input type="text" class="form-control" id="editCurrent_numero_0" required>
+                          </div>
+                          <div class="col-md-2">
+                            <label for="editCurrent_taille_0" class="form-label">Taille</label>
+                            <input type="text" class="form-control" id="editCurrent_taille_0" required>
+                          </div>
+                          <div class="col-md-4">
+                            <label for="editCurrent_etat_0" class="form-label">État</label>
+                            <select class="form-select" id="editCurrent_etat_0" required>
+                              <option value="" selected disabled>État actuel</option>
+                              <option value="Bon état">Bon état</option>
+                              <option value="Usé">Usé</option>
+                              <option value="Endommagé">Endommagé</option>
+                              <option value="Déchiré">Déchiré</option>
+                              <option value="Autre">Autre</option>
+                            </select>
+                          </div>
+                          <div class="col-12">
+                            <label for="editCurrent_photo_0" class="form-label">Photo de l'état actuel</label>
+                            <input class="form-control" type="file" id="editCurrent_photo_0" accept="image/*">
+                            <div id="editCurrent_photoPreview_0" class="mt-2"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-2">
+                      <button type="button" class="btn btn-sm btn-outline-primary" id="addEditCurrentEquipment">
+                        <i class="bi bi-plus-lg"></i> Ajouter un équipement
+                      </button>
+                    </div>
+                  </div>
+                `;
+                
+                // Insérer avant la section des articles
+                const articlesSection = document.querySelector('#editBody .col-12:has(#editArticlesContainer)');
+                articlesSection.insertAdjacentHTML('beforebegin', sectionHtml);
+                
+                // Ajouter les événements
+                document.getElementById('addEditCurrentEquipment').addEventListener('click', addEditCurrentEquipmentItem);
+              } else {
+                currentSection.style.display = 'block';
+              }
+              document.querySelectorAll('#editCurrentEquipmentContainer [id^="editCurrent_"]').forEach(el => el.required = true);
+            }
+          });
+        });
+
+        // Ajouter les événements
+        document.getElementById('addEditArticle').addEventListener('click', addEditArticleItem);
+        
+        if (document.getElementById('addEditCurrentEquipment')) {
+          document.getElementById('addEditCurrentEquipment').addEventListener('click', addEditCurrentEquipmentItem);
+        }
+        
+        // Gestion de la suppression des photos
+        document.querySelectorAll('.remove-photo').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const type = this.getAttribute('data-type');
+            const previewId = type === 'current' ? `editCurrent_photoPreview_${index}` : `editPhotoPreview_${index}`;
+            document.getElementById(previewId).innerHTML = '';
+            
+            // Marquer la photo pour suppression
+            if (type === 'current') {
+              document.getElementById(`editCurrent_photo_${index}`).setAttribute('data-to-delete', 'true');
+            } else {
+              document.getElementById(`editPhoto_${index}`).setAttribute('data-to-delete', 'true');
+            }
+          });
+        });
+
+        // Gestion de la suppression des articles/équipements
+        document.querySelectorAll('.remove-material').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const containerId = this.closest('#editCurrentEquipmentContainer') ? 'editCurrentEquipmentContainer' : 'editArticlesContainer';
+            const item = document.querySelector(`#${containerId} .material-item[data-index="${index}"]`);
+            
+            if (document.querySelectorAll(`#${containerId} .material-item`).length > 1) {
+              item.remove();
+            } else {
+              showToast(`Vous devez avoir au moins un ${containerId === 'editCurrentEquipmentContainer' ? 'équipement' : 'article'}`, 'warning');
+            }
+          });
+        });
+
+        // Prévisualisation des nouvelles photos (équipements actuels)
+        document.querySelectorAll('input[id^="editCurrent_photo_"]').forEach(input => {
+          input.addEventListener('change', function(e) {
+            const index = this.id.split('_')[2];
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > MAX_PHOTO_SIZE) {
+              showToast("La photo ne doit pas dépasser 15MB", 'danger');
+              this.value = '';
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              document.getElementById(`editCurrent_photoPreview_${index}`).innerHTML = `
+                <img src="${event.target.result}" class="img-thumbnail material-photo-preview mb-2">
+                <button class="btn btn-sm btn-danger remove-photo" data-index="${index}" data-type="current">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              `;
+              
+              document.querySelector(`#editCurrent_photoPreview_${index} .remove-photo`).addEventListener('click', function() {
+                document.getElementById(`editCurrent_photoPreview_${index}`).innerHTML = '';
+                document.getElementById(`editCurrent_photo_${index}`).value = '';
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+
+        // Prévisualisation des nouvelles photos (articles)
+        document.querySelectorAll('input[id^="editPhoto_"]').forEach(input => {
+          input.addEventListener('change', function(e) {
+            const index = this.id.split('_')[1];
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > MAX_PHOTO_SIZE) {
+              showToast("La photo ne doit pas dépasser 15MB", 'danger');
+              this.value = '';
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              document.getElementById(`editPhotoPreview_${index}`).innerHTML = `
+                <img src="${event.target.result}" class="img-thumbnail material-photo-preview mb-2">
+                <button class="btn btn-sm btn-danger remove-photo" data-index="${index}" data-type="article">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+              `;
+              
+              document.querySelector(`#editPhotoPreview_${index} .remove-photo`).addEventListener('click', function() {
+                document.getElementById(`editPhotoPreview_${index}`).innerHTML = '';
+                document.getElementById(`editPhoto_${index}`).value = '';
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        editModal.show();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      }
+    }
+
+    function addEditCurrentEquipmentItem() {
+      const container = document.getElementById('editCurrentEquipmentContainer');
+      const index = document.querySelectorAll('#editCurrentEquipmentContainer .material-item').length;
+      
+      const equipmentItem = document.createElement('div');
+      equipmentItem.className = 'material-item';
+      equipmentItem.setAttribute('data-index', index);
+      
+      equipmentItem.innerHTML = `
+        <i class="bi bi-x-lg remove-material" data-index="${index}"></i>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="editCurrent_article_${index}" class="form-label">Article</label>
+            <select class="form-select" id="editCurrent_article_${index}" required>
+              <option value="" selected disabled>Choisir un article</option>
+              <option value="Veste">Veste</option>
+              <option value="Pantalon">Pantalon</option>
+              <option value="T-shirt">T-shirt</option>
+              <option value="Chaussures">Chaussures</option>
+              <option value="Casque">Casque</option>
+              <option value="Gants">Gants</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="editCurrent_numero_${index}" class="form-label">N° d'étiquette</label>
+            <input type="text" class="form-control" id="editCurrent_numero_${index}" required>
+          </div>
+          <div class="col-md-2">
+            <label for="editCurrent_taille_${index}" class="form-label">Taille</label>
+            <input type="text" class="form-control" id="editCurrent_taille_${index}" required>
+          </div>
+          <div class="col-md-4">
+            <label for="editCurrent_etat_${index}" class="form-label">État</label>
+            <select class="form-select" id="editCurrent_etat_${index}" required>
+              <option value="" selected disabled>État actuel</option>
+              <option value="Bon état">Bon état</option>
+              <option value="Usé">Usé</option>
+              <option value="Endommagé">Endommagé</option>
+              <option value="Déchiré">Déchiré</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="editCurrent_photo_${index}" class="form-label">Photo de l'état actuel</label>
+            <input class="form-control" type="file" id="editCurrent_photo_${index}" accept="image/*">
+            <div id="editCurrent_photoPreview_${index}" class="mt-2"></div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(equipmentItem);
+      
+      // Gestion de la suppression d'un équipement
+      equipmentItem.querySelector('.remove-material').addEventListener('click', function() {
+        if (document.querySelectorAll('#editCurrentEquipmentContainer .material-item').length > 1) {
+          equipmentItem.remove();
+        } else {
+          showToast("Vous devez avoir au moins un équipement", 'warning');
+        }
+      });
+      
+      // Prévisualisation photo
+      document.getElementById(`editCurrent_photo_${index}`).addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > MAX_PHOTO_SIZE) {
+          showToast("La photo ne doit pas dépasser 15MB", 'danger');
+          this.value = '';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          document.getElementById(`editCurrent_photoPreview_${index}`).innerHTML = `
+            <img src="${event.target.result}" class="img-thumbnail material-photo-preview mb-2">
+            <button class="btn btn-sm btn-danger" id="removeEditCurrentPhoto_${index}">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          `;
+          
+          document.getElementById(`removeEditCurrentPhoto_${index}`).addEventListener('click', function() {
+            document.getElementById(`editCurrent_photoPreview_${index}`).innerHTML = '';
+            document.getElementById(`editCurrent_photo_${index}`).value = '';
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function addEditArticleItem() {
+      const container = document.getElementById('editArticlesContainer');
+      const index = document.querySelectorAll('#editArticlesContainer .material-item').length;
+      
+      const articleItem = document.createElement('div');
+      articleItem.className = 'material-item';
+      articleItem.setAttribute('data-index', index);
+      
+      articleItem.innerHTML = `
+        <i class="bi bi-x-lg remove-material" data-index="${index}"></i>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="editArticle_${index}" class="form-label">Article</label>
+            <select class="form-select" id="editArticle_${index}" required>
+              <option value="" selected disabled>Choisir un article</option>
+              <option value="Veste">Veste</option>
+              <option value="Pantalon">Pantalon</option>
+              <option value="T-shirt">T-shirt</option>
+              <option value="Chaussures">Chaussures</option>
+              <option value="Casque">Casque</option>
+              <option value="Gants">Gants</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="editNumero_${index}" class="form-label">N° d'étiquette</label>
+            <input type="text" class="form-control" id="editNumero_${index}" placeholder="Nouveau">
+          </div>
+          <div class="col-md-2">
+            <label for="editTaille_${index}" class="form-label">Taille</label>
+            <input type="text" class="form-control" id="editTaille_${index}" required>
+          </div>
+          <div class="col-md-4">
+            <label for="editRemplacement_${index}" class="form-label">Motif</label>
+            <input type="text" class="form-control" id="editRemplacement_${index}" required>
+          </div>
+          <div class="col-12">
+            <label for="editCommentaire_${index}" class="form-label">Commentaire</label>
+            <textarea class="form-control" id="editCommentaire_${index}" rows="2"></textarea>
+          </div>
+          <div class="col-12">
+            <label for="editPhoto_${index}" class="form-label">Photo (si nécessaire)</label>
+            <input class="form-control" type="file" id="editPhoto_${index}" accept="image/*">
+            <div id="editPhotoPreview_${index}" class="mt-2"></div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(articleItem);
+      
+      // Gestion de la suppression d'un article
+      articleItem.querySelector('.remove-material').addEventListener('click', function() {
+        if (document.querySelectorAll('#editArticlesContainer .material-item').length > 1) {
+          articleItem.remove();
+        } else {
+          showToast("Vous devez avoir au moins un article", 'warning');
+        }
+      });
+      
+      // Prévisualisation photo
+      document.getElementById(`editPhoto_${index}`).addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > MAX_PHOTO_SIZE) {
+          showToast("La photo ne doit pas dépasser 15MB", 'danger');
+          this.value = '';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          document.getElementById(`editPhotoPreview_${index}`).innerHTML = `
+            <img src="${event.target.result}" class="img-thumbnail material-photo-preview mb-2">
+            <button class="btn btn-sm btn-danger" id="removeEditPhoto_${index}">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          `;
+          
+          document.getElementById(`removeEditPhoto_${index}`).addEventListener('click', function() {
+            document.getElementById(`editPhotoPreview_${index}`).innerHTML = '';
+            document.getElementById(`editPhoto_${index}`).value = '';
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Sauvegarder les modifications
+    document.getElementById('saveEdit').addEventListener('click', async function() {
+      const nom = document.getElementById('editNom').value.trim();
+      const prenom = document.getElementById('editPrenom').value.trim();
+      const matricule = document.getElementById('editMatricule').value.trim();
+      const demandeType = document.getElementById('editDemandeType').value;
+      
+      // Récupérer les équipements actuels (pour les remplacements)
+      const currentEquipment = [];
+      if (demandeType === 'remplacement') {
+        const equipmentItems = document.querySelectorAll('#editCurrentEquipmentContainer .material-item');
+        
+        for (const item of equipmentItems) {
+          const index = item.getAttribute('data-index');
+          const article = document.getElementById(`editCurrent_article_${index}`).value;
+          const numero = document.getElementById(`editCurrent_numero_${index}`).value.trim();
+          const taille = document.getElementById(`editCurrent_taille_${index}`).value.trim();
+          const etat = document.getElementById(`editCurrent_etat_${index}`).value;
+          const photoInput = document.getElementById(`editCurrent_photo_${index}`);
+          const photoPreview = document.getElementById(`editCurrent_photoPreview_${index}`);
+          
+          let photoBase64 = null;
+          
+          // Si nouvelle photo téléchargée
+          if (photoInput.files && photoInput.files[0]) {
+            photoBase64 = await getBase64(photoInput.files[0]);
+          } 
+          // Si photo existante non supprimée
+          else if (photoPreview.querySelector('img') && !photoInput.hasAttribute('data-to-delete')) {
+            photoBase64 = photoPreview.querySelector('img').src;
+          }
+          
+          currentEquipment.push({
+            article,
+            numero,
+            taille,
+            etat,
+            photo: photoBase64
+          });
+        }
+      }
+      
+      // Récupérer tous les articles demandés
+      const articles = [];
+      const articleItems = document.querySelectorAll('#editArticlesContainer .material-item');
+      
+      for (const item of articleItems) {
+        const index = item.getAttribute('data-index');
+        const article = document.getElementById(`editArticle_${index}`).value;
+        const numero = document.getElementById(`editNumero_${index}`).value.trim();
+        const taille = document.getElementById(`editTaille_${index}`).value.trim();
+        const remplacement = document.getElementById(`editRemplacement_${index}`).value.trim();
+        const commentaire = document.getElementById(`editCommentaire_${index}`).value.trim();
+        const photoInput = document.getElementById(`editPhoto_${index}`);
+        const photoPreview = document.getElementById(`editPhotoPreview_${index}`);
+        
+        let photoBase64 = null;
+        
+        // Si nouvelle photo téléchargée
+        if (photoInput.files && photoInput.files[0]) {
+          photoBase64 = await getBase64(photoInput.files[0]);
+        } 
+        // Si photo existante non supprimée
+        else if (photoPreview.querySelector('img') && !photoInput.hasAttribute('data-to-delete')) {
+          photoBase64 = photoPreview.querySelector('img').src;
+        }
+        
+        articles.push({
+          article,
+          numero,
+          taille,
+          remplacement,
+          commentaire,
+          photo: photoBase64
+        });
+      }
+      
+      try {
+        await database.ref('demandes/' + currentEditingId).update({ 
+          nom,
+          prenom,
+          matricule,
+          type: demandeType,
+          currentEquipment: demandeType === 'remplacement' ? currentEquipment : null,
+          articles,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        showToast('Demande mise à jour avec succès', 'success');
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+        editModal.hide();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      }
+    });
+
+    // Fonction utilitaire pour convertir une image en base64
+    function getBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    async function showManageModal(id) {
+      try {
+        currentManagingId = id;
+        const snapshot = await database.ref('demandes/' + id).once('value');
+        const demande = snapshot.val();
+        
+        if (!demande) {
+          showToast("Demande non trouvée", 'danger');
+          return;
+        }
+        
+        let statusOptions = '';
+        ['En attente', 'En cours', 'Terminé', 'Refusé'].forEach(status => {
+          statusOptions += `<option value="${status}" ${demande.statut === status ? 'selected' : ''}>${status}</option>`;
+        });
+        
+        let commentsHtml = '';
+        if (demande.comments && demande.comments.length > 0) {
+          commentsHtml = demande.comments.map((comment, idx) => `
+            <div class="comment-bubble mb-2">
+              <div class="d-flex justify-content-between">
+                <span class="comment-author">${comment.auteur || 'Administrateur'}</span>
+                <div>
+                  <span class="comment-date">${formatDate(comment.date)}</span>
+                  <button class="btn btn-sm btn-link text-danger delete-comment" data-index="${idx}" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="mb-0 mt-1">${comment.text}</p>
+            </div>
+          `).join('');
+        }
+        
+        document.getElementById('manageBody').innerHTML = `
+          <div class="mb-3">
+            <label for="manageStatus" class="form-label">Statut</label>
+            <select class="form-select" id="manageStatus">
+              ${statusOptions}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="manageComment" class="form-label">Ajouter un commentaire</label>
+            <textarea class="form-control" id="manageComment" rows="3"></textarea>
+          </div>
+          ${commentsHtml ? `
+            <div class="mb-3">
+              <h6 class="text-muted">Commentaires précédents</h6>
+              ${commentsHtml}
+            </div>
+          ` : ''}
+        `;
+        
+        // Ajouter les événements de suppression de commentaires
+        document.querySelectorAll('.delete-comment').forEach(btn => {
+          btn.addEventListener('click', async function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            if (confirm("Voulez-vous vraiment supprimer ce commentaire ?")) {
+              try {
+                const snapshot = await database.ref(`demandes/${currentManagingId}/comments`).once('value');
+                const comments = snapshot.val() || [];
+                comments.splice(index, 1);
+                
+                await database.ref(`demandes/${currentManagingId}`).update({
+                  comments,
+                  updatedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                showToast('Commentaire supprimé', 'success');
+                // Recharger la modal pour afficher les changements
+                showManageModal(currentManagingId);
+              } catch (error) {
+                showToast("Erreur: " + error.message, 'danger');
+              }
+            }
+          });
+        });
+        
+        const manageModal = new bootstrap.Modal(document.getElementById('manageModal'));
+        manageModal.show();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      }
+    }
+
+    // Sauvegarder le statut et les commentaires
+    document.getElementById('saveStatus').addEventListener('click', async function() {
+      const newStatus = document.getElementById('manageStatus').value;
+      const commentText = document.getElementById('manageComment').value.trim();
+      
+      try {
+        const updates = {
+          statut: newStatus,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        
+        if (commentText) {
+          const newComment = {
+            text: commentText,
+            date: firebase.database.ServerValue.TIMESTAMP,
+            auteur: "Administrateur"
+          };
+          
+          // Ajouter le nouveau commentaire au tableau existant ou créer un nouveau tableau
+          const snapshot = await database.ref(`demandes/${currentManagingId}/comments`).once('value');
+          const existingComments = snapshot.val() || [];
+          updates.comments = [...existingComments, newComment];
+        }
+        
+        await database.ref('demandes/' + currentManagingId).update(updates);
+        showToast('Demande mise à jour avec succès', 'success');
+        
+        const manageModal = bootstrap.Modal.getInstance(document.getElementById('manageModal'));
+        manageModal.hide();
+      } catch (error) {
+        showToast("Erreur: " + error.message, 'danger');
+      }
+    });
+    
+    function setupRealtime() {
+      database.ref('demandes').on('value', (snapshot) => {
+        allDemandes = snapshot.val() || {};
+        displayDemandes(allDemandes);
+        updateStats(allDemandes);
+        updateCharts(allDemandes);
+      });
+    }
+    
+    function setupSearch() {
+      // Recherche pour les demandes actuelles
+      document.getElementById('currentSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        // Filtrage des lignes du tableau
+        const rows = document.querySelectorAll('#currentDemandes tr');
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        
+        // Filtrage des cartes
+        const cards = document.querySelectorAll('#currentDemandesCards .demande-card');
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+      });
+      
+      // Recherche pour les archives
+      document.getElementById('archiveSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        // Filtrage des lignes du tableau
+        const rows = document.querySelectorAll('#archivedDemandes tr');
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+        
+        // Filtrage des cartes
+        const cards = document.querySelectorAll('#archivedDemandesCards .demande-card');
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+      });
+    }
+    
+    function setupSorting() {
+      document.querySelectorAll('.sortable-header').forEach(header => {
+        header.addEventListener('click', function() {
+          const field = this.getAttribute('data-sort');
+          
+          if (currentSortField === field) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSortField = field;
+            currentSortDirection = 'asc';
+          }
+          
+          // Mettre à jour les icônes de tri
+          document.querySelectorAll('.sortable-header i').forEach(icon => {
+            icon.className = 'bi bi-arrow-down-up ms-1';
+          });
+          
+          const icon = this.querySelector('i');
+          if (icon) {
+            icon.className = currentSortDirection === 'asc' 
+              ? 'bi bi-arrow-up ms-1' 
+              : 'bi bi-arrow-down ms-1';
+          }
+          
+          displayDemandes(allDemandes);
+        });
+      });
+    }
+    
+    function setupFilters() {
+      // Gestion des filtres via le menu déroulant
+      document.querySelectorAll('.filter-dropdown .dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const filter = this.getAttribute('data-filter');
+          
+          if (filter === 'all') {
+            currentFilterStatus = null;
+          } else {
+            currentFilterStatus = filter;
+          }
+          
+          currentPage = 1;
+          displayDemandes(allDemandes);
+        });
+      });
+    }
+    
+    function setupMobileNav() {
+      // Gestion du menu mobile
+      document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.querySelectorAll('.mobile-nav-link').forEach(l => l.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Activer l'onglet correspondant
+          const target = this.getAttribute('data-bs-target');
+          const tab = document.querySelector(`.nav-link[data-bs-target="${target}"]`);
+          if (tab) {
+            // Désactiver tous les onglets
+            document.querySelectorAll('.nav-link').forEach(t => t.classList.remove('active'));
+            // Activer l'onglet correspondant
+            tab.classList.add('active');
+            
+            // Afficher le contenu de l'onglet
+            const tabContent = document.querySelector(target);
+            if (tabContent) {
+              document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+              tabContent.classList.add('show', 'active');
+            }
+          }
+        });
+      });
+    }
+    
+    function updatePagination(elementId, currentPage, totalPages, type) {
+      const pagination = document.getElementById(elementId);
+      pagination.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      // Bouton Précédent
+      pagination.innerHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" data-page="${currentPage - 1}" data-type="${type}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+      `;
+      
+      // Pages
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      if (startPage > 1) {
+        pagination.innerHTML += `
+          <li class="page-item">
+            <a class="page-link" href="#" data-page="1" data-type="${type}">1</a>
+          </li>
+          ${startPage > 2 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+        `;
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pagination.innerHTML += `
+          <li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link" href="#" data-page="${i}" data-type="${type}">${i}</a>
+          </li>
+        `;
+      }
+      
+      if (endPage < totalPages) {
+        pagination.innerHTML += `
+          ${endPage < totalPages - 1 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+          <li class="page-item">
+            <a class="page-link" href="#" data-page="${totalPages}" data-type="${type}">${totalPages}</a>
+          </li>
+        `;
+      }
+      
+      // Bouton Suivant
+      pagination.innerHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+          <a class="page-link" href="#" data-page="${currentPage + 1}" data-type="${type}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      `;
+      
+      // Événements de pagination
+      document.querySelectorAll(`#${elementId} .page-link`).forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const page = parseInt(this.getAttribute('data-page'));
+          const type = this.getAttribute('data-type');
+          
+          if (type === 'current') {
+            currentPage = page;
+          } else {
+            archivePage = page;
+          }
+          
+          displayDemandes(allDemandes);
+        });
+      });
+    }
+    
+    function updateStats(demandes) {
+      const demandesArray = Object.values(demandes);
+      
+      const enCours = demandesArray.filter(d => !d.archived && d.statut === 'En cours').length;
+      const termine = demandesArray.filter(d => !d.archived && d.statut === 'Terminé').length;
+      const enAttente = demandesArray.filter(d => !d.archived && d.statut === 'En attente').length;
+      const refuse = demandesArray.filter(d => !d.archived && d.statut === 'Refusé').length;
+      
+      document.getElementById('stats-en-cours').textContent = enCours;
+      document.getElementById('stats-termine').textContent = termine;
+      document.getElementById('stats-en-attente').textContent = enAttente;
+      document.getElementById('stats-refuse').textContent = refuse;
+    }
+    
+    function updateCharts(demandes) {
+      updateMonthlyChart(demandes);
+      updateStatusChart(demandes);
+      updateArticlesChart(demandes);
+      updateEvolutionChart(demandes);
+    }
+    
+    function updateMonthlyChart(demandes) {
+      const ctx = document.getElementById('monthlyChart').getContext('2d');
+      const demandesArray = Object.values(demandes);
+      
+      // Group by month
+      const monthlyData = {};
+      demandesArray.forEach(demande => {
+        const date = new Date(demande.createdAt);
+        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = 0;
+        }
+        monthlyData[monthYear]++;
+      });
+      
+      // Get last 12 months
+      const now = new Date();
+      const labels = [];
+      const data = [];
+      
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const dateStr = date.toISOString().split('T')[0];
+        const formattedDate = date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+        
+        labels.push(formattedDate);
+        data.push(monthlyData[dateStr] || 0);
+      }
+      
+      if (monthlyChart) {
+        monthlyChart.data.labels = labels;
+        monthlyChart.data.datasets[0].data = data;
+        monthlyChart.update();
+      } else {
+        monthlyChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Demandes par mois',
+              data: data,
+              backgroundColor: 'rgba(67, 97, 238, 0.7)',
+              borderColor: 'rgba(67, 97, 238, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.parsed.y} demande${context.parsed.y !== 1 ? 's' : ''}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    function updateStatusChart(demandes) {
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      const demandesArray = Object.values(demandes);
+      
+      const activeDemandes = demandesArray.filter(d => !d.archived);
+      const statusCounts = {
+        'En cours': activeDemandes.filter(d => d.statut === 'En cours').length,
+        'Terminé': activeDemandes.filter(d => d.statut === 'Terminé').length,
+        'En attente': activeDemandes.filter(d => d.statut === 'En attente').length,
+        'Refusé': activeDemandes.filter(d => d.statut === 'Refusé').length
+      };
+      
+      const labels = Object.keys(statusCounts);
+      const data = Object.values(statusCounts);
+      const backgroundColors = [
+        'rgba(67, 97, 238, 0.7)',
+        'rgba(76, 201, 240, 0.7)',
+        'rgba(248, 150, 30, 0.7)',
+        'rgba(247, 37, 133, 0.7)'
+      ];
+      
+      if (statusChart) {
+        statusChart.data.labels = labels;
+        statusChart.data.datasets[0].data = data;
+        statusChart.data.datasets[0].backgroundColor = backgroundColors;
+        statusChart.update();
+      } else {
+        statusChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: backgroundColors,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom',
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const value = context.parsed;
+                    const percentage = Math.round((value / total) * 100);
+                    return `${context.label}: ${value} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+    }
+    
+    function updateArticlesChart(demandes) {
+      const ctx = document.getElementById('articlesChart').getContext('2d');
+      const demandesArray = Object.values(demandes);
+      
+      // Compter les articles demandés
+      const articleCounts = {};
+      demandesArray.forEach(demande => {
+        if (demande.articles) {
+          demande.articles.forEach(article => {
+            if (!articleCounts[article.article]) {
+              articleCounts[article.article] = 0;
+            }
+            articleCounts[article.article]++;
+          });
+        }
+      });
+      
+      // Trier par nombre décroissant et prendre les 5 premiers
+      const sortedArticles = Object.entries(articleCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+      
+      const labels = sortedArticles.map(item => item[0]);
+      const data = sortedArticles.map(item => item[1]);
+      
+      if (articlesChart) {
+        articlesChart.data.labels = labels;
+        articlesChart.data.datasets[0].data = data;
+        articlesChart.update();
+      } else {
+        articlesChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Nombre de demandes',
+              data: data,
+              backgroundColor: 'rgba(103, 58, 183, 0.7)',
+              borderColor: 'rgba(103, 58, 183, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.parsed.y} demande${context.parsed.y !== 1 ? 's' : ''}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    function updateEvolutionChart(demandes) {
+      const ctx = document.getElementById('evolutionChart').getContext('2d');
+      const demandesArray = Object.values(demandes);
+      
+      // Group by date
+      const dailyData = {};
+      demandesArray.forEach(demande => {
+        const date = new Date(demande.createdAt).toISOString().split('T')[0];
+        
+        if (!dailyData[date]) {
+          dailyData[date] = 0;
+        }
+        dailyData[date]++;
+      });
+      
+      // Get last 30 days
+      const now = new Date();
+      const labels = [];
+      const data = [];
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const formattedDate = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        
+        labels.push(formattedDate);
+        data.push(dailyData[dateStr] || 0);
+      }
+      
+      if (evolutionChart) {
+        evolutionChart.data.labels = labels;
+        evolutionChart.data.datasets[0].data = data;
+        evolutionChart.update();
+      } else {
+        evolutionChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Demandes par jour',
+              data: data,
+              borderColor: 'rgba(67, 97, 238, 1)',
+              backgroundColor: 'rgba(67, 97, 238, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.parsed.y} demande${context.parsed.y !== 1 ? 's' : ''}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    function showToast(message, type) {
+      const toastContainer = document.getElementById('toastContainer');
+      const toastId = 'toast-' + Date.now();
+      
+      const toast = document.createElement('div');
+      toast.id = toastId;
+      toast.className = `toast show align-items-center text-white bg-${type} border-0`;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Supprimer après 5 secondes
+      setTimeout(() => {
+        const toastElement = document.getElementById(toastId);
+        if (toastElement) {
+          toastElement.classList.remove('show');
+          setTimeout(() => toastElement.remove(), 300);
+        }
+      }, 5000);
+    }
+    
+    function getStatusBadgeClass(statut) {
+      switch(statut) {
+        case 'Terminé': return 'badge-termine';
+        case 'En attente': return 'badge-en-attente';
+        case 'Refusé': return 'badge-refuse';
+        default: return 'badge-en-cours';
+      }
+    }
+    
+    function formatDate(timestamp) {
+      if (!timestamp) return 'N/A';
+      
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    function updateFilterDropdown() {
+      // Mettre à jour l'état actif des éléments du menu déroulant
+      document.querySelectorAll('.filter-dropdown .dropdown-item').forEach(item => {
+        const filter = item.getAttribute('data-filter');
+        if ((!currentFilterStatus && filter === 'all') || (currentFilterStatus === filter)) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

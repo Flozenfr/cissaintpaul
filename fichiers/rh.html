@@ -1,0 +1,3988 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gestion RH | Pompiers Saint-Paul de Fenouillet</title>
+  
+  <!-- CSS Libraries -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Couleurs */
+      --primary: #d32f2f;
+      --primary-light: #ff6659;
+      --primary-dark: #9a0007;
+      --secondary: #0288d1;
+      --success: #388e3c;
+      --info: #1976d2;
+      --warning: #ffa000;
+      --danger: #d32f2f;
+      --light: #f5f5f5;
+      --dark: #212121;
+      --gray: #757575;
+      --white: #ffffff;
+      
+      /* Variables de design */
+      --border-radius: 8px;
+      --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      --transition: all 0.2s ease;
+    }
+    
+    /* Styles de base */
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f5f5f5;
+      color: var(--dark);
+      line-height: 1.6;
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+      padding-bottom: 60px; /* Espace pour le menu mobile */
+    }
+    
+    /* Structure principale */
+    .container-app {
+      width: 100%;
+      background-color: var(--white);
+      padding: 1rem;
+      min-height: 100vh;
+    }
+    
+    /* En-tête */
+    .app-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--primary);
+    }
+    
+    .app-title {
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+    }
+    
+    /* Onglets */
+    .nav-tabs {
+      border-bottom: 2px solid rgba(0,0,0,0.05);
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 5px;
+    }
+    
+    .nav-tabs .nav-link {
+      color: var(--gray);
+      font-weight: 600;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      transition: var(--transition);
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.85rem;
+      min-width: max-content;
+    }
+    
+    .nav-tabs .nav-link:hover {
+      color: var(--primary);
+      background-color: rgba(211, 47, 47, 0.05);
+    }
+    
+    .nav-tabs .nav-link.active {
+      color: var(--primary);
+      background-color: rgba(211, 47, 47, 0.1);
+      border: none;
+      position: relative;
+    }
+    
+    .nav-tabs .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--primary);
+    }
+    
+    /* Menu mobile */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+    }
+    
+    .mobile-nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem 0;
+      color: var(--gray);
+      font-size: 0.7rem;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    
+    .mobile-nav-item.active {
+      color: var(--primary);
+    }
+    
+    .mobile-nav-item i {
+      display: block;
+      font-size: 1.2rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    /* Contenu des onglets */
+    .tab-content {
+      padding: 1rem 0;
+    }
+    
+    /* Formulaires */
+    .form-label {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+      border-radius: var(--border-radius);
+      padding: 0.75rem;
+      border: 1px solid rgba(0,0,0,0.1);
+      transition: var(--transition);
+      font-size: 0.9rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.15);
+    }
+    
+    /* Badges */
+    .badge {
+      font-weight: 500;
+      padding: 0.4em 0.6em;
+      border-radius: 50px;
+      font-size: 0.8rem;
+    }
+    
+    .badge-grade {
+      background-color: var(--secondary);
+      color: white;
+    }
+    
+    .badge-active {
+      background-color: var(--success);
+      color: white;
+    }
+    
+    .badge-inactive {
+      background-color: var(--gray);
+      color: white;
+    }
+    
+    .badge-warning {
+      background-color: var(--warning);
+      color: var(--dark);
+    }
+    
+    .badge-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+    
+    /* Photos */
+    .photo-thumbnail {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .photo-thumbnail:hover {
+      transform: scale(1.05);
+      box-shadow: var(--box-shadow);
+    }
+    
+    /* Tableaux */
+    .table {
+      --bs-table-bg: transparent;
+      --bs-table-striped-bg: rgba(0,0,0,0.02);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      font-size: 0.85rem;
+    }
+    
+    .table th {
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      padding: 0.75rem;
+      vertical-align: middle;
+    }
+    
+    .table td {
+      padding: 0.75rem;
+      vertical-align: middle;
+      border-color: rgba(0,0,0,0.05);
+    }
+    
+    /* Boutons */
+    .btn {
+      font-weight: 600;
+      padding: 0.6rem 1rem;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+    }
+    
+    .btn-sm {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.8rem;
+    }
+    
+    .btn i {
+      font-size: 1em;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .btn-outline-primary:hover {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    /* Barre de recherche */
+    .search-box {
+      position: relative;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    
+    .search-box input {
+      padding-left: 2.25rem;
+      border-radius: 50px;
+      border: 1px solid rgba(0,0,0,0.1);
+      font-size: 0.9rem;
+    }
+    
+    /* Cartes statistiques */
+    .stats-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--box-shadow);
+      border-left: 4px solid var(--primary);
+      transition: var(--transition);
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-3px);
+    }
+    
+    .stats-card h5 {
+      color: var(--gray);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    
+    .stats-card p {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 0;
+    }
+    
+    .stats-card small {
+      font-size: 0.7rem;
+    }
+    
+    /* Variations des cartes stats */
+    .stats-card.active { border-left-color: var(--success); }
+    .stats-card.inactive { border-left-color: var(--gray); }
+    .stats-card.grades { border-left-color: var(--secondary); }
+    .stats-card.medical { border-left-color: var(--info); }
+    .stats-card.license { border-left-color: var(--warning); }
+    
+    /* Notifications Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 4rem;
+      right: 1rem;
+      z-index: 1100;
+      width: 90%;
+      max-width: 350px;
+    }
+    
+    .toast {
+      border-radius: var(--border-radius);
+      border: none;
+      box-shadow: var(--box-shadow);
+      font-size: 0.9rem;
+    }
+    
+    /* Badges de compétences */
+    .skill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background-color: rgba(2, 136, 209, 0.1);
+      color: var(--secondary);
+      padding: 0.4rem 0.6rem;
+      border-radius: 50px;
+      font-weight: 500;
+      margin: 0.2rem;
+      font-size: 0.8rem;
+    }
+    
+    .skill-badge .btn-close {
+      font-size: 0.5rem;
+      opacity: 0.7;
+      padding: 0.25rem;
+    }
+    
+    .skill-badge .btn-close:hover {
+      opacity: 1;
+    }
+    
+    /* Lignes inactives */
+    .inactive-row {
+      opacity: 0.7;
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    .inactive-row:hover {
+      opacity: 1;
+    }
+    
+    /* Boutons d'action */
+    .action-buttons {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+    
+    /* Indicateurs d'expiration */
+    .expired {
+      position: relative;
+    }
+    
+    .expired::after {
+      content: 'EXPIRÉ';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-15deg);
+      background-color: rgba(211, 47, 47, 0.8);
+      color: white;
+      font-weight: bold;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+    
+    .expiring-soon {
+      position: relative;
+    }
+    
+    .expiring-soon::after {
+      content: 'À RENOUVELER';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-15deg);
+      background-color: rgba(255, 160, 0, 0.8);
+      color: var(--dark);
+      font-weight: bold;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+    
+    /* Filtres */
+    .filter-dropdown .dropdown-menu {
+      padding: 0.4rem;
+      min-width: 180px;
+    }
+    
+    .filter-dropdown .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      margin-bottom: 0.2rem;
+    }
+    
+    .filter-dropdown .dropdown-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .filter-dropdown .dropdown-item.active {
+      background-color: rgba(211, 47, 47, 0.1);
+      color: var(--primary);
+      font-weight: 500;
+    }
+    
+    /* Timeline (historique) */
+    .timeline {
+      position: relative;
+      padding-left: 1.2rem;
+      margin-left: 0.8rem;
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: var(--primary);
+    }
+    
+    .timeline-item {
+      position: relative;
+      padding-bottom: 1.2rem;
+    }
+    
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -1.4rem;
+      top: 0.25rem;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      border: 2px solid white;
+    }
+    
+    .timeline-date {
+      font-weight: 500;
+      color: var(--primary);
+      font-size: 0.85rem;
+    }
+    
+    /* Modals */
+    .modal-content {
+      border-radius: var(--border-radius);
+    }
+    
+    .modal-header {
+      padding: 1rem;
+    }
+    
+    .modal-body {
+      padding: 1rem;
+    }
+    
+    .modal-footer {
+      padding: 0.75rem 1rem;
+    }
+    
+    /* Galerie d'images */
+    .image-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .image-thumbnail {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .image-thumbnail:hover {
+      transform: scale(1.05);
+      box-shadow: var(--box-shadow);
+    }
+
+    /* Équipes */
+    .team-member-item {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      border: 1px solid #eee;
+      border-radius: var(--border-radius);
+      margin-bottom: 0.5rem;
+      background-color: #f9f9f9;
+    }
+
+    .team-member-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 0.75rem;
+      object-fit: cover;
+    }
+
+    .team-member-item .member-info {
+      flex-grow: 1;
+    }
+
+    .team-member-item .member-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .team-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      border: 1px solid #eee;
+      border-radius: var(--border-radius);
+      padding: 0.5rem;
+    }
+
+    .team-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--box-shadow);
+      border-left: 4px solid var(--secondary);
+    }
+
+    .team-card h5 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* Optimisation pour mobile */
+    @media (max-width: 768px) {
+      .app-title {
+        font-size: 1.3rem;
+      }
+      
+      .nav-tabs {
+        display: none;
+      }
+      
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      
+      .table td, .table th {
+        padding: 0.5rem;
+      }
+      
+      .btn {
+        padding: 0.5rem 0.8rem;
+      }
+      
+      .stats-card p {
+        font-size: 1.3rem;
+      }
+      
+      .form-control, .form-select {
+        padding: 0.65rem;
+      }
+      
+      /* Masquer certaines colonnes en mobile */
+      .mobile-hide {
+        display: none;
+      }
+      
+      .toast-container {
+        bottom: 5rem;
+      }
+
+      .team-member-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .team-member-item img {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+      }
+
+      .team-member-item .member-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+      }
+      
+      /* Afficher les boutons d'action sous forme de dropdown en mobile */
+      .mobile-actions {
+        position: relative;
+      }
+      
+      .mobile-actions .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+      }
+      
+      /* Permettre le clic sur toute la ligne pour voir les détails */
+      .clickable-row {
+        cursor: pointer;
+      }
+      
+      .clickable-row:hover {
+        background-color: rgba(0,0,0,0.03);
+      }
+    }
+    
+    /* Styles pour le mode hors ligne */
+    .offline-notification {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      right: 1rem;
+      background-color: var(--warning);
+      color: var(--dark);
+      padding: 0.75rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+      font-weight: 600;
+      z-index: 1050;
+      box-shadow: var(--box-shadow);
+      display: none;
+    }
+    
+    /* Animation de chargement */
+    .loading-spinner {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Amélioration de l'expérience tactile */
+    .btn, .nav-link, .dropdown-item, .photo-thumbnail, .image-thumbnail {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Optimisation des formulaires pour mobile */
+    input, select, textarea {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    
+    /* Correction du zoom sur iOS */
+    @media screen and (max-width: 767px) {
+      input[type="date"],
+      input[type="time"],
+      input[type="datetime-local"],
+      input[type="month"] {
+        min-height: 2.5rem;
+      }
+    }
+    
+    /* Style pour le mot de passe */
+    .password-input {
+      position: relative;
+    }
+    
+    .password-input .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--gray);
+    }
+  </style>
+</head>
+<body>
+  <!-- Notification hors ligne -->
+  <div class="offline-notification" id="offlineNotification">
+    <i class="bi bi-wifi-off"></i> Mode hors ligne - Les modifications seront synchronisées lorsque vous serez reconnecté
+  </div>
+
+  <!-- Structure principale -->
+  <div class="container-app">
+    <header class="app-header">
+      <h1 class="app-title">
+        <i class="bi bi-people-fill"></i> 
+        Gestion RH
+      </h1>
+      <small class="text-muted">Pompiers Saint-Paul de Fenouillet</small>
+    </header>
+    
+    <!-- Onglets de navigation (masqués sur mobile) -->
+    <ul class="nav nav-tabs" id="personnelTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab">
+          <i class="bi bi-person-plus"></i> Ajouter
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button" role="tab">
+          <i class="bi bi-list-ul"></i> Liste
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button" role="tab">
+          <i class="bi bi-heart-pulse"></i> Médical
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="licenses-tab" data-bs-toggle="tab" data-bs-target="#licenses" type="button" role="tab">
+          <i class="bi bi-car-front"></i> Permis
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="equipment-tab" data-bs-toggle="tab" data-bs-target="#equipment" type="button" role="tab">
+          <i class="bi bi-shield-check"></i> Équipements
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">
+          <i class="bi bi-people"></i> Équipes
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">
+          <i class="bi bi-bar-chart"></i> Stats
+        </button>
+      </li>
+    </ul>
+    
+    <!-- Contenu des onglets -->
+    <div class="tab-content" id="personnelTabsContent">
+      <!-- Formulaire d'ajout -->
+      <div class="tab-pane fade show active" id="add" role="tabpanel">
+        <form id="personnelForm" class="row g-3 needs-validation" novalidate>
+          <!-- Section Informations de base -->
+          <div class="col-md-6">
+            <label for="prenom" class="form-label">
+              <i class="bi bi-person"></i> Prénom
+            </label>
+            <input type="text" class="form-control" id="prenom" required>
+            <div class="invalid-feedback">Veuillez saisir le prénom.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="nom" class="form-label">
+              <i class="bi bi-person-badge"></i> Nom
+            </label>
+            <input type="text" class="form-control" id="nom" required>
+            <div class="invalid-feedback">Veuillez saisir le nom.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="dateNaissance" class="form-label">
+              <i class="bi bi-calendar-date"></i> Date de naissance
+            </label>
+            <input type="date" class="form-control" id="dateNaissance" required>
+            <div class="invalid-feedback">Veuillez sélectionner une date.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="matricule" class="form-label">
+              <i class="bi bi-123"></i> Matricule
+            </label>
+            <input type="text" class="form-control" id="matricule" required>
+            <div class="invalid-feedback">Veuillez saisir le matricule.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="grade" class="form-label">
+              <i class="bi bi-star"></i> Grade
+            </label>
+            <select class="form-select" id="grade" required>
+              <option value="">Sélectionner un grade</option>
+              <option value="Sapeur">Sapeur</option>
+              <option value="Caporal">Caporal</option>
+              <option value="Caporal-chef">Caporal-chef</option>
+              <option value="Sergent">Sergent</option>
+              <option value="Sergent-chef">Sergent-chef</option>
+              <option value="Adjudant">Adjudant</option>
+              <option value="Adjudant-chef">Adjudant-chef</option>
+              <option value="Lieutenant">Lieutenant</option>
+              <option value="Capitaine">Capitaine</option>
+              <option value="Commandant">Commandant</option>
+            </select>
+            <div class="invalid-feedback">Veuillez sélectionner un grade.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="statut" class="form-label">
+              <i class="bi bi-person-check"></i> Statut
+            </label>
+            <select class="form-select" id="statut" required>
+              <option value="Actif" selected>Actif</option>
+              <option value="Inactif">Inactif</option>
+              <option value="En congé">En congé</option>
+              <option value="En formation">En formation</option>
+              <option value="Blessé">Blessé</option>
+              <option value="Démision">Démision</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="competences" class="form-label">
+              <i class="bi bi-tools"></i> Compétences/Spécialités
+            </label>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="competenceInput" placeholder="Ajouter une compétence">
+              <button class="btn btn-outline-primary" type="button" id="ajouterCompetence">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            <div id="competencesList" class="d-flex flex-wrap gap-2 mb-3"></div>
+          </div>
+          <div class="col-md-6">
+            <label for="dateEntree" class="form-label">
+              <i class="bi bi-calendar-plus"></i> Date d'entrée
+            </label>
+            <input type="date" class="form-control" id="dateEntree" required>
+            <div class="invalid-feedback">Veuillez sélectionner une date.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="telephone" class="form-label">
+              <i class="bi bi-telephone"></i> Téléphone
+            </label>
+            <input type="tel" class="form-control" id="telephone" required>
+            <div class="invalid-feedback">Veuillez saisir un numéro de téléphone.</div>
+          </div>
+          <div class="col-12">
+            <label for="adresse" class="form-label">
+              <i class="bi bi-house"></i> Adresse
+            </label>
+            <textarea class="form-control" id="adresse" rows="2" required></textarea>
+            <div class="invalid-feedback">Veuillez saisir une adresse.</div>
+          </div>
+          
+          <!-- Section Visite Médicale -->
+          <div class="col-12 mt-3">
+            <h5 class="border-bottom pb-2"><i class="bi bi-heart-pulse"></i> Visite Médicale</h5>
+          </div>
+          <div class="col-md-6">
+            <label for="dateVisiteMedicale" class="form-label">
+              <i class="bi bi-calendar-check"></i> Dernière visite
+            </label>
+            <input type="date" class="form-control" id="dateVisiteMedicale">
+          </div>
+          <div class="col-md-6">
+            <label for="prochaineVisiteMedicale" class="form-label">
+              <i class="bi bi-calendar-event"></i> Prochaine visite
+            </label>
+            <input type="date" class="form-control" id="prochaineVisiteMedicale">
+          </div>
+          <div class="col-12">
+            <label for="notesMedicales" class="form-label">
+              <i class="bi bi-file-medical"></i> Notes médicales
+            </label>
+            <textarea class="form-control" id="notesMedicales" rows="2" placeholder="Aptitudes, restrictions..."></textarea>
+          </div>
+          
+          <!-- Section Permis de conduire -->
+          <div class="col-12 mt-3">
+            <h5 class="border-bottom pb-2"><i class="bi bi-car-front"></i> Permis de conduire</h5>
+          </div>
+          <div class="col-md-6">
+            <label for="permisConduire" class="form-label">
+              <i class="bi bi-card-checklist"></i> Catégories de permis
+            </label>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="permisInput" placeholder="Ajouter une catégorie (ex: B, C, D...)">
+              <button class="btn btn-outline-primary" type="button" id="ajouterPermis">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            <div id="permisList" class="d-flex flex-wrap gap-2 mb-3"></div>
+          </div>
+          <div class="col-md-6">
+            <label for="dateExpirationPermis" class="form-label">
+              <i class="bi bi-calendar-x"></i> Date d'expiration du permis
+            </label>
+            <input type="date" class="form-control" id="dateExpirationPermis">
+          </div>
+          <div class="col-12">
+            <label class="form-label">
+              <i class="bi bi-images"></i> Photos du permis
+            </label>
+            <div class="image-gallery" id="permisPhotosGallery"></div>
+            <input class="form-control" type="file" id="permisPhotoInput" accept="image/*" multiple>
+            <small class="text-muted">Ajoutez le recto et verso du permis</small>
+          </div>
+          
+          <!-- Section Équipements -->
+          <div class="col-12 mt-3">
+            <h5 class="border-bottom pb-2"><i class="bi bi-shield-check"></i> Équipements attribués</h5>
+          </div>
+          <div class="col-12">
+            <label for="equipements" class="form-label">
+              <i class="bi bi-tools"></i> Liste des équipements
+            </label>
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" id="equipementInput" placeholder="Nom de l'équipement">
+              <input type="text" class="form-control" id="equipementNumero" placeholder="Numéro" style="max-width: 100px;">
+              <button class="btn btn-outline-primary" type="button" id="ajouterEquipement">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            <div id="equipementsList" class="d-flex flex-wrap gap-2 mb-3"></div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">
+              <i class="bi bi-image"></i> Photo des équipements
+            </label>
+            <div class="image-gallery" id="equipmentPhotosGallery"></div>
+            <input class="form-control" type="file" id="equipmentPhotoInput" accept="image/*" multiple>
+            <small class="text-muted">Ajoutez des photos des équipements attribués</small>
+          </div>
+          
+          <!-- Photo et notes -->
+          <div class="col-12">
+            <label for="photo" class="form-label">
+              <i class="bi bi-camera"></i> Photo de profil (max 5MB)
+            </label>
+            <input class="form-control" type="file" id="photo" accept="image/*">
+            <div id="photoPreview" class="mt-3 text-center"></div>
+          </div>
+          <div class="col-12">
+            <label for="notes" class="form-label">
+              <i class="bi bi-journal-text"></i> Notes/Informations complémentaires
+            </label>
+            <textarea class="form-control" id="notes" rows="3" placeholder="Informations supplémentaires..."></textarea>
+          </div>
+          
+          <!-- Boutons de soumission -->
+          <div class="col-12 d-flex justify-content-between mt-3">
+            <button type="submit" class="btn btn-primary px-3">
+              <i class="bi bi-save"></i> Enregistrer
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="resetForm">
+              <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+            </button>
+          </div>
+          <input type="hidden" id="personnelId">
+        </form>
+      </div>
+      
+      <!-- Liste du personnel -->
+      <div class="tab-pane fade" id="list" role="tabpanel">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+          <div class="search-box flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input type="text" id="personnelSearch" class="form-control" placeholder="Rechercher un membre...">
+          </div>
+          
+          <!-- Menu déroulant des filtres -->
+          <div class="filter-dropdown dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-funnel"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="filterDropdown">
+              <li>
+                <a class="dropdown-item ${!currentFilterStatus ? 'active' : ''}" href="#" data-filter="all">
+                  <i class="bi bi-collection"></i> Tous
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'Actif' ? 'active' : ''}" href="#" data-filter="Actif">
+                  <i class="bi bi-person-check"></i> Actifs
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'Inactif' ? 'active' : ''}" href="#" data-filter="Inactif">
+                  <i class="bi bi-person-x"></i> Inactifs
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'En congé' ? 'active' : ''}" href="#" data-filter="En congé">
+                  <i class="bi bi-umbrella"></i> En congé
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'En formation' ? 'active' : ''}" href="#" data-filter="En formation">
+                  <i class="bi bi-book"></i> En formation
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item ${currentFilterStatus === 'Blessé' ? 'active' : ''}" href="#" data-filter="Blessé">
+                  <i class="bi bi-bandage"></i> Blessés
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th class="mobile-hide">Photo</th>
+                <th class="sortable-header" data-sort="nom">
+                  Nom <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="sortable-header" data-sort="prenom">
+                  Prénom <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="mobile-hide sortable-header" data-sort="grade">
+                  Grade <i class="bi bi-arrow-down-up ms-1"></i>
+                </th>
+                <th class="mobile-hide">Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="personnelList">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-center mt-3">
+          <nav aria-label="Pagination">
+            <ul class="pagination" id="personnelPagination">
+              <!-- Rempli dynamiquement -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+      
+      <!-- Visites Médicales -->
+      <div class="tab-pane fade" id="medical" role="tabpanel">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+          <div class="search-box flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input type="text" id="medicalSearch" class="form-control" placeholder="Rechercher un membre...">
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm" id="showExpiredMedical">
+              <i class="bi bi-exclamation-triangle"></i> Expirés
+            </button>
+            <button class="btn btn-outline-warning btn-sm" id="showExpiringMedical">
+              <i class="bi bi-exclamation-circle"></i> À renouveler
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="showAllMedical">
+              <i class="bi bi-list-ul"></i> Tous
+            </button>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Membre</th>
+                <th class="mobile-hide">Dernière visite</th>
+                <th>Prochaine visite</th>
+                <th>État</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="medicalList">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-center mt-3">
+          <nav aria-label="Pagination">
+            <ul class="pagination" id="medicalPagination">
+              <!-- Rempli dynamiquement -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+      
+      <!-- Permis de conduire -->
+      <div class="tab-pane fade" id="licenses" role="tabpanel">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+          <div class="search-box flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input type="text" id="licensesSearch" class="form-control" placeholder="Rechercher un membre...">
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm" id="showExpiredLicenses">
+              <i class="bi bi-exclamation-triangle"></i> Expirés
+            </button>
+            <button class="btn btn-outline-warning btn-sm" id="showExpiringLicenses">
+              <i class="bi bi-exclamation-circle"></i> À renouveler
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="showAllLicenses">
+              <i class="bi bi-list-ul"></i> Tous
+            </button>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Membre</th>
+                <th class="mobile-hide">Catégories</th>
+                <th>Expiration</th>
+                <th>État</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="licensesList">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-center mt-3">
+          <nav aria-label="Pagination">
+            <ul class="pagination" id="licensesPagination">
+              <!-- Rempli dynamiquement -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+      
+      <!-- Équipements -->
+      <div class="tab-pane fade" id="equipment" role="tabpanel">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+          <div class="search-box flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input type="text" id="equipmentSearch" class="form-control" placeholder="Rechercher un équipement ou un membre...">
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Membre</th>
+                <th class="mobile-hide">Équipements</th>
+                <th>Attribution</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="equipmentList">
+              <!-- Rempli dynamiquement -->
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-center mt-3">
+          <nav aria-label="Pagination">
+            <ul class="pagination" id="equipmentPagination">
+              <!-- Rempli dynamiquement -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Équipes -->
+      <div class="tab-pane fade" id="teams" role="tabpanel">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+          <div class="search-box flex-grow-1">
+            <i class="bi bi-search"></i>
+            <input type="text" id="teamSearch" class="form-control" placeholder="Rechercher une équipe...">
+          </div>
+          <button class="btn btn-primary" id="addTeamBtn">
+            <i class="bi bi-plus-lg"></i> Nouvelle équipe
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card mb-3">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Liste des équipes</h5>
+              </div>
+              <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="teamsList">
+                  <!-- Rempli dynamiquement -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0" id="teamDetailsTitle">Sélectionnez une équipe</h5>
+              </div>
+              <div class="card-body" id="teamDetailsContent">
+                <div class="text-center text-muted py-5">
+                  <i class="bi bi-people" style="font-size: 3rem;"></i>
+                  <p class="mt-3">Sélectionnez une équipe pour voir les détails</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Statistiques -->
+      <div class="tab-pane fade" id="stats" role="tabpanel">
+        <div class="row mb-3">
+          <div class="col-6 col-md-3">
+            <div class="stats-card active">
+              <h5><i class="bi bi-person-check"></i> Actifs</h5>
+              <p id="stats-active">0</p>
+              <small class="text-muted">En service</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="stats-card inactive">
+              <h5><i class="bi bi-person-x"></i> Inactifs</h5>
+              <p id="stats-inactive">0</p>
+              <small class="text-muted">Membres</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="stats-card medical">
+              <h5><i class="bi bi-heart-pulse"></i> À renouveler</h5>
+              <p id="stats-medical">0</p>
+              <small class="text-muted">Visites</small>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="stats-card license">
+              <h5><i class="bi bi-car-front"></i> À renouveler</h5>
+              <p id="stats-license">0</p>
+              <small class="text-muted">Permis</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-star"></i> Répartition par grade</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="gradesChart" height="250"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-pie-chart"></i> Répartition par statut</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="statusChart" height="250"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-heart-pulse"></i> État des visites médicales</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="medicalChart" height="250"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-calendar-week"></i> Entrées par année</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="entriesChart" height="250"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu mobile -->
+  <div class="mobile-bottom-nav">
+    <a href="#" class="mobile-nav-item active" data-tab="add">
+      <i class="bi bi-person-plus"></i>
+      Ajouter
+    </a>
+    <a href="#" class="mobile-nav-item" data-tab="list">
+      <i class="bi bi-list-ul"></i>
+      Liste
+    </a>
+    <a href="#" class="mobile-nav-item" data-tab="medical">
+      <i class="bi bi-heart-pulse"></i>
+      Médical
+    </a>
+    <a href="#" class="mobile-nav-item" data-tab="licenses">
+      <i class="bi bi-car-front"></i>
+      Permis
+    </a>
+    <a href="#" class="mobile-nav-item" data-tab="equipment">
+      <i class="bi bi-shield-check"></i>
+      Équipements
+    </a>
+    <a href="#" class="mobile-nav-item" data-tab="teams">
+      <i class="bi bi-people"></i>
+      Équipes
+    </a>
+    <a href="#" class="mobile-nav-item" data-tab="stats">
+      <i class="bi bi-bar-chart"></i>
+      Stats
+    </a>
+  </div>
+
+  <!-- Modals -->
+  <!-- Modal Détails Membre -->
+  <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-person-lines-fill"></i> Détails du membre
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Contenu dynamique -->
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Photo -->
+  <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-image-fill"></i> Photo
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center p-0">
+          <img id="fullPhoto" src="" class="img-fluid rounded" style="max-height: 70vh; width: auto;">
+        </div>
+        <div class="modal-footer border-0 justify-content-center">
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Visite Médicale -->
+  <div class="modal fade" id="medicalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-heart-pulse"></i> Visite Médicale
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="medicalForm">
+            <input type="hidden" id="medicalPersonnelId">
+            <div class="mb-3">
+              <label for="medicalDate" class="form-label">Date de la visite</label>
+              <input type="date" class="form-control" id="medicalDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="nextMedicalDate" class="form-label">Prochaine visite</label>
+              <input type="date" class="form-control" id="nextMedicalDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="medicalResult" class="form-label">Résultat</label>
+              <select class="form-select" id="medicalResult" required>
+                <option value="Apte">Apte</option>
+                <option value="Apte avec restrictions">Apte avec restrictions</option>
+                <option value="Inapte temporaire">Inapte temporaire</option>
+                <option value="Inapte">Inapte</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="medicalNotes" class="form-label">Notes</label>
+              <textarea class="form-control" id="medicalNotes" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveMedical">
+            <i class="bi bi-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Permis -->
+  <div class="modal fade" id="licenseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-car-front"></i> Permis de conduire
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="licenseForm">
+            <input type="hidden" id="licensePersonnelId">
+            <div class="mb-3">
+              <label for="licenseCategories" class="form-label">Catégories</label>
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" id="licenseInput" placeholder="Ajouter une catégorie (ex: B, C, D...)">
+                <button class="btn btn-outline-primary" type="button" id="ajouterLicense">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div>
+              <div id="licenseList" class="d-flex flex-wrap gap-2 mb-3"></div>
+            </div>
+            <div class="mb-3">
+              <label for="licenseExpiration" class="form-label">Date d'expiration</label>
+              <input type="date" class="form-control" id="licenseExpiration" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Photos du permis</label>
+              <div class="image-gallery" id="modalPermisPhotos"></div>
+              <input type="file" class="form-control" id="modalPermisPhotoInput" accept="image/*" multiple>
+              <small class="text-muted">Ajoutez le recto et verso du permis</small>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveLicense">
+            <i class="bi bi-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Équipements -->
+  <div class="modal fade" id="equipmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-shield-check"></i> Équipements attribués
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="equipmentForm">
+            <input type="hidden" id="equipmentPersonnelId">
+            <div class="mb-3">
+              <label for="equipmentListInput" class="form-label">Équipements</label>
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" id="equipmentInput" placeholder="Nom de l'équipement">
+                <input type="text" class="form-control" id="equipmentNumero" placeholder="Numéro" style="max-width: 100px;">
+                <button class="btn btn-outline-primary" type="button" id="addEquipment">
+                  <i class="bi bi-plus-lg"></i> Ajouter
+                </button>
+              </div>
+              <div id="equipmentItems" class="d-flex flex-wrap gap-2 mb-3"></div>
+            </div>
+            <div class="mb-3">
+              <label for="equipmentDate" class="form-label">Date d'attribution</label>
+              <input type="date" class="form-control" id="equipmentDate">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Photos des équipements</label>
+              <div class="image-gallery" id="modalEquipmentPhotos"></div>
+              <input type="file" class="form-control" id="modalEquipmentPhotoInput" accept="image/*" multiple>
+              <small class="text-muted">Ajoutez des photos des équipements attribués</small>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveEquipment">
+            <i class="bi bi-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Équipe -->
+  <div class="modal fade" id="teamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="teamModalTitle">
+            <i class="bi bi-people-fill"></i> Nouvelle équipe
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="teamForm">
+            <input type="hidden" id="teamId">
+            <div class="mb-3">
+              <label for="teamName" class="form-label">Nom de l'équipe</label>
+              <input type="text" class="form-control" id="teamName" required>
+            </div>
+            <div class="mb-3">
+              <label for="teamDescription" class="form-label">Description</label>
+              <textarea class="form-control" id="teamDescription" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Chef d'équipe</label>
+              <select class="form-select" id="teamLeader">
+                <option value="">Sélectionner un chef d'équipe</option>
+                <!-- Rempli dynamiquement -->
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Membres disponibles</label>
+              <div class="search-box mb-2">
+                <i class="bi bi-search"></i>
+                <input type="text" id="teamMemberSearch" class="form-control" placeholder="Rechercher un membre...">
+              </div>
+              <div class="team-list" id="availableMembers">
+                <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Membres de l'équipe</label>
+              <div class="team-list" id="teamMembers">
+                <!-- Rempli dynamiquement -->
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-primary" id="saveTeam">
+            <i class="bi bi-save"></i> Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmation -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="confirmModalTitle">
+            <i class="bi bi-exclamation-triangle"></i> Confirmation
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="confirmModalBody">
+          <div id="confirmMessage">
+            Êtes-vous sûr de vouloir effectuer cette action ?
+          </div>
+          <div id="passwordSection" class="mt-3" style="display: none;">
+            <div class="password-input">
+              <label for="confirmPassword" class="form-label">Mot de passe requis</label>
+              <input type="password" class="form-control" id="confirmPassword" placeholder="Entrez le mot de passe">
+              <i class="bi bi-eye-fill toggle-password" id="togglePassword"></i>
+              <div class="invalid-feedback" id="passwordError">Mot de passe incorrect</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-danger" id="confirmAction">
+            <i class="bi bi-check-lg"></i> Confirmer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Luxon pour les dates -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0"></script>
+  <!-- Chart.js plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  
+  <!-- Application Script -->
+  <script>
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAn3EkNxGgxftUpdi4dM2YkvaKgi-EIWs4",
+      authDomain: "logiciel-rh.firebaseapp.com",
+      databaseURL: "https://logiciel-rh-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "logiciel-rh",
+      storageBucket: "logiciel-rh.firebasestorage.app",
+      messagingSenderId: "846412910561",
+      appId: "1:846412910561:web:24be5bed42ce8b1fa8cca0",
+      measurementId: "G-RN9WYNGP4Q"
+    };
+
+    // Initialisation Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    // Variables globales
+    let competences = [];
+    let permis = [];
+    let equipements = [];
+    let photoBase64 = null;
+    let permisPhotos = [];
+    let equipmentPhotos = [];
+    let currentEditingId = null;
+    const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
+    let currentSortField = 'nom';
+    let currentSortDirection = 'asc';
+    let currentFilterStatus = null;
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 8;
+    let gradesChart = null;
+    let statusChart = null;
+    let medicalChart = null;
+    let entriesChart = null;
+    let allPersonnel = {};
+    let allTeams = {};
+    let currentMedicalFilter = 'all';
+    let currentLicenseFilter = 'all';
+    let pendingWrites = [];
+    let isOnline = navigator.onLine;
+    let currentTeamId = null;
+    const ADMIN_PASSWORD = "Aspf66220*";
+    
+    // Initialisation de l'application
+    document.addEventListener('DOMContentLoaded', function() {
+      initForm();
+      loadPersonnel();
+      loadTeams();
+      setupRealtime();
+      setupSearch();
+      setupSorting();
+      setupFilters();
+      setupMedicalFilters();
+      setupLicenseFilters();
+      setupOfflineDetection();
+      setupServiceWorker();
+      setupMobileNavigation();
+      setupTeamEvents();
+      setupPasswordToggle();
+    });
+    
+    // Configuration du Service Worker pour PWA
+    function setupServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful');
+          }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    }
+    
+    // Configuration de la navigation mobile
+    function setupMobileNavigation() {
+      document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tabId = this.getAttribute('data-tab');
+          
+          // Activer l'onglet correspondant
+          const tabButton = document.getElementById(`${tabId}-tab`);
+          if (tabButton) {
+            const tab = new bootstrap.Tab(tabButton);
+            tab.show();
+          }
+          
+          // Mettre à jour l'état actif du menu
+          document.querySelectorAll('.mobile-nav-item').forEach(navItem => {
+            navItem.classList.remove('active');
+          });
+          this.classList.add('active');
+          
+          // Faire défiler vers le haut
+          window.scrollTo(0, 0);
+        });
+      });
+    }
+    
+    // Configuration du toggle pour le mot de passe
+    function setupPasswordToggle() {
+      document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('confirmPassword');
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.classList.toggle('bi-eye-fill');
+        this.classList.toggle('bi-eye-slash-fill');
+      });
+    }
+    
+    // Détection de la connexion
+    function setupOfflineDetection() {
+      window.addEventListener('online', handleConnectionChange);
+      window.addEventListener('offline', handleConnectionChange);
+      
+      function handleConnectionChange() {
+        isOnline = navigator.onLine;
+        const notification = document.getElementById('offlineNotification');
+        
+        if (isOnline) {
+          notification.style.display = 'none';
+          // Synchroniser les modifications en attente
+          syncPendingWrites();
+        } else {
+          notification.style.display = 'block';
+        }
+      }
+      
+      // Afficher initialement si hors ligne
+      if (!isOnline) {
+        document.getElementById('offlineNotification').style.display = 'block';
+      }
+    }
+    
+    // Synchronisation des écritures en attente
+    function syncPendingWrites() {
+      if (pendingWrites.length === 0) return;
+      
+      showToast("Synchronisation des modifications en cours...", 'info');
+      
+      const promises = pendingWrites.map(write => {
+        return database.ref(write.path).set(write.data)
+          .then(() => {
+            // Supprimer de la liste des écritures en attente
+            pendingWrites = pendingWrites.filter(w => w !== write);
+          });
+      });
+      
+      Promise.all(promises)
+        .then(() => {
+          showToast("Synchronisation terminée", 'success');
+        })
+        .catch(error => {
+          console.error("Erreur de synchronisation:", error);
+        });
+    }
+    
+    // Initialisation du formulaire
+    function initForm() {
+      // Validation du formulaire
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', function(event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          
+          form.classList.add('was-validated');
+        }, false);
+      });
+      
+      // Gestion des compétences
+      document.getElementById('ajouterCompetence').addEventListener('click', function() {
+        const input = document.getElementById('competenceInput');
+        const value = input.value.trim();
+        if (value) {
+          competences.push(value);
+          updateCompetencesDisplay();
+          input.value = '';
+          input.focus();
+        }
+      });
+      
+      // Gestion des permis dans le formulaire principal
+      document.getElementById('ajouterPermis').addEventListener('click', function() {
+        const input = document.getElementById('permisInput');
+        const value = input.value.trim().toUpperCase();
+        if (value) {
+          permis.push(value);
+          updatePermisDisplay();
+          input.value = '';
+          input.focus();
+        }
+      });
+      
+      // Gestion des permis dans le modal
+      document.getElementById('ajouterLicense').addEventListener('click', function() {
+        const input = document.getElementById('licenseInput');
+        const value = input.value.trim().toUpperCase();
+        if (value) {
+          permis.push(value);
+          updateLicenseModalDisplay();
+          input.value = '';
+          input.focus();
+        }
+      });
+      
+      // Gestion des équipements
+      document.getElementById('ajouterEquipement').addEventListener('click', function() {
+        const input = document.getElementById('equipementInput');
+        const numero = document.getElementById('equipementNumero').value.trim();
+        const value = input.value.trim();
+        
+        if (value && numero) {
+          equipements.push({ nom: value, numero });
+          updateEquipementsDisplay();
+          input.value = '';
+          document.getElementById('equipementNumero').value = '';
+          input.focus();
+        }
+      });
+
+      // Prévisualisation photo de profil
+      document.getElementById('photo').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > MAX_PHOTO_SIZE) {
+          showToast("La photo est trop volumineuse (max 5MB)", 'warning');
+          this.value = '';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          photoBase64 = event.target.result;
+          document.getElementById('photoPreview').innerHTML = `
+            <img src="${photoBase64}" class="photo-thumbnail mb-2">
+            <button class="btn btn-sm btn-danger" id="removePhoto">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          `;
+          
+          document.getElementById('removePhoto').addEventListener('click', function() {
+            document.getElementById('photoPreview').innerHTML = '';
+            document.getElementById('photo').value = '';
+            photoBase64 = null;
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      // Gestion des photos du permis
+      document.getElementById('permisPhotoInput').addEventListener('change', function(e) {
+        handleImageUpload(e.target.files, 'permisPhotos', 'permisPhotosGallery');
+      });
+      
+      // Gestion des photos des équipements
+      document.getElementById('equipmentPhotoInput').addEventListener('change', function(e) {
+        handleImageUpload(e.target.files, 'equipmentPhotos', 'equipmentPhotosGallery');
+      });
+      
+      // Soumission du formulaire
+      document.getElementById('personnelForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!this.checkValidity()) {
+          return;
+        }
+        
+        const prenom = document.getElementById('prenom').value.trim();
+        const nom = document.getElementById('nom').value.trim();
+        const dateNaissance = document.getElementById('dateNaissance').value;
+        const matricule = document.getElementById('matricule').value.trim();
+        const grade = document.getElementById('grade').value;
+        const statut = document.getElementById('statut').value;
+        const dateEntree = document.getElementById('dateEntree').value;
+        const telephone = document.getElementById('telephone').value.trim();
+        const adresse = document.getElementById('adresse').value.trim();
+        const notes = document.getElementById('notes').value.trim();
+        const dateVisiteMedicale = document.getElementById('dateVisiteMedicale').value;
+        const prochaineVisiteMedicale = document.getElementById('prochaineVisiteMedicale').value;
+        const notesMedicales = document.getElementById('notesMedicales').value.trim();
+        const dateExpirationPermis = document.getElementById('dateExpirationPermis').value;
+        
+        const personnelData = {
+          prenom,
+          nom,
+          dateNaissance,
+          matricule,
+          grade,
+          statut,
+          competences: [...competences],
+          permis: [...permis],
+          permisPhotos: [...permisPhotos],
+          equipements: [...equipements],
+          equipmentPhotos: [...equipmentPhotos],
+          dateEntree,
+          telephone,
+          adresse,
+          notes,
+          dateVisiteMedicale,
+          prochaineVisiteMedicale,
+          notesMedicales,
+          dateExpirationPermis,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        
+        if (photoBase64) {
+          personnelData.photo = photoBase64;
+        }
+        
+        try {
+          if (currentEditingId) {
+            personnelData.createdAt = allPersonnel[currentEditingId].createdAt;
+            await writeData(`personnel/${currentEditingId}`, personnelData);
+          } else {
+            personnelData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+            await writeData('personnel', personnelData);
+          }
+          resetForm();
+        } catch (error) {
+          console.error("Erreur Firebase:", error);
+          showToast("Erreur lors de l'enregistrement", 'danger');
+        }
+      });
+      
+      // Réinitialisation du formulaire
+      document.getElementById('resetForm').addEventListener('click', resetForm);
+      
+      // Sauvegarde visite médicale
+      document.getElementById('saveMedical').addEventListener('click', async function() {
+        const id = document.getElementById('medicalPersonnelId').value;
+        const date = document.getElementById('medicalDate').value;
+        const nextDate = document.getElementById('nextMedicalDate').value;
+        const result = document.getElementById('medicalResult').value;
+        const notes = document.getElementById('medicalNotes').value;
+        
+        if (!date || !nextDate) {
+          showToast('Veuillez remplir toutes les dates', 'warning');
+          return;
+        }
+        
+        try {
+          await writeData(`personnel/${id}`, {
+            dateVisiteMedicale: date,
+            prochaineVisiteMedicale: nextDate,
+            notesMedicales: notes,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          
+          $('#medicalModal').modal('hide');
+        } catch (error) {
+          console.error("Erreur:", error);
+          showToast("Erreur lors de l'enregistrement", 'danger');
+        }
+      });
+      
+      // Sauvegarde permis
+      document.getElementById('saveLicense').addEventListener('click', async function() {
+        const id = document.getElementById('licensePersonnelId').value;
+        const categories = Array.from(document.querySelectorAll('#licenseList .skill-badge'))
+          .map(el => el.textContent.trim().replace('×', '').trim());
+        const expiration = document.getElementById('licenseExpiration').value;
+        
+        if (!categories.length || !expiration) {
+          showToast('Veuillez remplir tous les champs', 'warning');
+          return;
+        }
+        
+        try {
+          await writeData(`personnel/${id}`, {
+            permis: categories,
+            dateExpirationPermis: expiration,
+            permisPhotos: permisPhotos,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          
+          $('#licenseModal').modal('hide');
+        } catch (error) {
+          console.error("Erreur:", error);
+          showToast("Erreur lors de l'enregistrement", 'danger');
+        }
+      });
+      
+      // Sauvegarde équipements
+      document.getElementById('saveEquipment').addEventListener('click', async function() {
+        const id = document.getElementById('equipmentPersonnelId').value;
+        const date = document.getElementById('equipmentDate').value || new Date().toISOString().split('T')[0];
+        
+        const equipmentItems = Array.from(document.querySelectorAll('#equipmentItems .skill-badge'))
+          .map(el => {
+            const text = el.textContent.trim().replace('×', '').trim();
+            const [nom, numero] = text.split(' - ');
+            return { nom, numero };
+          });
+        
+        try {
+          await writeData(`personnel/${id}`, {
+            equipements: equipmentItems,
+            dateAttributionEquipements: date,
+            equipmentPhotos: equipmentPhotos,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          
+          $('#equipmentModal').modal('hide');
+        } catch (error) {
+          console.error("Erreur:", error);
+          showToast("Erreur lors de l'enregistrement", 'danger');
+        }
+      });
+      
+      // Ajout équipement dans le modal
+      document.getElementById('addEquipment').addEventListener('click', function() {
+        const input = document.getElementById('equipmentInput');
+        const numeroInput = document.getElementById('equipmentNumero');
+        const value = input.value.trim();
+        const numero = numeroInput.value.trim();
+        
+        if (value && numero) {
+          const container = document.getElementById('equipmentItems');
+          container.innerHTML += `
+            <span class="skill-badge">
+              ${value} - ${numero}
+              <button type="button" class="btn-close" data-equipment="${value}" aria-label="Supprimer"></button>
+            </span>
+          `;
+          
+          // Ajouter l'événement de suppression
+          container.lastElementChild.querySelector('.btn-close').addEventListener('click', function() {
+            this.parentElement.remove();
+          });
+          
+          input.value = '';
+          numeroInput.value = '';
+          input.focus();
+        }
+      });
+      
+      // Confirmation de suppression
+      document.getElementById('confirmAction').addEventListener('click', async function() {
+        const id = this.getAttribute('data-id');
+        const type = this.getAttribute('data-type');
+        const requiresPassword = this.getAttribute('data-requires-password') === 'true';
+        
+        if (requiresPassword) {
+          const password = document.getElementById('confirmPassword').value;
+          if (password !== ADMIN_PASSWORD) {
+            document.getElementById('passwordError').style.display = 'block';
+            document.getElementById('confirmPassword').classList.add('is-invalid');
+            return;
+          }
+        }
+        
+        try {
+          if (type === 'team') {
+            await writeData(`teams/${id}`, null); // Suppression équipe
+          } else {
+            await writeData(`personnel/${id}`, null); // Suppression membre
+          }
+          $('#confirmModal').modal('hide');
+        } catch (error) {
+          console.error("Erreur:", error);
+          showToast("Erreur lors de la suppression", 'danger');
+        }
+      });
+    }
+    
+    // Configuration des événements pour les équipes
+    function setupTeamEvents() {
+      // Bouton pour ajouter une nouvelle équipe
+      document.getElementById('addTeamBtn').addEventListener('click', function() {
+        showTeamModal();
+      });
+
+      // Sauvegarde d'une équipe
+      document.getElementById('saveTeam').addEventListener('click', async function() {
+        const id = document.getElementById('teamId').value;
+        const name = document.getElementById('teamName').value.trim();
+        const description = document.getElementById('teamDescription').value.trim();
+        const leaderId = document.getElementById('teamLeader').value;
+        
+        if (!name) {
+          showToast('Veuillez saisir un nom pour l\'équipe', 'warning');
+          return;
+        }
+
+        // Récupérer les membres de l'équipe
+        const members = Array.from(document.querySelectorAll('#teamMembers .team-member-item'))
+          .map(el => el.getAttribute('data-id'));
+
+        if (members.length === 0) {
+          showToast('Veuillez ajouter au moins un membre à l\'équipe', 'warning');
+          return;
+        }
+
+        const teamData = {
+          name,
+          description,
+          leader: leaderId,
+          members,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        try {
+          if (id) {
+            teamData.createdAt = allTeams[id].createdAt;
+            await writeData(`teams/${id}`, teamData);
+          } else {
+            teamData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+            await writeData('teams', teamData);
+          }
+          $('#teamModal').modal('hide');
+        } catch (error) {
+          console.error("Erreur:", error);
+          showToast("Erreur lors de l'enregistrement", 'danger');
+        }
+      });
+
+      // Recherche dans les équipes
+      document.getElementById('teamSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const teamItems = document.querySelectorAll('#teamsList .list-group-item');
+        
+        teamItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+      });
+
+      // Recherche dans les membres disponibles
+      document.getElementById('teamMemberSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const memberItems = document.querySelectorAll('#availableMembers .team-member-item');
+        
+        memberItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+      });
+    }
+    
+    // Gestion de l'upload d'images
+    function handleImageUpload(files, photosArrayName, galleryId) {
+      if (!files || files.length === 0) return;
+      
+      const maxFiles = 5; // Limite de 5 images
+      const remainingSlots = maxFiles - window[photosArrayName].length;
+      
+      if (files.length > remainingSlots) {
+        showToast(`Vous ne pouvez ajouter que ${remainingSlots} photo(s) supplémentaire(s)`, 'warning');
+        return;
+      }
+      
+      for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
+        const file = files[i];
+        
+        if (file.size > MAX_PHOTO_SIZE) {
+          showToast(`La photo ${file.name} est trop volumineuse (max 5MB)`, 'warning');
+          continue;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          window[photosArrayName].push(event.target.result);
+          updateImageGallery(galleryId, window[photosArrayName]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+    
+    // Mise à jour de la galerie d'images
+    function updateImageGallery(galleryId, photos) {
+      const gallery = document.getElementById(galleryId);
+      gallery.innerHTML = '';
+      
+      photos.forEach((photo, index) => {
+        gallery.innerHTML += `
+          <div class="position-relative">
+            <img src="${photo}" class="image-thumbnail" data-index="${index}">
+            <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0" style="width: 20px; height: 20px;" data-index="${index}">
+              <i class="bi bi-x" style="font-size: 0.7rem;"></i>
+            </button>
+          </div>
+        `;
+      });
+      
+      // Ajouter les événements pour supprimer les images
+      document.querySelectorAll(`#${galleryId} .btn-danger`).forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = parseInt(this.getAttribute('data-index'));
+          photos.splice(index, 1);
+          updateImageGallery(galleryId, photos);
+        });
+      });
+      
+      // Ajouter les événements pour voir les images en grand
+      document.querySelectorAll(`#${galleryId} .image-thumbnail`).forEach(img => {
+        img.addEventListener('click', function() {
+          const index = parseInt(this.getAttribute('data-index'));
+          document.getElementById('fullPhoto').src = photos[index];
+          const photoModal = new bootstrap.Modal(document.getElementById('photoModal'));
+          photoModal.show();
+        });
+      });
+    }
+    
+    // Fonction d'écriture avec gestion hors ligne
+    async function writeData(path, data) {
+      if (!isOnline) {
+        // Stocker en local pour synchronisation ultérieure
+        pendingWrites.push({ path, data });
+        throw new Error("Opération enregistrée pour synchronisation ultérieure (hors ligne)");
+      }
+      
+      try {
+        if (data === null) {
+          // Suppression
+          await database.ref(path).remove();
+        } else if (path === 'personnel' || path === 'teams') {
+          // Nouvel élément
+          const ref = await database.ref(path).push();
+          await ref.set(data);
+          return ref.key; // Retourne l'ID généré
+        } else {
+          // Mise à jour
+          await database.ref(path).update(data);
+        }
+        return true;
+      } catch (error) {
+        console.error("Erreur d'écriture:", error);
+        throw error;
+      }
+    }
+    
+    // Réinitialisation du formulaire
+    function resetForm() {
+      const form = document.getElementById('personnelForm');
+      form.reset();
+      form.classList.remove('was-validated');
+      document.getElementById('photoPreview').innerHTML = '';
+      competences = [];
+      permis = [];
+      equipements = [];
+      permisPhotos = [];
+      equipmentPhotos = [];
+      updateCompetencesDisplay();
+      updatePermisDisplay();
+      updateEquipementsDisplay();
+      updateImageGallery('permisPhotosGallery', permisPhotos);
+      updateImageGallery('equipmentPhotosGallery', equipmentPhotos);
+      photoBase64 = null;
+      currentEditingId = null;
+      document.getElementById('statut').value = 'Actif';
+      
+      // Réinitialiser la date d'entrée à aujourd'hui
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      document.getElementById('dateEntree').value = dateStr;
+    }
+    
+    // Mise à jour de l'affichage des compétences
+    function updateCompetencesDisplay() {
+      const container = document.getElementById('competencesList');
+      container.innerHTML = competences.map(c => `
+        <span class="skill-badge">
+          ${c}
+          <button type="button" class="btn-close" data-competence="${c}" aria-label="Supprimer"></button>
+        </span>
+      `).join('');
+      
+      document.querySelectorAll('[data-competence]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const comp = this.getAttribute('data-competence');
+          competences = competences.filter(c => c !== comp);
+          updateCompetencesDisplay();
+        });
+      });
+    }
+    
+    // Mise à jour de l'affichage des permis
+    function updatePermisDisplay() {
+      const container = document.getElementById('permisList');
+      container.innerHTML = permis.map(p => `
+        <span class="skill-badge">
+          ${p}
+          <button type="button" class="btn-close" data-permis="${p}" aria-label="Supprimer"></button>
+        </span>
+      `).join('');
+      
+      document.querySelectorAll('[data-permis]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const p = this.getAttribute('data-permis');
+          permis = permis.filter(perm => perm !== p);
+          updatePermisDisplay();
+        });
+      });
+    }
+    
+    // Mise à jour de l'affichage des permis dans le modal
+    function updateLicenseModalDisplay() {
+      const container = document.getElementById('licenseList');
+      container.innerHTML = permis.map(p => `
+        <span class="skill-badge">
+          ${p}
+          <button type="button" class="btn-close" data-permis="${p}" aria-label="Supprimer"></button>
+        </span>
+      `).join('');
+      
+      document.querySelectorAll('[data-permis]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const p = this.getAttribute('data-permis');
+          permis = permis.filter(perm => perm !== p);
+          updateLicenseModalDisplay();
+        });
+      });
+    }
+    
+    // Mise à jour de l'affichage des équipements
+    function updateEquipementsDisplay() {
+      const container = document.getElementById('equipementsList');
+      container.innerHTML = equipements.map(e => `
+        <span class="skill-badge">
+          ${e.nom} - ${e.numero}
+          <button type="button" class="btn-close" data-equipement="${e.nom}" aria-label="Supprimer"></button>
+        </span>
+      `).join('');
+      
+      document.querySelectorAll('[data-equipement]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const e = this.getAttribute('data-equipement');
+          equipements = equipements.filter(equip => equip.nom !== e);
+          updateEquipementsDisplay();
+        });
+      });
+    }
+    
+    // Chargement du personnel depuis Firebase
+    async function loadPersonnel() {
+      try {
+        const snapshot = await database.ref('personnel').once('value');
+        allPersonnel = snapshot.val() || {};
+        displayPersonnel(allPersonnel);
+        displayMedicalList(allPersonnel);
+        displayLicensesList(allPersonnel);
+        displayEquipmentList(allPersonnel);
+        updateStats(allPersonnel);
+        updateCharts(allPersonnel);
+      } catch (error) {
+        console.error("Erreur Firebase:", error);
+        showToast("Erreur lors du chargement des membres", 'danger');
+      }
+    }
+    
+    // Chargement des équipes depuis Firebase
+    async function loadTeams() {
+      try {
+        const snapshot = await database.ref('teams').once('value');
+        allTeams = snapshot.val() || {};
+        displayTeamsList(allTeams);
+      } catch (error) {
+        console.error("Erreur Firebase:", error);
+        showToast("Erreur lors du chargement des équipes", 'danger');
+      }
+    }
+    
+    // Affichage de la liste du personnel
+    function displayPersonnel(personnel) {
+      const container = document.getElementById('personnelList');
+      container.innerHTML = '';
+      
+      // Convertir en tableau et trier
+      let personnelArray = Object.entries(personnel).map(([id, data]) => ({ id, ...data }));
+      
+      // Trier
+      personnelArray.sort((a, b) => {
+        if (a[currentSortField] < b[currentSortField]) {
+          return currentSortDirection === 'asc' ? -1 : 1;
+        }
+        if (a[currentSortField] > b[currentSortField]) {
+          return currentSortDirection === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+      
+      // Filtrer
+      const filteredPersonnel = currentFilterStatus 
+        ? personnelArray.filter(p => p.statut === currentFilterStatus)
+        : personnelArray;
+      
+      // Pagination
+      const totalPages = Math.ceil(filteredPersonnel.length / ITEMS_PER_PAGE);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedPersonnel = filteredPersonnel.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      
+      // Afficher le personnel
+      paginatedPersonnel.forEach(person => {
+        container.innerHTML += createPersonnelRow(person);
+      });
+      
+      // Mettre à jour la pagination
+      updatePagination('personnelPagination', currentPage, totalPages);
+      
+      // Ajouter les événements
+      addPersonnelEvents();
+      
+      // Mettre à jour le menu déroulant des filtres
+      updateFilterDropdown();
+    }
+    
+    // Affichage de la liste des visites médicales
+    function displayMedicalList(personnel) {
+      const container = document.getElementById('medicalList');
+      container.innerHTML = '';
+      
+      // Convertir en tableau
+      let personnelArray = Object.entries(personnel).map(([id, data]) => ({ id, ...data }));
+      
+      // Filtrer selon le filtre actif
+      let filteredPersonnel = personnelArray;
+      if (currentMedicalFilter === 'expired') {
+        filteredPersonnel = personnelArray.filter(p => isMedicalExpired(p));
+      } else if (currentMedicalFilter === 'expiring') {
+        filteredPersonnel = personnelArray.filter(p => isMedicalExpiring(p));
+      }
+      
+      // Trier par date de prochaine visite
+      filteredPersonnel.sort((a, b) => {
+        const dateA = a.prochaineVisiteMedicale || '9999-99-99';
+        const dateB = b.prochaineVisiteMedicale || '9999-99-99';
+        return dateA.localeCompare(dateB);
+      });
+      
+      // Pagination
+      const totalPages = Math.ceil(filteredPersonnel.length / ITEMS_PER_PAGE);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedPersonnel = filteredPersonnel.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      
+      // Afficher les visites médicales
+      paginatedPersonnel.forEach(person => {
+        container.innerHTML += createMedicalRow(person);
+      });
+      
+      // Mettre à jour la pagination
+      updatePagination('medicalPagination', currentPage, totalPages);
+      
+      // Ajouter les événements
+      addMedicalEvents();
+    }
+    
+    // Affichage de la liste des permis
+    function displayLicensesList(personnel) {
+      const container = document.getElementById('licensesList');
+      container.innerHTML = '';
+      
+      // Convertir en tableau
+      let personnelArray = Object.entries(personnel).map(([id, data]) => ({ id, ...data }));
+      
+      // Filtrer selon le filtre actif
+      let filteredPersonnel = personnelArray;
+      if (currentLicenseFilter === 'expired') {
+        filteredPersonnel = personnelArray.filter(p => isLicenseExpired(p));
+      } else if (currentLicenseFilter === 'expiring') {
+        filteredPersonnel = personnelArray.filter(p => isLicenseExpiring(p));
+      }
+      
+      // Trier par date d'expiration
+      filteredPersonnel.sort((a, b) => {
+        const dateA = a.dateExpirationPermis || '9999-99-99';
+        const dateB = b.dateExpirationPermis || '9999-99-99';
+        return dateA.localeCompare(dateB);
+      });
+      
+      // Pagination
+      const totalPages = Math.ceil(filteredPersonnel.length / ITEMS_PER_PAGE);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedPersonnel = filteredPersonnel.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      
+      // Afficher les permis
+      paginatedPersonnel.forEach(person => {
+        container.innerHTML += createLicenseRow(person);
+      });
+      
+      // Mettre à jour la pagination
+      updatePagination('licensesPagination', currentPage, totalPages);
+      
+      // Ajouter les événements
+      addLicenseEvents();
+    }
+    
+    // Affichage de la liste des équipements
+    function displayEquipmentList(personnel) {
+      const container = document.getElementById('equipmentList');
+      container.innerHTML = '';
+      
+      // Convertir en tableau et filtrer ceux qui ont des équipements
+      let personnelArray = Object.entries(personnel).map(([id, data]) => ({ id, ...data }))
+        .filter(p => p.equipements && p.equipements.length > 0);
+      
+      // Trier par nom
+      personnelArray.sort((a, b) => a.nom.localeCompare(b.nom));
+      
+      // Pagination
+      const totalPages = Math.ceil(personnelArray.length / ITEMS_PER_PAGE);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const paginatedPersonnel = personnelArray.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+      
+      // Afficher les équipements
+      paginatedPersonnel.forEach(person => {
+        container.innerHTML += createEquipmentRow(person);
+      });
+      
+      // Mettre à jour la pagination
+      updatePagination('equipmentPagination', currentPage, totalPages);
+      
+      // Ajouter les événements
+      addEquipmentEvents();
+    }
+    
+    // Affichage de la liste des équipes
+    function displayTeamsList(teams) {
+      const container = document.getElementById('teamsList');
+      container.innerHTML = '';
+      
+      if (Object.keys(teams).length === 0) {
+        container.innerHTML = `
+          <div class="list-group-item text-center text-muted py-3">
+            <i class="bi bi-info-circle"></i> Aucune équipe créée
+          </div>
+        `;
+        return;
+      }
+      
+      // Convertir en tableau et trier par nom
+      const teamsArray = Object.entries(teams).map(([id, data]) => ({ id, ...data }));
+      teamsArray.sort((a, b) => a.name.localeCompare(b.name));
+      
+      // Afficher les équipes
+      teamsArray.forEach(team => {
+        const leader = team.leader && allPersonnel[team.leader] 
+          ? `${allPersonnel[team.leader].prenom} ${allPersonnel[team.leader].nom}` 
+          : 'Non défini';
+        
+        container.innerHTML += `
+          <a href="#" class="list-group-item list-group-item-action team-item" data-id="${team.id}">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1">${team.name}</h6>
+                <small class="text-muted">${team.members.length} membre(s) - Chef: ${leader}</small>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary edit-team" data-id="${team.id}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-team" data-id="${team.id}">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </a>
+        `;
+      });
+      
+      // Ajouter les événements
+      document.querySelectorAll('.team-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          if (e.target.classList.contains('edit-team') || e.target.classList.contains('delete-team')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          
+          const id = this.getAttribute('data-id');
+          showTeamDetails(id);
+        });
+      });
+      
+      document.querySelectorAll('.edit-team').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = this.getAttribute('data-id');
+          showTeamModal(id);
+        });
+      });
+      
+      document.querySelectorAll('.delete-team').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = this.getAttribute('data-id');
+          showConfirmModal(
+            "Confirmer la suppression",
+            `Voulez-vous vraiment supprimer l'équipe "${allTeams[id].name}" ?`,
+            id,
+            'team',
+            false
+          );
+        });
+      });
+    }
+    
+    // Affichage des détails d'une équipe
+    function showTeamDetails(teamId) {
+      const team = allTeams[teamId];
+      if (!team) return;
+      
+      currentTeamId = teamId;
+      
+      const leader = team.leader && allPersonnel[team.leader] 
+        ? `${allPersonnel[team.leader].prenom} ${allPersonnel[team.leader].nom} (${allPersonnel[team.leader].grade})` 
+        : 'Non défini';
+      
+      let membersHtml = '';
+      team.members.forEach(memberId => {
+        if (allPersonnel[memberId]) {
+          const member = allPersonnel[memberId];
+          const competences = member.competences && member.competences.length > 0 
+            ? member.competences.map(c => `<span class="badge bg-secondary">${c}</span>`).join(' ')
+            : 'Aucune compétence définie';
+            
+          membersHtml += `
+            <div class="team-member-item" data-id="${memberId}">
+              ${member.photo 
+                ? `<img src="${member.photo}" alt="${member.prenom} ${member.nom}">` 
+                : `<i class="bi bi-person-circle"></i>`}
+              <div class="member-info">
+                <h6 class="mb-0">${member.prenom} ${member.nom}</h6>
+                <small class="text-muted">${member.grade}</small>
+                <div class="mt-1">${competences}</div>
+              </div>
+              ${memberId === team.leader 
+                ? `<span class="badge bg-primary">Chef</span>` 
+                : `<button class="btn btn-sm btn-outline-danger remove-member" data-id="${memberId}">
+                    <i class="bi bi-x-lg"></i>
+                  </button>`}
+            </div>
+          `;
+        }
+      });
+      
+      document.getElementById('teamDetailsTitle').textContent = team.name;
+      document.getElementById('teamDetailsContent').innerHTML = `
+        <div class="mb-3">
+          <h6>Description</h6>
+          <p>${team.description || 'Aucune description'}</p>
+        </div>
+        <div class="mb-3">
+          <h6>Chef d'équipe</h6>
+          <p>${leader}</p>
+        </div>
+        <div class="mb-3">
+          <h6>Membres (${team.members.length})</h6>
+          <div class="team-list">
+            ${membersHtml || '<p class="text-muted">Aucun membre</p>'}
+          </div>
+        </div>
+        <div class="d-flex justify-content-end">
+          <button class="btn btn-primary" id="editTeamBtn">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+        </div>
+      `;
+      
+      // Ajouter l'événement pour le bouton de modification
+      document.getElementById('editTeamBtn').addEventListener('click', function() {
+        showTeamModal(teamId);
+      });
+      
+      // Ajouter les événements pour supprimer des membres
+      document.querySelectorAll('.remove-member').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const memberId = this.getAttribute('data-id');
+          removeTeamMember(teamId, memberId);
+        });
+      });
+    }
+    
+    // Suppression d'un membre d'une équipe
+    async function removeTeamMember(teamId, memberId) {
+      const team = allTeams[teamId];
+      if (!team) return;
+      
+      try {
+        const updatedMembers = team.members.filter(id => id !== memberId);
+        let updatedLeader = team.leader;
+        
+        if (memberId === team.leader) {
+          updatedLeader = updatedMembers.length > 0 ? updatedMembers[0] : null;
+        }
+        
+        await writeData(`teams/${teamId}`, {
+          members: updatedMembers,
+          leader: updatedLeader,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+      } catch (error) {
+        console.error("Erreur:", error);
+        showToast("Erreur lors de la suppression du membre", 'danger');
+      }
+    }
+    
+    // Création d'une ligne de personnel pour le tableau
+    function createPersonnelRow(person) {
+      const inactiveClass = person.statut !== 'Actif' ? 'inactive-row' : '';
+      const photo = person.photo 
+        ? `<img src="${person.photo}" class="photo-thumbnail" data-id="${person.id}">` 
+        : `<i class="bi bi-person-circle" style="font-size: 2rem;"></i>`;
+      
+      return `
+        <tr class="${inactiveClass}" data-id="${person.id}">
+          <td class="mobile-hide">${photo}</td>
+          <td>${person.nom}</td>
+          <td>${person.prenom}</td>
+          <td class="mobile-hide">
+            <span class="badge badge-grade">${person.grade}</span>
+          </td>
+          <td class="mobile-hide">
+            ${getStatusBadge(person.statut)}
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-outline-primary view-person" data-id="${person.id}">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary edit-person" data-id="${person.id}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger delete-person" data-id="${person.id}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Création d'une ligne pour les visites médicales
+    function createMedicalRow(person) {
+      const expired = isMedicalExpired(person);
+      const expiring = isMedicalExpiring(person);
+      const statusClass = expired ? 'expired' : expiring ? 'expiring-soon' : '';
+      
+      return `
+        <tr class="${statusClass}" data-id="${person.id}">
+          <td>
+            ${person.prenom} ${person.nom}
+            <div class="small text-muted">${person.grade}</div>
+          </td>
+          <td class="mobile-hide">${formatDate(person.dateVisiteMedicale) || 'Non renseignée'}</td>
+          <td>${formatDate(person.prochaineVisiteMedicale) || 'Non renseignée'}</td>
+          <td>
+            ${expired ? '<span class="badge bg-danger">Expiré</span>' : 
+              expiring ? '<span class="badge bg-warning">À renouveler</span>' : 
+              person.prochaineVisiteMedicale ? '<span class="badge bg-success">Valide</span>' : 
+              '<span class="badge bg-secondary">Non renseigné</span>'}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary edit-medical" data-id="${person.id}">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Création d'une ligne pour les permis
+    function createLicenseRow(person) {
+      const expired = isLicenseExpired(person);
+      const expiring = isLicenseExpiring(person);
+      const statusClass = expired ? 'expired' : expiring ? 'expiring-soon' : '';
+      
+      return `
+        <tr class="${statusClass}" data-id="${person.id}">
+          <td>
+            ${person.prenom} ${person.nom}
+            <div class="small text-muted">${person.grade}</div>
+          </td>
+          <td class="mobile-hide">
+            ${person.permis && person.permis.length > 0 
+              ? person.permis.map(p => `<span class="badge bg-secondary">${p}</span>`).join(' ') 
+              : 'Aucun'}
+          </td>
+          <td>${formatDate(person.dateExpirationPermis) || 'Non renseignée'}</td>
+          <td>
+            ${expired ? '<span class="badge bg-danger">Expiré</span>' : 
+              expiring ? '<span class="badge bg-warning">À renouveler</span>' : 
+              person.dateExpirationPermis ? '<span class="badge bg-success">Valide</span>' : 
+              '<span class="badge bg-secondary">Non renseigné</span>'}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary edit-license" data-id="${person.id}">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Création d'une ligne pour les équipements
+    function createEquipmentRow(person) {
+      return `
+        <tr data-id="${person.id}">
+          <td>
+            ${person.prenom} ${person.nom}
+            <div class="small text-muted">${person.grade}</div>
+          </td>
+          <td class="mobile-hide">
+            ${person.equipements && person.equipements.length > 0 
+              ? person.equipements.map(e => 
+                  `<span class="badge bg-secondary">${e.nom}${e.numero ? ' - ' + e.numero : ''}</span>`
+                ).join(' ') 
+              : 'Aucun'}
+          </td>
+          <td>${formatDate(person.dateAttributionEquipements) || 'Non renseignée'}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary edit-equipment" data-id="${person.id}">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Vérification si une visite médicale est expirée
+    function isMedicalExpired(person) {
+      if (!person.prochaineVisiteMedicale) return false;
+      const today = new Date();
+      const expDate = new Date(person.prochaineVisiteMedicale);
+      return expDate < today;
+    }
+
+    // Vérification si une visite médicale expire bientôt (dans les 30 jours)
+    function isMedicalExpiring(person) {
+      if (!person.prochaineVisiteMedicale || isMedicalExpired(person)) return false;
+      const today = new Date();
+      const expDate = new Date(person.prochaineVisiteMedicale);
+      const diffTime = expDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 30;
+    }
+
+    // Vérification si un permis est expiré
+    function isLicenseExpired(person) {
+      if (!person.dateExpirationPermis) return false;
+      const today = new Date();
+      const expDate = new Date(person.dateExpirationPermis);
+      return expDate < today;
+    }
+
+    // Vérification si un permis expire bientôt (dans les 30 jours)
+    function isLicenseExpiring(person) {
+      if (!person.dateExpirationPermis || isLicenseExpired(person)) return false;
+      const today = new Date();
+      const expDate = new Date(person.dateExpirationPermis);
+      const diffTime = expDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 30;
+    }
+
+    // Formatage de la date
+    function formatDate(dateString) {
+      if (!dateString) return null;
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(dateString).toLocaleDateString('fr-FR', options);
+    }
+
+    // Création d'un badge de statut
+    function getStatusBadge(status) {
+      switch(status) {
+        case 'Actif':
+          return '<span class="badge bg-success">Actif</span>';
+        case 'Inactif':
+          return '<span class="badge bg-secondary">Inactif</span>';
+        case 'En congé':
+          return '<span class="badge bg-info">En congé</span>';
+        case 'En formation':
+          return '<span class="badge bg-primary">En formation</span>';
+        case 'Blessé':
+          return '<span class="badge bg-warning">Blessé</span>';
+        case 'Démision':
+          return '<span class="badge bg-danger">Démision</span>';
+        default:
+          return '<span class="badge bg-secondary">' + status + '</span>';
+      }
+    }
+
+    // Mise à jour de la pagination
+    function updatePagination(elementId, currentPage, totalPages) {
+      const container = document.getElementById(elementId);
+      container.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      // Bouton Précédent
+      container.innerHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" data-page="${currentPage - 1}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+      `;
+      
+      // Pages
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      if (startPage > 1) {
+        container.innerHTML += `
+          <li class="page-item">
+            <a class="page-link" href="#" data-page="1">1</a>
+          </li>
+          ${startPage > 2 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+        `;
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        container.innerHTML += `
+          <li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link" href="#" data-page="${i}">${i}</a>
+          </li>
+        `;
+      }
+      
+      if (endPage < totalPages) {
+        container.innerHTML += `
+          ${endPage < totalPages - 1 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+          <li class="page-item">
+            <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
+          </li>
+        `;
+      }
+      
+      // Bouton Suivant
+      container.innerHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+          <a class="page-link" href="#" data-page="${currentPage + 1}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      `;
+      
+      // Ajouter les événements
+      container.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const page = parseInt(this.getAttribute('data-page'));
+          if (page !== currentPage) {
+            currentPage = page;
+            loadPersonnel();
+          }
+        });
+      });
+    }
+
+    // Ajout des événements pour le personnel
+    function addPersonnelEvents() {
+      // Visualiser un membre
+      document.querySelectorAll('.view-person').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          showPersonDetails(id);
+        });
+      });
+      
+      // Modifier un membre
+      document.querySelectorAll('.edit-person').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          editPerson(id);
+        });
+      });
+      
+      // Supprimer un membre
+      document.querySelectorAll('.delete-person').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const person = allPersonnel[id];
+          showConfirmModal(
+            "Confirmer la suppression",
+            `Voulez-vous vraiment supprimer ${person.prenom} ${person.nom} ?`,
+            id,
+            'personnel',
+            true
+          );
+        });
+      });
+      
+      // Voir la photo en grand
+      document.querySelectorAll('.photo-thumbnail').forEach(img => {
+        img.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const person = allPersonnel[id];
+          if (person.photo) {
+            document.getElementById('fullPhoto').src = person.photo;
+            const photoModal = new bootstrap.Modal(document.getElementById('photoModal'));
+            photoModal.show();
+          }
+        });
+      });
+      
+      // Clic sur une ligne (mobile)
+      if (window.innerWidth <= 768) {
+        document.querySelectorAll('#personnelList tr').forEach(row => {
+          row.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            showPersonDetails(id);
+          });
+        });
+      }
+    }
+
+    // Ajout des événements pour les visites médicales
+    function addMedicalEvents() {
+      document.querySelectorAll('.edit-medical').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          editMedical(id);
+        });
+      });
+    }
+
+    // Ajout des événements pour les permis
+    function addLicenseEvents() {
+      document.querySelectorAll('.edit-license').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          editLicense(id);
+        });
+      });
+    }
+
+    // Ajout des événements pour les équipements
+    function addEquipmentEvents() {
+      document.querySelectorAll('.edit-equipment').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          editEquipment(id);
+        });
+      });
+    }
+
+    // Affichage des détails d'un membre
+    function showPersonDetails(id) {
+      const person = allPersonnel[id];
+      if (!person) return;
+      
+      const modalBody = document.getElementById('modalBody');
+      const competences = person.competences && person.competences.length > 0 
+        ? person.competences.map(c => `<span class="badge bg-secondary">${c}</span>`).join(' ') 
+        : 'Aucune compétence définie';
+      
+      const permis = person.permis && person.permis.length > 0 
+        ? person.permis.map(p => `<span class="badge bg-secondary">${p}</span>`).join(' ') 
+        : 'Aucun permis';
+      
+      const equipements = person.equipements && person.equipements.length > 0 
+        ? person.equipements.map(e => 
+            `<div class="mb-1">${e.nom}${e.numero ? ' - ' + e.numero : ''}</div>`
+          ).join('') 
+        : 'Aucun équipement attribué';
+      
+      const photo = person.photo 
+        ? `<img src="${person.photo}" class="img-thumbnail mb-3" style="max-width: 150px;">` 
+        : '<div class="text-center mb-3"><i class="bi bi-person-circle" style="font-size: 5rem;"></i></div>';
+      
+      modalBody.innerHTML = `
+        <div class="row">
+          <div class="col-md-4 text-center">
+            ${photo}
+            <h4>${person.prenom} ${person.nom}</h4>
+            <div class="badge badge-grade mb-2">${person.grade}</div>
+            <div>${getStatusBadge(person.statut)}</div>
+          </div>
+          <div class="col-md-8">
+            <div class="row">
+              <div class="col-md-6">
+                <h5 class="border-bottom pb-2"><i class="bi bi-info-circle"></i> Informations</h5>
+                <p><strong>Matricule:</strong> ${person.matricule || 'Non renseigné'}</p>
+                <p><strong>Date de naissance:</strong> ${formatDate(person.dateNaissance) || 'Non renseignée'}</p>
+                <p><strong>Date d'entrée:</strong> ${formatDate(person.dateEntree) || 'Non renseignée'}</p>
+                <p><strong>Téléphone:</strong> ${person.telephone || 'Non renseigné'}</p>
+                <p><strong>Adresse:</strong> ${person.adresse || 'Non renseignée'}</p>
+              </div>
+              <div class="col-md-6">
+                <h5 class="border-bottom pb-2"><i class="bi bi-tools"></i> Compétences</h5>
+                <div class="mb-3">${competences}</div>
+                
+                <h5 class="border-bottom pb-2"><i class="bi bi-car-front"></i> Permis</h5>
+                <div class="mb-3">${permis}</div>
+                <p><strong>Expiration:</strong> ${formatDate(person.dateExpirationPermis) || 'Non renseignée'}</p>
+              </div>
+            </div>
+            
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <h5 class="border-bottom pb-2"><i class="bi bi-heart-pulse"></i> Visite Médicale</h5>
+                <p><strong>Dernière visite:</strong> ${formatDate(person.dateVisiteMedicale) || 'Non renseignée'}</p>
+                <p><strong>Prochaine visite:</strong> ${formatDate(person.prochaineVisiteMedicale) || 'Non renseignée'}</p>
+                <p><strong>Notes médicales:</strong> ${person.notesMedicales || 'Aucune note'}</p>
+              </div>
+              <div class="col-md-6">
+                <h5 class="border-bottom pb-2"><i class="bi bi-shield-check"></i> Équipements</h5>
+                ${equipements}
+                <p class="mt-2"><strong>Date d'attribution:</strong> ${formatDate(person.dateAttributionEquipements) || 'Non renseignée'}</p>
+              </div>
+            </div>
+            
+            ${person.notes ? `
+              <div class="mt-3">
+                <h5 class="border-bottom pb-2"><i class="bi bi-journal-text"></i> Notes</h5>
+                <p>${person.notes}</p>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      
+      const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+      detailsModal.show();
+    }
+
+    // Édition d'un membre
+    function editPerson(id) {
+      const person = allPersonnel[id];
+      if (!person) return;
+      
+      currentEditingId = id;
+      
+      // Remplir le formulaire
+      document.getElementById('prenom').value = person.prenom || '';
+      document.getElementById('nom').value = person.nom || '';
+      document.getElementById('dateNaissance').value = person.dateNaissance || '';
+      document.getElementById('matricule').value = person.matricule || '';
+      document.getElementById('grade').value = person.grade || '';
+      document.getElementById('statut').value = person.statut || 'Actif';
+      document.getElementById('dateEntree').value = person.dateEntree || '';
+      document.getElementById('telephone').value = person.telephone || '';
+      document.getElementById('adresse').value = person.adresse || '';
+      document.getElementById('notes').value = person.notes || '';
+      document.getElementById('dateVisiteMedicale').value = person.dateVisiteMedicale || '';
+      document.getElementById('prochaineVisiteMedicale').value = person.prochaineVisiteMedicale || '';
+      document.getElementById('notesMedicales').value = person.notesMedicales || '';
+      document.getElementById('dateExpirationPermis').value = person.dateExpirationPermis || '';
+      
+      // Compétences
+      competences = person.competences || [];
+      updateCompetencesDisplay();
+      
+      // Permis
+      permis = person.permis || [];
+      updatePermisDisplay();
+      
+      // Équipements
+      equipements = person.equipements || [];
+      updateEquipementsDisplay();
+      
+      // Photos
+      permisPhotos = person.permisPhotos || [];
+      updateImageGallery('permisPhotosGallery', permisPhotos);
+      
+      equipmentPhotos = person.equipmentPhotos || [];
+      updateImageGallery('equipmentPhotosGallery', equipmentPhotos);
+      
+      // Photo de profil
+      if (person.photo) {
+        photoBase64 = person.photo;
+        document.getElementById('photoPreview').innerHTML = `
+          <img src="${photoBase64}" class="photo-thumbnail mb-2">
+          <button class="btn btn-sm btn-danger" id="removePhoto">
+            <i class="bi bi-trash"></i> Supprimer
+          </button>
+        `;
+        
+        document.getElementById('removePhoto').addEventListener('click', function() {
+          document.getElementById('photoPreview').innerHTML = '';
+          document.getElementById('photo').value = '';
+          photoBase64 = null;
+        });
+      }
+      
+      // Basculer vers l'onglet d'ajout
+      const addTab = new bootstrap.Tab(document.getElementById('add-tab'));
+      addTab.show();
+      
+      // Faire défiler vers le haut
+      window.scrollTo(0, 0);
+    }
+
+    // Édition d'une visite médicale
+    function editMedical(id) {
+      const person = allPersonnel[id];
+      if (!person) return;
+      
+      document.getElementById('medicalPersonnelId').value = id;
+      document.getElementById('medicalDate').value = person.dateVisiteMedicale || '';
+      document.getElementById('nextMedicalDate').value = person.prochaineVisiteMedicale || '';
+      document.getElementById('medicalResult').value = 
+        person.notesMedicales?.includes('Apte') ? 'Apte' :
+        person.notesMedicales?.includes('Apte avec restrictions') ? 'Apte avec restrictions' :
+        person.notesMedicales?.includes('Inapte temporaire') ? 'Inapte temporaire' :
+        person.notesMedicales?.includes('Inapte') ? 'Inapte' : 'Apte';
+      document.getElementById('medicalNotes').value = person.notesMedicales || '';
+      
+      const medicalModal = new bootstrap.Modal(document.getElementById('medicalModal'));
+      medicalModal.show();
+    }
+
+    // Édition d'un permis
+    function editLicense(id) {
+      const person = allPersonnel[id];
+      if (!person) return;
+      
+      document.getElementById('licensePersonnelId').value = id;
+      permis = person.permis || [];
+      permisPhotos = person.permisPhotos || [];
+      updateLicenseModalDisplay();
+      updateImageGallery('modalPermisPhotos', permisPhotos);
+      document.getElementById('licenseExpiration').value = person.dateExpirationPermis || '';
+      
+      const licenseModal = new bootstrap.Modal(document.getElementById('licenseModal'));
+      licenseModal.show();
+    }
+
+    // Édition des équipements
+    function editEquipment(id) {
+      const person = allPersonnel[id];
+      if (!person) return;
+      
+      document.getElementById('equipmentPersonnelId').value = id;
+      equipmentPhotos = person.equipmentPhotos || [];
+      updateImageGallery('modalEquipmentPhotos', equipmentPhotos);
+      document.getElementById('equipmentDate').value = person.dateAttributionEquipements || '';
+      
+      // Remplir les équipements
+      const container = document.getElementById('equipmentItems');
+      container.innerHTML = '';
+      if (person.equipements && person.equipements.length > 0) {
+        person.equipements.forEach(e => {
+          container.innerHTML += `
+            <span class="skill-badge">
+              ${e.nom}${e.numero ? ' - ' + e.numero : ''}
+              <button type="button" class="btn-close" data-equipment="${e.nom}" aria-label="Supprimer"></button>
+            </span>
+          `;
+        });
+        
+        // Ajouter les événements de suppression
+        document.querySelectorAll('[data-equipment]').forEach(btn => {
+          btn.addEventListener('click', function() {
+            this.parentElement.remove();
+          });
+        });
+      }
+      
+      const equipmentModal = new bootstrap.Modal(document.getElementById('equipmentModal'));
+      equipmentModal.show();
+    }
+
+    // Affichage du modal d'équipe
+    function showTeamModal(teamId = null) {
+      const modal = new bootstrap.Modal(document.getElementById('teamModal'));
+      const title = document.getElementById('teamModalTitle');
+      const form = document.getElementById('teamForm');
+      
+      if (teamId) {
+        // Mode édition
+        const team = allTeams[teamId];
+        title.innerHTML = `<i class="bi bi-people-fill"></i> Modifier l'équipe`;
+        document.getElementById('teamId').value = teamId;
+        document.getElementById('teamName').value = team.name || '';
+        document.getElementById('teamDescription').value = team.description || '';
+        
+        // Remplir les membres disponibles (tous les membres sauf ceux déjà dans l'équipe)
+        const availableMembers = Object.keys(allPersonnel)
+          .filter(id => !team.members.includes(id));
+        fillAvailableMembers(availableMembers);
+        
+        // Remplir les membres de l'équipe
+        fillTeamMembers(team.members);
+        
+        // Sélectionner le chef d'équipe
+        document.getElementById('teamLeader').value = team.leader || '';
+      } else {
+        // Mode création
+        title.innerHTML = `<i class="bi bi-people-fill"></i> Nouvelle équipe`;
+        form.reset();
+        document.getElementById('teamId').value = '';
+        
+        // Remplir les membres disponibles (tous les membres)
+        fillAvailableMembers(Object.keys(allPersonnel));
+        
+        // Vider les membres de l'équipe
+        document.getElementById('teamMembers').innerHTML = '';
+      }
+      
+      modal.show();
+    }
+
+    // Remplissage des membres disponibles
+    function fillAvailableMembers(memberIds) {
+      const container = document.getElementById('availableMembers');
+      container.innerHTML = '';
+      
+      if (memberIds.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">Aucun membre disponible</div>';
+        return;
+      }
+      
+      memberIds.forEach(id => {
+        const member = allPersonnel[id];
+        if (member) {
+          container.innerHTML += `
+            <div class="team-member-item" data-id="${id}">
+              ${member.photo 
+                ? `<img src="${member.photo}" alt="${member.prenom} ${member.nom}">` 
+                : `<i class="bi bi-person-circle"></i>`}
+              <div class="member-info">
+                <h6 class="mb-0">${member.prenom} ${member.nom}</h6>
+                <small class="text-muted">${member.grade}</small>
+              </div>
+              <div class="member-actions">
+                <button class="btn btn-sm btn-outline-primary add-member" data-id="${id}">
+                  <i class="bi bi-plus-lg"></i> Ajouter
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      // Ajouter les événements pour ajouter des membres
+      document.querySelectorAll('.add-member').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const memberId = this.getAttribute('data-id');
+          addTeamMember(memberId);
+        });
+      });
+    }
+
+    // Remplissage des membres de l'équipe
+    function fillTeamMembers(memberIds) {
+      const container = document.getElementById('teamMembers');
+      container.innerHTML = '';
+      
+      if (memberIds.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">Aucun membre dans cette équipe</div>';
+        return;
+      }
+      
+      memberIds.forEach(id => {
+        const member = allPersonnel[id];
+        if (member) {
+          container.innerHTML += `
+            <div class="team-member-item" data-id="${id}">
+              ${member.photo 
+                ? `<img src="${member.photo}" alt="${member.prenom} ${member.nom}">` 
+                : `<i class="bi bi-person-circle"></i>`}
+              <div class="member-info">
+                <h6 class="mb-0">${member.prenom} ${member.nom}</h6>
+                <small class="text-muted">${member.grade}</small>
+              </div>
+              <div class="member-actions">
+                <button class="btn btn-sm btn-outline-danger remove-member" data-id="${id}">
+                  <i class="bi bi-x-lg"></i> Retirer
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      });
+      
+      // Ajouter les événements pour retirer des membres
+      document.querySelectorAll('.remove-member').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const memberId = this.getAttribute('data-id');
+          removeTeamMemberFromModal(memberId);
+        });
+      });
+    }
+
+    // Ajout d'un membre à l'équipe dans le modal
+    function addTeamMember(memberId) {
+      const member = allPersonnel[memberId];
+      if (!member) return;
+      
+      const container = document.getElementById('teamMembers');
+      const existingMember = container.querySelector(`[data-id="${memberId}"]`);
+      
+      if (existingMember) return;
+      
+      container.innerHTML += `
+        <div class="team-member-item" data-id="${memberId}">
+          ${member.photo 
+            ? `<img src="${member.photo}" alt="${member.prenom} ${member.nom}">` 
+            : `<i class="bi bi-person-circle"></i>`}
+          <div class="member-info">
+            <h6 class="mb-0">${member.prenom} ${member.nom}</h6>
+            <small class="text-muted">${member.grade}</small>
+          </div>
+          <div class="member-actions">
+            <button class="btn btn-sm btn-outline-danger remove-member" data-id="${memberId}">
+              <i class="bi bi-x-lg"></i> Retirer
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // Ajouter l'événement pour retirer le membre
+      container.lastElementChild.querySelector('.remove-member').addEventListener('click', function() {
+        removeTeamMemberFromModal(memberId);
+      });
+      
+      // Supprimer le membre des disponibles
+      const availableMember = document.querySelector(`#availableMembers [data-id="${memberId}"]`);
+      if (availableMember) {
+        availableMember.remove();
+      }
+      
+      // Mettre à jour la liste déroulante du chef d'équipe si nécessaire
+      const leaderSelect = document.getElementById('teamLeader');
+      if (!leaderSelect.querySelector(`option[value="${memberId}"]`)) {
+        const option = document.createElement('option');
+        option.value = memberId;
+        option.textContent = `${member.prenom} ${member.nom} (${member.grade})`;
+        leaderSelect.appendChild(option);
+      }
+    }
+
+    // Retrait d'un membre de l'équipe dans le modal
+    function removeTeamMemberFromModal(memberId) {
+      const member = allPersonnel[memberId];
+      if (!member) return;
+      
+      // Retirer le membre de l'équipe
+      const teamMember = document.querySelector(`#teamMembers [data-id="${memberId}"]`);
+      if (teamMember) {
+        teamMember.remove();
+      }
+      
+      // Ajouter le membre aux disponibles
+      const availableContainer = document.getElementById('availableMembers');
+      if (!availableContainer.querySelector(`[data-id="${memberId}"]`)) {
+        availableContainer.innerHTML += `
+          <div class="team-member-item" data-id="${memberId}">
+            ${member.photo 
+              ? `<img src="${member.photo}" alt="${member.prenom} ${member.nom}">` 
+              : `<i class="bi bi-person-circle"></i>`}
+            <div class="member-info">
+              <h6 class="mb-0">${member.prenom} ${member.nom}</h6>
+              <small class="text-muted">${member.grade}</small>
+            </div>
+            <div class="member-actions">
+              <button class="btn btn-sm btn-outline-primary add-member" data-id="${memberId}">
+                <i class="bi bi-plus-lg"></i> Ajouter
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // Ajouter l'événement pour ajouter le membre
+        availableContainer.lastElementChild.querySelector('.add-member').addEventListener('click', function() {
+          addTeamMember(memberId);
+        });
+      }
+      
+      // Mettre à jour la sélection du chef d'équipe si nécessaire
+      const leaderSelect = document.getElementById('teamLeader');
+      if (leaderSelect.value === memberId) {
+        leaderSelect.value = '';
+      }
+    }
+
+    // Affichage du modal de confirmation
+    function showConfirmModal(title, message, id, type, requiresPassword) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmAction').setAttribute('data-id', id);
+      document.getElementById('confirmAction').setAttribute('data-type', type);
+      document.getElementById('confirmAction').setAttribute('data-requires-password', requiresPassword);
+      
+      const passwordSection = document.getElementById('passwordSection');
+      if (requiresPassword) {
+        passwordSection.style.display = 'block';
+        document.getElementById('confirmPassword').value = '';
+        document.getElementById('confirmPassword').classList.remove('is-invalid');
+        document.getElementById('passwordError').style.display = 'none';
+      } else {
+        passwordSection.style.display = 'none';
+      }
+      
+      const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+      modal.show();
+    }
+
+    // Configuration de la recherche
+    function setupSearch() {
+      // Recherche dans la liste du personnel
+      document.getElementById('personnelSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#personnelList tr');
+        
+        rows.forEach(row => {
+          const id = row.getAttribute('data-id');
+          const person = allPersonnel[id];
+          if (person) {
+            const text = `${person.prenom} ${person.nom} ${person.grade} ${person.matricule}`.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+          }
+        });
+      });
+      
+      // Recherche dans les visites médicales
+      document.getElementById('medicalSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#medicalList tr');
+        
+        rows.forEach(row => {
+          const id = row.getAttribute('data-id');
+          const person = allPersonnel[id];
+          if (person) {
+            const text = `${person.prenom} ${person.nom} ${person.grade}`.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+          }
+        });
+      });
+      
+      // Recherche dans les permis
+      document.getElementById('licensesSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#licensesList tr');
+        
+        rows.forEach(row => {
+          const id = row.getAttribute('data-id');
+          const person = allPersonnel[id];
+          if (person) {
+            const text = `${person.prenom} ${person.nom} ${person.grade} ${person.permis?.join(' ') || ''}`.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+          }
+        });
+      });
+      
+      // Recherche dans les équipements
+      document.getElementById('equipmentSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#equipmentList tr');
+        
+        rows.forEach(row => {
+          const id = row.getAttribute('data-id');
+          const person = allPersonnel[id];
+          if (person) {
+            const equipText = person.equipements?.map(e => `${e.nom} ${e.numero}`).join(' ') || '';
+            const text = `${person.prenom} ${person.nom} ${person.grade} ${equipText}`.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+          }
+        });
+      });
+    }
+
+    // Configuration du tri
+    function setupSorting() {
+      document.querySelectorAll('.sortable-header').forEach(header => {
+        header.addEventListener('click', function() {
+          const field = this.getAttribute('data-sort');
+          
+          if (currentSortField === field) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSortField = field;
+            currentSortDirection = 'asc';
+          }
+          
+          loadPersonnel();
+        });
+      });
+    }
+
+    // Configuration des filtres
+    function setupFilters() {
+      document.querySelectorAll('[data-filter]').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const filter = this.getAttribute('data-filter');
+          currentFilterStatus = filter === 'all' ? null : filter;
+          currentPage = 1;
+          loadPersonnel();
+        });
+      });
+    }
+
+    // Configuration des filtres médicaux
+    function setupMedicalFilters() {
+      document.getElementById('showExpiredMedical').addEventListener('click', function() {
+        currentMedicalFilter = 'expired';
+        currentPage = 1;
+        displayMedicalList(allPersonnel);
+      });
+      
+      document.getElementById('showExpiringMedical').addEventListener('click', function() {
+        currentMedicalFilter = 'expiring';
+        currentPage = 1;
+        displayMedicalList(allPersonnel);
+      });
+      
+      document.getElementById('showAllMedical').addEventListener('click', function() {
+        currentMedicalFilter = 'all';
+        currentPage = 1;
+        displayMedicalList(allPersonnel);
+      });
+    }
+
+    // Configuration des filtres de permis
+    function setupLicenseFilters() {
+      document.getElementById('showExpiredLicenses').addEventListener('click', function() {
+        currentLicenseFilter = 'expired';
+        currentPage = 1;
+        displayLicensesList(allPersonnel);
+      });
+      
+      document.getElementById('showExpiringLicenses').addEventListener('click', function() {
+        currentLicenseFilter = 'expiring';
+        currentPage = 1;
+        displayLicensesList(allPersonnel);
+      });
+      
+      document.getElementById('showAllLicenses').addEventListener('click', function() {
+        currentLicenseFilter = 'all';
+        currentPage = 1;
+        displayLicensesList(allPersonnel);
+      });
+    }
+
+    // Mise à jour du menu déroulant des filtres
+    function updateFilterDropdown() {
+      document.querySelectorAll('[data-filter]').forEach(item => {
+        const filter = item.getAttribute('data-filter');
+        if (filter === 'all') {
+          item.classList.toggle('active', !currentFilterStatus);
+        } else {
+          item.classList.toggle('active', currentFilterStatus === filter);
+        }
+      });
+    }
+
+    // Configuration des mises à jour en temps réel
+    function setupRealtime() {
+      database.ref('personnel').on('value', (snapshot) => {
+        allPersonnel = snapshot.val() || {};
+        displayPersonnel(allPersonnel);
+        displayMedicalList(allPersonnel);
+        displayLicensesList(allPersonnel);
+        displayEquipmentList(allPersonnel);
+        updateStats(allPersonnel);
+        updateCharts(allPersonnel);
+      });
+      
+      database.ref('teams').on('value', (snapshot) => {
+        allTeams = snapshot.val() || {};
+        displayTeamsList(allTeams);
+        
+        // Mettre à jour les détails de l'équipe courante si elle existe
+        if (currentTeamId && allTeams[currentTeamId]) {
+          showTeamDetails(currentTeamId);
+        }
+      });
+    }
+
+    // Mise à jour des statistiques
+    function updateStats(personnel) {
+      const personnelArray = Object.values(personnel);
+      
+      // Membres actifs/inactifs
+      const activeCount = personnelArray.filter(p => p.statut === 'Actif').length;
+      const inactiveCount = personnelArray.length - activeCount;
+      
+      document.getElementById('stats-active').textContent = activeCount;
+      document.getElementById('stats-inactive').textContent = inactiveCount;
+      
+      // Visites médicales à renouveler
+      const medicalToRenew = personnelArray.filter(p => 
+        isMedicalExpired(p) || isMedicalExpiring(p)).length;
+      document.getElementById('stats-medical').textContent = medicalToRenew;
+      
+      // Permis à renouveler
+      const licensesToRenew = personnelArray.filter(p => 
+        isLicenseExpired(p) || isLicenseExpiring(p)).length;
+      document.getElementById('stats-license').textContent = licensesToRenew;
+    }
+
+    // Mise à jour des graphiques
+    function updateCharts(personnel) {
+      const personnelArray = Object.values(personnel);
+      
+      // Répartition par grade
+      const grades = {};
+      personnelArray.forEach(p => {
+        grades[p.grade] = (grades[p.grade] || 0) + 1;
+      });
+      
+      if (gradesChart) gradesChart.destroy();
+      gradesChart = new Chart(
+        document.getElementById('gradesChart'),
+        {
+          type: 'bar',
+          data: {
+            labels: Object.keys(grades),
+            datasets: [{
+              label: 'Nombre de membres',
+              data: Object.values(grades),
+              backgroundColor: '#0288d1',
+              borderColor: '#0277bd',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          }
+        }
+      );
+      
+      // Répartition par statut
+      const statuses = {};
+      personnelArray.forEach(p => {
+        statuses[p.statut] = (statuses[p.statut] || 0) + 1;
+      });
+      
+      if (statusChart) statusChart.destroy();
+      statusChart = new Chart(
+        document.getElementById('statusChart'),
+        {
+          type: 'pie',
+          data: {
+            labels: Object.keys(statuses),
+            datasets: [{
+              data: Object.values(statuses),
+              backgroundColor: [
+                '#388e3c', // Actif - vert
+                '#757575', // Inactif - gris
+                '#1976d2', // En formation - bleu
+                '#ffa000', // Blessé - orange
+                '#d32f2f', // Démision - rouge
+                '#0288d1'  // En congé - bleu clair
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'right'
+              }
+            }
+          }
+        }
+      );
+      
+      // État des visites médicales
+      const medicalStatus = {
+        'Valide': personnelArray.filter(p => 
+          p.prochaineVisiteMedicale && !isMedicalExpired(p) && !isMedicalExpiring(p)).length,
+        'À renouveler': personnelArray.filter(p => isMedicalExpiring(p)).length,
+        'Expiré': personnelArray.filter(p => isMedicalExpired(p)).length,
+        'Non renseigné': personnelArray.filter(p => !p.prochaineVisiteMedicale).length
+      };
+      
+      if (medicalChart) medicalChart.destroy();
+      medicalChart = new Chart(
+        document.getElementById('medicalChart'),
+        {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(medicalStatus),
+            datasets: [{
+              data: Object.values(medicalStatus),
+              backgroundColor: [
+                '#388e3c', // Valide - vert
+                '#ffa000', // À renouveler - orange
+                '#d32f2f', // Expiré - rouge
+                '#757575'  // Non renseigné - gris
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'right'
+              }
+            }
+          }
+        }
+      );
+      
+      // Entrées par année
+      const entriesByYear = {};
+      personnelArray.forEach(p => {
+        if (p.dateEntree) {
+          const year = p.dateEntree.split('-')[0];
+          entriesByYear[year] = (entriesByYear[year] || 0) + 1;
+        }
+      });
+      
+      // Trier les années
+      const sortedYears = Object.keys(entriesByYear).sort();
+      const entriesData = sortedYears.map(year => entriesByYear[year]);
+      
+      if (entriesChart) entriesChart.destroy();
+      entriesChart = new Chart(
+        document.getElementById('entriesChart'),
+        {
+          type: 'line',
+          data: {
+            labels: sortedYears,
+            datasets: [{
+              label: 'Nouvelles entrées',
+              data: entriesData,
+              backgroundColor: 'rgba(2, 136, 209, 0.2)',
+              borderColor: '#0288d1',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          }
+        }
+      );
+    }
+
+    // Affichage des notifications Toast
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toastId = 'toast-' + Date.now();
+      
+      const toast = document.createElement('div');
+      toast.className = `toast show align-items-center text-white bg-${type} border-0`;
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      toast.id = toastId;
+      
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            ${message}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      // Suppression automatique après 5 secondes
+      setTimeout(() => {
+        const toastElement = document.getElementById(toastId);
+        if (toastElement) {
+          toastElement.classList.remove('show');
+          setTimeout(() => toastElement.remove(), 300);
+        }
+      }, 5000);
+      
+      // Fermeture manuelle
+      toast.querySelector('.btn-close').addEventListener('click', function() {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      });
+    }
+  </script>
+</body>
+</html>
