@@ -1,23 +1,488 @@
-body {
-  font-family: sans-serif;
+/* RÃ©initialisation et Variables Globales */
+:root {
+    --fire-red-light: #FF5252;
+    --fire-red: #D32F2F;
+    --burgundy-red: #9A0000;
+    --dark-bg: #121212;
+    --elevation-1: #1E1E1E;
+    --elevation-2: #2C2C2C;
+    --primary-text: #E0E0E0;
+    --secondary-text: #B0B0B0;
+    --accent-text: #FFFFFF;
+    --divider-color: #3A3A3A;
+
+    --header-shadow: rgba(0, 0, 0, 0.3);
+    --menu-shadow: rgba(0, 0, 0, 0.5);
+
+    --menu-width: 300px;
+    --menu-width-reduced: calc(var(--menu-width) - 60px);
+    --header-height: 70px;
+
+    --font-primary: 'Roboto', sans-serif;
+    --font-secondary: 'Montserrat', sans-serif;
+
+    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 16px;
 }
 
-/* Make content area fill the entire browser window */
-html,
-.fullscreen {
-  display: flex;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  width: 100%;
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
-/* Center the content in the browser window */
-.container {
-  margin: auto;
-  text-align: center;
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+    background-color: var(--dark-bg);
+    color: var(--primary-text);
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-.title {
-  font-size: 3rem;
+/* Page Loader */
+.page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(18, 18, 18, 0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: opacity 0.5s var(--transition-smooth);
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--divider-color);
+    border-top-color: var(--fire-red);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+.page-loader span {
+    font-family: var(--font-secondary);
+    font-size: 1.1em;
+    color: var(--primary-text);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s var(--transition-smooth), visibility 0s 0.3s linear;
+}
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+
+/* Header */
+#app-header {
+    background: var(--elevation-1);
+    color: var(--accent-text);
+    padding: 0 25px;
+    height: var(--header-height);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 2px 10px var(--header-shadow);
+    transition: transform 0.4s var(--transition-smooth), filter 0.4s var(--transition-smooth);
+    will-change: transform, filter;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+#logo-img {
+    height: 45px;
+    margin-right: 15px;
+    border-radius: var(--border-radius-sm);
+    transition: transform 0.3s var(--transition-bounce);
+}
+#logo-img:hover {
+    transform: scale(1.1);
+}
+#logo-text {
+    font-family: var(--font-secondary);
+    font-size: 1.6em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.pro-badge {
+    font-size: 0.5em;
+    font-weight: 700;
+    padding: 3px 6px;
+    background-color: var(--fire-red);
+    color: var(--accent-text);
+    border-radius: var(--border-radius-sm);
+    margin-left: 8px;
+    vertical-align: middle;
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Menu Toggle Button - Animated Hamburger */
+.menu-toggle {
+    background: transparent;
+    border: none;
+    color: var(--accent-text);
+    cursor: pointer;
+    padding: 10px;
+    z-index: 1002; /* Au-dessus de l'overlay quand le menu est fermÃ©, mais en dessous du menu ouvert */
+    height: 40px;
+    width: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.hamburger-icon {
+    position: relative;
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--accent-text);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.3s var(--transition-smooth);
+}
+.hamburger-icon::before,
+.hamburger-icon::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--accent-text);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.3s var(--transition-smooth);
+}
+.hamburger-icon::before {
+    transform: translateY(-7px);
+}
+.hamburger-icon::after {
+    transform: translateY(7px);
+}
+.menu-toggle.open .hamburger-icon {
+    background: transparent;
+}
+.menu-toggle.open .hamburger-icon::before {
+    transform: translateY(0) rotate(45deg);
+}
+.menu-toggle.open .hamburger-icon::after {
+    transform: translateY(0) rotate(-45deg);
+}
+
+/* ---- Navigation Menu ---- */
+#main-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--menu-width);
+    height: 100vh; /* Utilise toute la hauteur de la fenÃªtre */
+    background-color: var(--elevation-1);
+    box-shadow: 5px 0px 25px var(--menu-shadow);
+    transform: translateX(-100%);
+    transition: transform 0.4s var(--transition-smooth);
+    z-index: 1001; /* Juste au-dessus de l'overlay, en dessous du bouton toggle s'il devait rester visible */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px; /* Espace en bas pour ne pas coller le footer */
+    will-change: transform;
+}
+#main-nav.active {
+    transform: translateX(0);
+}
+
+/* Custom Scrollbar for Menu */
+#main-nav::-webkit-scrollbar { width: 8px; }
+#main-nav::-webkit-scrollbar-track { background: var(--elevation-1); }
+#main-nav::-webkit-scrollbar-thumb { background-color: var(--fire-red); border-radius: var(--border-radius-md); }
+#main-nav::-webkit-scrollbar-thumb:hover { background-color: var(--fire-red-light); }
+#main-nav { scrollbar-width: thin; scrollbar-color: var(--fire-red) var(--elevation-1); }
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    height: var(--header-height);
+    border-bottom: 1px solid var(--divider-color);
+    position: sticky; /* Pour que le header du menu reste visible en scrollant le menu */
+    top: 0;
+    background-color: var(--elevation-1); /* Pour masquer le contenu du menu qui dÃ©file derriÃ¨re */
+    z-index: 1; /* Pour Ãªtre au-dessus des items de liste qui scrollent */
+}
+.nav-title {
+    font-family: var(--font-secondary);
+    font-size: 1.2em;
+    font-weight: 500;
+    color: var(--accent-text);
+}
+.close-menu-btn {
+    background: none;
+    border: none;
+    color: var(--secondary-text);
+    font-size: 30px;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s ease, transform 0.3s var(--transition-bounce);
+}
+.close-menu-btn:hover {
+    color: var(--fire-red-light);
+    transform: rotate(90deg) scale(1.1);
+}
+
+#main-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    padding-top: 15px;
+    flex-grow: 1; /* Permet au footer de se positionner en bas */
+}
+
+#main-nav li {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+#main-nav.active li {
+    animation: menuItemFadeIn 0.3s var(--transition-smooth) forwards;
+}
+/* Staggered animation delays */
+#main-nav.active li:nth-child(1) { animation-delay: 0.1s; }
+#main-nav.active li:nth-child(2) { animation-delay: 0.15s; }
+#main-nav.active li:nth-child(3) { animation-delay: 0.2s; }
+#main-nav.active li:nth-child(4) { animation-delay: 0.25s; }
+#main-nav.active li:nth-child(5) { animation-delay: 0.3s; }
+#main-nav.active li:nth-child(6) { animation-delay: 0.35s; }
+#main-nav.active li:nth-child(7) { animation-delay: 0.4s; }
+/* Ajoutez plus de dÃ©lais si vous avez plus d'Ã©lÃ©ments de menu principaux */
+
+
+@keyframes menuItemFadeIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 16px 25px;
+    color: var(--primary-text);
+    text-decoration: none;
+    font-size: 1.05em;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    transition: background-color 0.25s ease, color 0.25s ease, border-left-color 0.25s ease;
+    position: relative;
+}
+.nav-link:hover {
+    background-color: var(--elevation-2);
+    color: var(--accent-text);
+    border-left-color: var(--fire-red-light);
+}
+.nav-link.active-link {
+    color: var(--accent-text);
+    background-color: var(--burgundy-red); /* Couleur de fond pour l'Ã©lÃ©ment actif */
+    border-left-color: var(--fire-red-light); /* Bordure pour l'Ã©lÃ©ment actif */
+    font-weight: 700;
+}
+.nav-link.active-link .menu-icon {
+    opacity: 1;
+    filter: brightness(1.2); /* LÃ©gÃ¨rement plus brillant pour l'icÃ´ne active */
+}
+
+.menu-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 20px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+}
+.nav-link:hover .menu-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Submenu Styling */
+.submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background-color: var(--elevation-2); /* Un peu plus clair pour distinguer */
+    overflow: hidden;
+    max-height: 0; /* CachÃ© par dÃ©faut */
+    transition: max-height 0.35s ease-out, padding 0.35s ease-out;
+}
+.has-submenu.open > .submenu {
+    padding-top: 5px; /* Ajoute un peu de padding quand ouvert */
+    padding-bottom: 5px;
+    /* max-height est dÃ©fini dynamiquement en JS */
+}
+.submenu .nav-link {
+    padding-left: 55px; /* Indentation pour les items de sous-menu */
+    font-size: 0.95em;
+    font-weight: 400;
+    border-left: none; /* Pas de bordure gauche pour les enfants */
+}
+.submenu .nav-link:hover {
+    background-color: var(--burgundy-red); /* Couleur de survol pour sous-menu */
+    color: var(--accent-text);
+}
+.submenu .nav-link.active-link {
+    background-color: var(--fire-red); /* Couleur active pour sous-menu, un peu diffÃ©rente */
+    color: var(--accent-text);
+    font-weight: 500; /* Un peu plus gras pour l'actif du sous-menu */
+}
+.has-submenu > .nav-link .arrow {
+    margin-left: auto; /* Pousse la flÃ¨che Ã  droite */
+    font-size: 0.8em;
+    transition: transform 0.3s var(--transition-smooth);
+    /* La rotation de la flÃ¨che est gÃ©rÃ©e par le changement de contenu HTML en JS */
+}
+
+
+/* Main Content Area */
+#app-main {
+    flex-grow: 1; /* Prend l'espace restant */
+    display: flex; /* Pour que l'iframe remplisse cet espace */
+    overflow: hidden; /* Pour Ã©viter les barres de dÃ©filement si l'iframe est mal dimensionnÃ© */
+    transition: transform 0.4s var(--transition-smooth), filter 0.4s var(--transition-smooth);
+    will-change: transform, filter;
+}
+
+/* Effects when menu is open */
+body.menu-open #app-header,
+body.menu-open #app-main {
+    /* L'effet de transformation est appliquÃ© par JS si `no-transform-for-menu` n'est pas sur body */
+    filter: blur(4px) brightness(0.6); /* Effet de flou et d'assombrissement */
+    pointer-events: none; /* EmpÃªche les interactions avec le contenu principal lorsque le menu est ouvert */
+}
+
+
+#content-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: var(--dark-bg); /* Couleur de fond pendant le chargement de l'iframe */
+}
+
+/* Nav Footer */
+.nav-footer {
+    padding: 20px 25px;
+    text-align: center;
+    font-size: 0.85em;
+    color: var(--secondary-text);
+    border-top: 1px solid var(--divider-color);
+    margin-top: auto; /* Pousse le footer en bas du menu */
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    :root {
+        --menu-width: 280px;
+        --menu-width-reduced: calc(var(--menu-width) - 40px); /* ajustÃ© */
+    }
+    #app-header {
+        padding: 0 20px;
+    }
+
+    /* Comportement spÃ©cifique pour le menu ouvert sur tablettes/mobiles si `no-transform-for-menu` n'est PAS prÃ©sent */
+    body:not(.no-transform-for-menu).menu-open #app-header,
+    body:not(.no-transform-for-menu).menu-open #app-main {
+        transform: translateX(var(--menu-width-reduced)) scale(0.95); /* Un peu moins de scale */
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --menu-width: 260px; /* Menu un peu plus Ã©troit sur petits Ã©crans */
+        --header-height: 60px; /* Header un peu plus petit */
+    }
+    #app-header {
+        height: var(--header-height);
+    }
+    .nav-header {
+        height: var(--header-height); /* S'assurer que le header du menu correspond */
+    }
+
+    #logo-text { font-size: 1.3em; }
+    #logo-img { height: 38px; }
+    .pro-badge { font-size: 0.45em; padding: 2px 4px; }
+
+    .nav-link { padding: 14px 20px; font-size: 1em; }
+    .menu-icon { width: 20px; height: 20px; margin-right: 15px; }
+    .submenu .nav-link { padding-left: 45px; font-size: 0.9em; }
+
+    /* Sur les trÃ¨s petits Ã©crans, on peut choisir de ne pas scaler mais juste de dÃ©caler */
+    body.menu-open #app-header,
+    body.menu-open #app-main {
+        /* Par dÃ©faut, on garde le comportement de la classe `no-transform-for-menu` pour Ã©viter le scale,
+           mais on peut le surcharger ici si on veut un effet diffÃ©rent sur mobile */
+        transform: translateX(var(--menu-width)) scale(1); /* Pas de scale, juste translation */
+        filter: blur(3px) brightness(0.7);
+    }
+
+    /* Ajout pour que le body avec `no-transform-for-menu` ne soit pas affectÃ© par le scale ci-dessus */
+    body.no-transform-for-menu.menu-open #app-header,
+    body.no-transform-for-menu.menu-open #app-main {
+        transform: none; /* Assure qu'il n'y a pas de transformation */
+    }
+}
+
+/* PWA Standalone Mode Adjustments */
+@media all and (display-mode: standalone) {
+    #app-header {
+        /* Ajoute un padding en haut Ã©gal Ã  la zone de sÃ©curitÃ© pour les encoches, etc. */
+        padding-top: env(safe-area-inset-top, 0px);
+        height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+    }
+
+    #main-nav {
+        /* Le menu doit aussi prendre en compte la safe area en haut */
+        padding-top: env(safe-area-inset-top, 0px);
+         /* Si le header du nav est sticky, il faudra peut-Ãªtre ajuster sa hauteur ou son padding-top aussi */
+    }
+    .nav-header { /* Si le header du menu est sticky */
+        height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+    }
+
+    body {
+        /* Ajoute un padding en bas pour la zone de sÃ©curitÃ© (barre de navigation gestuelle, etc.) */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Le FAB d'installation n'est plus nÃ©cessaire car il est supprimÃ©,
+       mais si d'autres Ã©lÃ©ments flottants Ã©taient prÃ©sents, ils devraient aussi considÃ©rer env(safe-area-inset-bottom) */
 }
