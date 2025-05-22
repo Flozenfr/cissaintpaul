@@ -50,3 +50,19 @@
     transform: translateY(0);
   }
 }
+#installPrompt .buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+#installPrompt button#dismissBtn {
+  background-color: transparent;
+  color: var(--accent-text);
+  border: 1px solid var(--fire-red-light);
+}
+
+#installPrompt button#dismissBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
