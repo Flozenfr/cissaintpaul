@@ -256,14 +256,14 @@ select#filterInput option { background-color: var(--background-card); color: whi
     content: '';
     position: absolute;
     bottom: 5px;
-    left: 5px;
+    left: 5px; /* Changé de right à left pour le différencier de 'has-availability' */
     width: 8px;
     height: 8px;
-    background-color: var(--fire-red);
+    background-color: var(--fire-red); /* Couleur différente pour les événements */
     border-radius: 50%;
 }
 #teams-calendar-days div.selected-day {
-    background-color: var(--ember-orange) !important;
+    background-color: var(--ember-orange) !important; /* Style pour le jour sélectionné */
     color: var(--charcoal) !important;
     border: 2px solid var(--smoke-white);
 }
@@ -320,6 +320,8 @@ select#filterInput option { background-color: var(--background-card); color: whi
     border-radius: 12px;
     padding: 1.5rem;
     min-height: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
 #teams-placeholder {
@@ -329,7 +331,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     justify-content: center;
     text-align: center;
     color: var(--text-secondary);
-    height: 100%;
+    flex-grow: 1; 
     padding: 2rem;
 }
 #teams-placeholder ion-icon {
@@ -346,14 +348,13 @@ select#filterInput option { background-color: var(--background-card); color: whi
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--charcoal);
+    text-align: center;
 }
 .teams-display-header h3 {
     color: var(--ember-orange);
-    text-align: center;
     font-size: 1.5rem;
 }
 .teams-display-header p {
-    text-align: center;
     color: var(--text-secondary);
     font-size: 0.9em;
 }
@@ -398,11 +399,16 @@ select#filterInput option { background-color: var(--background-card); color: whi
     align-items: center;
     gap: 0.8rem;
     margin-bottom: 0.8rem;
+    justify-content: space-between; /* Pour espacer nom et bouton */
 }
 .team-card .role-name {
-    flex-grow: 1;
     color: var(--text-secondary);
     font-size: 0.9em;
+}
+.team-card .personnel-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .team-card .personnel-name {
     color: var(--smoke-white);
@@ -413,6 +419,20 @@ select#filterInput option { background-color: var(--background-card); color: whi
     color: var(--fire-red);
     font-style: italic;
     font-weight: normal;
+}
+.replace-personnel-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.4em;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s, transform 0.2s;
+}
+.replace-personnel-btn:hover {
+    color: var(--ember-orange);
+    transform: scale(1.1);
 }
 
 /* MODALE D'ÉVÉNEMENT */
@@ -433,6 +453,74 @@ select#filterInput option { background-color: var(--background-card); color: whi
     background-color: var(--charcoal);
     padding: 0.8rem;
     border-radius: 5px;
+}
+
+/* NOUVEAU: STYLES POUR LA MODALE DE REMPLACEMENT */
+#replacement-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 1rem;
+    background-color: var(--charcoal);
+    padding: 0.5rem;
+    border-radius: 5px;
+}
+.replacement-option {
+    padding: 0.8rem;
+    background-color: #3e3e42;
+    color: var(--smoke-white);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.replacement-option:hover {
+    background-color: var(--ember-orange);
+    color: var(--charcoal);
+}
+.replacement-option.no-options {
+    text-align: center;
+    color: var(--text-secondary);
+    cursor: default;
+}
+.replacement-option.no-options:hover {
+    background-color: #3e3e42;
+    color: var(--text-secondary);
+}
+
+/* NOUVEAU: STYLES POUR LE CONTENEUR DES REMPLAÇANTS POTENTIELS */
+#potential-replacements-container {
+    background-color: var(--background-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+#potential-replacements-container h3 {
+    color: var(--ember-orange);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--charcoal);
+}
+.potential-replacements-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+.replacement-role-group h4 {
+    color: var(--smoke-white);
+    font-size: 1em;
+    margin-bottom: 0.5rem;
+}
+.replacement-role-group ul {
+    list-style: none;
+    padding-left: 1rem;
+    margin: 0;
+}
+.replacement-role-group li {
+    color: var(--text-secondary);
+    font-size: 0.9em;
 }
 
 
@@ -507,7 +595,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
 #custom-prompt-modal {
     display: none;
     position: fixed;
-    z-index: 1002;
+    z-index: 1002; /* S'assurer qu'il est au-dessus des autres modales si nécessaire */
     left: 0;
     top: 0;
     width: 100%;
@@ -558,4 +646,48 @@ select#filterInput option { background-color: var(--background-card); color: whi
     display: flex;
     justify-content: center;
     gap: 1rem;
+}
+
+/* Styles pour la modale de confirmation générique (réutilise les styles existants) */
+#generic-confirm-modal .modal-content {
+    max-width: 450px; /* Peut être ajusté */
+}
+#generic-confirm-modal p { /* Style pour le message de confirmation */
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+/* ... (tout le CSS existant) ... */
+
+/* STYLES POUR LA ZONE DE DANGER DANS LES PARAMÈTRES */
+.settings-container .danger-zone {
+    margin-top: 2.5rem;
+    border-top: 2px solid var(--fire-red);
+    padding-top: 1.5rem;
+}
+
+.settings-container .danger-zone > label {
+    color: var(--fire-red);
+    font-size: 1.2em;
+    margin-bottom: 0.5rem;
+}
+
+.settings-container .danger-zone .warning-text {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 400px;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+}
+
+.settings-container .danger-zone .irreversible-text {
+    font-size: 0.9em;
+    color: var(--ember-orange);
+    text-align: center;
+    font-weight: bold;
+}
+
+.settings-container .danger-zone > button {
+    margin-top: 1rem;
 }
