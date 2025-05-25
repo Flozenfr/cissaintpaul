@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONFIGURATION ET INITIALISATION FIREBASE ---
     const firebaseConfig = {
-        apiKey: "AIzaSyCfm_Rq_lma5JVsWRt_qLxpUvgEQ4I6k5g",
+        apiKey: "AIzaSyCfm_Rq_lma5JVsWRt_qLxpUvgEQ4I6k5g", // Remplacez par votre clé réelle
         authDomain: "giffmpr-test.firebaseapp.com",
         databaseURL: "https://giffmpr-test-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "giffmpr-test",
@@ -19,15 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminOnlyTabs = document.querySelectorAll('.admin-only');
     const headerPersonnelControls = document.getElementById('header-personnel-controls');
     const headerCalendarControls = document.getElementById('header-calendar-controls');
+    const headerStatsControls = document.getElementById('header-stats-controls');
     const personnelView = document.getElementById('personnel-view');
     const calendarView = document.getElementById('calendar-view');
+    const statsView = document.getElementById('stats-view');
     const personnelList = document.getElementById('personnel-list');
+    const statsList = document.getElementById('stats-list');
     const addPersonnelBtn = document.getElementById('add-personnel-btn');
     const searchInput = document.getElementById('searchInput');
     const filterInput = document.getElementById('filterInput');
+    const statsSearchInput = document.getElementById('statsSearchInput');
+    const statsFilterInput = document.getElementById('statsFilterInput');
     const personnelModal = document.getElementById('personnel-modal');
     const confirmModal = document.getElementById('confirm-modal');
-    const closeButton = document.querySelector('.close-button');
+    const closeButton = document.querySelector('#personnel-modal .close-button');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
     const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
     const personnelForm = document.getElementById('personnel-form');
@@ -37,84 +42,128 @@ document.addEventListener('DOMContentLoaded', () => {
     const navItems = document.querySelectorAll(".navigation .list");
     const navUl = document.querySelector(".navigation ul");
     const indicator = document.querySelector(".navigation .indicator");
+    const settingsView = document.getElementById('settings-view');
+    const deadlineInput = document.getElementById('deadline-input');
+    const saveDeadlineBtn = document.getElementById('save-deadline-btn');
+    const deadlineMessage = document.getElementById('deadline-message');
+    const customPromptModal = document.getElementById('custom-prompt-modal');
+    const customPasswordInput = document.getElementById('custom-password-input');
+    const customPromptOkBtn = document.getElementById('custom-prompt-ok-btn');
+    const customPromptCancelBtn = document.getElementById('custom-prompt-cancel-btn');
+    const resetAllDataBtn = document.getElementById('reset-all-data-btn');
 
+    // --- SÉLECTEURS CALENDRIER DISPONIBILITÉS (Spécifiques) ---
+    const calendarDaysContainer = document.querySelector('#calendar-view .calendar-days');
+    const calendarMonthPicker = document.querySelector('#calendar-view #month-picker');
+    const calendarYearHeader = document.querySelector('#calendar-view #year');
+    const calendarMonthList = document.querySelector('#calendar-view .month-list');
+    const calendarPreYearBtn = document.querySelector('#calendar-view #pre-year');
+    const calendarNextYearBtn = document.querySelector('#calendar-view #next-year');
+    const dispoDayText = document.querySelector('#calendar-view .day-text-formate');
+    const dispoTimeText = document.querySelector('#calendar-view .time-formate');
+    const dispoDateText = document.querySelector('#calendar-view .date-formate');
     const calendarPersonnelSelector = document.getElementById('calendar-personnel-selector');
     const calendarSearchInput = document.getElementById('calendar-search-input');
     const calendarSearchResults = document.getElementById('calendar-search-results');
     const selectedPersonnelName = document.getElementById('selected-personnel-name');
     const deselectPersonnelBtn = document.getElementById('deselect-personnel-btn');
-    const calendarDaysContainer = document.querySelector('.calendar-days');
 
-    const settingsView = document.getElementById('settings-view');
-    const deadlineInput = document.getElementById('deadline-input');
-    const saveDeadlineBtn = document.getElementById('save-deadline-btn');
-    const deadlineMessage = document.getElementById('deadline-message');
-
-    const customPromptModal = document.getElementById('custom-prompt-modal');
-    const customPasswordInput = document.getElementById('custom-password-input');
-    const customPromptOkBtn = document.getElementById('custom-prompt-ok-btn');
-    const customPromptCancelBtn = document.getElementById('custom-prompt-cancel-btn');
-
-    // --- NOUVEAUX SÉLECTEURS POUR LA VUE ÉQUIPES ---
+    // --- SÉLECTEURS VUE ÉQUIPES ---
     const teamsView = document.getElementById('teams-view');
     const teamsCalendarDaysContainer = document.getElementById('teams-calendar-days');
     const generatedTeamsContainer = document.getElementById('generated-teams-container');
+    const potentialReplacementsContainer = document.getElementById('potential-replacements-container');
     const eventTypeModal = document.getElementById('event-type-modal');
     const eventTypeForm = document.getElementById('event-type-form');
     const eventModalTitle = document.getElementById('event-modal-title');
     const eventDateInput = document.getElementById('event-date');
     const eventCancelBtn = document.getElementById('event-cancel-btn');
 
+    // --- SÉLECTEURS MODALE DE REMPLACEMENT ---
+    const replacePersonnelModal = document.getElementById('replace-personnel-modal');
+    const replaceModalTitle = document.getElementById('replace-modal-title');
+    const roleToReplaceEl = document.getElementById('role-to-replace');
+    const replacementOptionsContainer = document.getElementById('replacement-options-container');
+    const replaceCancelBtn = document.getElementById('replace-cancel-btn');
+    if (replacePersonnelModal) replacePersonnelModal.querySelector('.close-button').addEventListener('click', () => closeModal(replacePersonnelModal));
+    if (replaceCancelBtn) replaceCancelBtn.addEventListener('click', () => closeModal(replacePersonnelModal));
+
 
     // --- ÉTAT GLOBAL ---
     let allPersonnel = {};
     let allAvailabilities = {};
-    let allEvents = {}; // Pour stocker les événements (GIFF, MPR)
+    let allEvents = {};
+    let allAssignedTeams = {}; // Pour stocker les équipes figées/manuelles
     let selectedPersonnel = null;
     let isAdmin = false;
     let availabilityDeadline = null;
-    let selectedTeamDate = null; // Pour savoir quel jour est sélectionné dans le calendrier des équipes
+    let selectedTeamDate = null; // Utilisé pour la vue Équipes
+    let currentReplacementInfo = {}; // Pour stocker les infos lors d'un remplacement
+    let currentWorkingTeam = null; // **MODIFIÉ**: Pour stocker l'équipe en cours de modification (figée ou non)
 
-    // Fonction pour afficher un message stylisé
+
+    // --- FONCTIONS UTILITAIRES (showMessage, showCustomPrompt, showGenericConfirmModal) ---
     function showMessage(message, type) {
         const messageContainer = document.createElement('div');
         messageContainer.className = `message-container ${type}`;
-        messageContainer.innerHTML = `
-            <h3>${type === 'success' ? 'Succès' : type === 'error' ? 'Erreur' : 'Attention'}</h3>
-            <p>${message}</p>
-        `;
+        messageContainer.innerHTML = `<h3>${type === 'success' ? 'Succès' : type === 'error' ? 'Erreur' : 'Attention'}</h3><p>${message}</p>`;
         document.body.appendChild(messageContainer);
         messageContainer.classList.add('show');
-
         setTimeout(() => {
             messageContainer.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(messageContainer);
-            }, 500);
+            setTimeout(() => { if (document.body.contains(messageContainer)) { document.body.removeChild(messageContainer); } }, 500);
         }, 3000);
     }
-
-    // Fonction pour afficher la boîte de dialogue personnalisée
     function showCustomPrompt(message, callback) {
         const modal = document.getElementById('custom-prompt-modal');
         const passwordInput = document.getElementById('custom-password-input');
         const okBtn = document.getElementById('custom-prompt-ok-btn');
         const cancelBtn = document.getElementById('custom-prompt-cancel-btn');
-
+        const modalParagraph = modal.querySelector('p');
+        if (modalParagraph) modalParagraph.textContent = message;
         passwordInput.value = '';
         modal.classList.add('visible');
+        okBtn.onclick = () => { modal.classList.remove('visible'); callback(passwordInput.value); };
+        cancelBtn.onclick = () => { modal.classList.remove('visible'); callback(null); };
+        passwordInput.focus();
+    }
+    const genericConfirmModal = document.createElement('div');
+    genericConfirmModal.className = 'modal';
+    genericConfirmModal.id = 'generic-confirm-modal';
+    genericConfirmModal.innerHTML = `<div class="modal-content"><h4 class="modal-title-confirm" id="generic-confirm-title">Confirmation requise</h4><p id="generic-confirm-message">Êtes-vous sûr ?</p><div class="modal-actions"><button id="generic-confirm-cancel-btn" class="btn-secondary">Annuler</button><button id="generic-confirm-ok-btn" class="btn-danger">Confirmer</button></div></div>`;
+    document.body.appendChild(genericConfirmModal);
+    const genericConfirmTitleEl = document.getElementById('generic-confirm-title');
+    const genericConfirmMessageEl = document.getElementById('generic-confirm-message');
+    const genericConfirmOkBtn = document.getElementById('generic-confirm-ok-btn');
+    const genericConfirmCancelBtn = document.getElementById('generic-confirm-cancel-btn');
 
-        okBtn.onclick = () => {
-            const password = passwordInput.value;
-            modal.classList.remove('visible');
-            callback(password);
+    function showGenericConfirmModal(message, onConfirm, onCancel, title = "Confirmation requise", okButtonClass = "btn-danger", okButtonText = "Confirmer") {
+        genericConfirmTitleEl.textContent = title;
+        genericConfirmMessageEl.innerHTML = message;
+        genericConfirmOkBtn.className = 'btn-primary'; // Clear existing classes
+        okButtonClass.split(' ').forEach(cls => { if (cls) genericConfirmOkBtn.classList.add(cls); });
+        genericConfirmOkBtn.textContent = okButtonText;
+        genericConfirmModal.classList.add('visible');
+        
+        genericConfirmOkBtn.currentOnConfirm = onConfirm;
+        genericConfirmCancelBtn.currentOnCancel = onCancel;
+
+        genericConfirmOkBtn.onclick = () => { 
+            closeModal(genericConfirmModal); 
+            if (genericConfirmOkBtn.currentOnConfirm) genericConfirmOkBtn.currentOnConfirm(); 
         };
-
-        cancelBtn.onclick = () => {
-            modal.classList.remove('visible');
-            callback(null);
+        genericConfirmCancelBtn.onclick = () => { 
+            closeModal(genericConfirmModal); 
+            if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel(); 
+        };
+        genericConfirmModal.onclick = (e) => { 
+            if (e.target === genericConfirmModal) { 
+                closeModal(genericConfirmModal); 
+                if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel(); 
+            } 
         };
     }
+
 
     // --- LOGIQUE DE NAVIGATION ---
     function moveIndicator(element) {
@@ -124,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const E_left = element.offsetLeft;
             const i_width = indicator.offsetWidth;
             const newX = (E_width / 2 - i_width / 2) + E_left;
-
             navUl.style.setProperty("--indicator-x-pos", `${newX}px`);
             navUl.classList.add("indicator-ready");
             const shockwave = indicator.querySelector(".shockwave") || document.createElement("div");
@@ -139,11 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GESTION DE L'AUTHENTIFICATION ET DE L'UI ---
     const ADMIN_PASSWORD = "Aspf66220*";
-
     function updateAdminUI() {
         const loginIcon = topLoginBtn.querySelector('ion-icon');
         const currentlyActiveTab = document.querySelector('.navigation .list.active');
-
         if (isAdmin) {
             adminOnlyTabs.forEach(tab => tab.style.display = 'list-item');
             loginIcon.setAttribute('name', 'log-out-outline');
@@ -154,19 +200,20 @@ document.addEventListener('DOMContentLoaded', () => {
             loginIcon.setAttribute('name', 'log-in-outline');
             topLoginBtn.setAttribute('title', 'Connexion');
             if (currentlyActiveTab && currentlyActiveTab.classList.contains('admin-only')) {
-                 setActiveTab(navItems[0]);
+                setActiveTab(navItems[0]);
             } else if (currentlyActiveTab) {
                 moveIndicator(currentlyActiveTab);
             }
         }
     }
-
     topLoginBtn.addEventListener('click', () => {
         if (isAdmin) {
             isAdmin = false;
             sessionStorage.removeItem('isAdmin');
             showMessage('Vous avez été déconnecté.', 'warning');
             updateAdminUI();
+            const activeTab = document.querySelector('.navigation .list.active');
+            if (activeTab) updateActiveView(activeTab);
         } else {
             showCustomPrompt("Veuillez entrer le mot de passe administrateur :", (password) => {
                 if (password === ADMIN_PASSWORD) {
@@ -174,38 +221,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('isAdmin', 'true');
                     showMessage('Connexion réussie !', 'success');
                     updateAdminUI();
+                    const activeTab = document.querySelector('.navigation .list.active');
+                    if (activeTab) updateActiveView(activeTab);
                 } else if (password !== null) {
                     showMessage('Mot de passe incorrect.', 'error');
                 }
             });
         }
     });
+    if (sessionStorage.getItem('isAdmin') === 'true') { isAdmin = true; }
 
-    if (sessionStorage.getItem('isAdmin') === 'true') {
-        isAdmin = true;
-    }
-
-    // --- GESTION DE LA DATE LIMITE (MODIFIÉE) ---
+    // --- GESTION DE LA DATE LIMITE ---
     const deadlineRef = database.ref('config/deadline');
-
     saveDeadlineBtn.addEventListener('click', () => {
         if (!isAdmin) return;
         const newDeadline = deadlineInput.value;
-        deadlineRef.set(newDeadline || null)
-            .then(() => showMessage('Date et heure limites enregistrées avec succès !', 'success'))
-            .catch(err => showMessage('Erreur: ' + err.message, 'error'));
+        deadlineRef.set(newDeadline || null).then(() => showMessage('Date et heure limites enregistrées !', 'success')).catch(err => showMessage('Erreur: ' + err.message, 'error'));
     });
-
     deadlineRef.on('value', (snapshot) => {
         availabilityDeadline = snapshot.val();
         if (availabilityDeadline) {
             deadlineInput.value = availabilityDeadline;
-
-            // Formatter la date et l'heure pour l'affichage public
             const dateObj = new Date(availabilityDeadline);
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             const formattedDate = new Intl.DateTimeFormat('fr-FR', options).format(dateObj);
-
             deadlineMessage.innerHTML = `Date et heure limites pour la saisie : <strong>${formattedDate}</strong>`;
             deadlineMessage.style.display = 'block';
         } else {
@@ -214,13 +253,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- FONCTIONS UTILITAIRES BASE64 ---
-    const toBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
-    const fromBase64 = (str) => decodeURIComponent(escape(atob(str)));
-
-    // --- GESTION DES MODALS ---
+    // --- FONCTIONS UTILITAIRES ET GESTION MODALS ---
+    const toBase64 = (str) => str ? btoa(unescape(encodeURIComponent(str))) : "";
+    const fromBase64 = (str) => str ? decodeURIComponent(escape(atob(str))) : "";
     const openModal = (modal) => modal.classList.add('visible');
     const closeModal = (modal) => modal.classList.remove('visible');
+
     addPersonnelBtn.addEventListener('click', () => {
         if (!isAdmin) return;
         personnelForm.reset();
@@ -229,16 +267,21 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Ajouter';
         openModal(personnelModal);
     });
-    closeButton.addEventListener('click', () => closeModal(personnelModal));
-    confirmCancelBtn.addEventListener('click', () => closeModal(confirmModal));
-    // Ajout pour la nouvelle modale
-    eventTypeModal.querySelector('.close-button').addEventListener('click', () => closeModal(eventTypeModal));
-    eventCancelBtn.addEventListener('click', () => closeModal(eventTypeModal));
-
-    window.addEventListener('click', (e) => { 
-        if (e.target == personnelModal) closeModal(personnelModal); 
-        if (e.target == confirmModal) closeModal(confirmModal);
-        if (e.target == eventTypeModal) closeModal(eventTypeModal);
+    if (closeButton) closeButton.addEventListener('click', () => closeModal(personnelModal));
+    if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', () => closeModal(confirmModal));
+    if (eventTypeModal) eventTypeModal.querySelector('.close-button').addEventListener('click', () => closeModal(eventTypeModal));
+    if (eventCancelBtn) eventCancelBtn.addEventListener('click', () => closeModal(eventTypeModal));
+    if (customPromptCancelBtn) customPromptCancelBtn.addEventListener('click', () => closeModal(customPromptModal));
+    window.addEventListener('click', (e) => {
+        if (e.target === personnelModal) closeModal(personnelModal);
+        if (e.target === confirmModal) closeModal(confirmModal);
+        if (e.target === eventTypeModal) closeModal(eventTypeModal);
+        if (e.target === customPromptModal) closeModal(customPromptModal);
+        if (replacePersonnelModal && e.target === replacePersonnelModal) closeModal(replacePersonnelModal);
+        if (genericConfirmModal && e.target === genericConfirmModal) {
+             closeModal(genericConfirmModal);
+             if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel();
+        }
     });
 
     // --- LOGIQUE DE GESTION DU PERSONNEL ---
@@ -253,20 +296,26 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const id = personnelIdInput.value;
         const dbRef = id ? database.ref('personnel/' + id) : database.ref('personnel').push();
-        dbRef.update(personnelData).then(() => closeModal(personnelModal));
+        dbRef.update(personnelData).then(() => { closeModal(personnelModal); showMessage(id ? 'Personnel modifié !' : 'Personnel ajouté !', 'success'); }).catch(err => showMessage('Erreur: ' + err.message, 'error'));
     });
-
-    const renderPersonnel = (personnelData) => {
+    const renderPersonnel = (personnelDataToRender) => {
         if (!personnelList) return;
         personnelList.innerHTML = '';
         const searchTerm = searchInput.value.toLowerCase();
         const filterTerm = filterInput.value;
-        allPersonnel = personnelData || {};
-        for (const id in allPersonnel) {
-            const p = { id: id, nom: fromBase64(allPersonnel[id].nom), prenom: fromBase64(allPersonnel[id].prenom), commentaire: fromBase64(allPersonnel[id].commentaire), fonctions: allPersonnel[id].fonctions ? allPersonnel[id].fonctions.map(f => fromBase64(f)) : [] };
+
+        for (const id in personnelDataToRender) {
+            const pData = personnelDataToRender[id];
+            const p = {
+                id: id,
+                nom: fromBase64(pData.nom),
+                prenom: fromBase64(pData.prenom),
+                commentaire: fromBase64(pData.commentaire || ""),
+                fonctions: pData.fonctions ? pData.fonctions.map(f => fromBase64(f)) : []
+            };
             const fullName = `${p.prenom} ${p.nom}`;
-            const initials = `${p.prenom.charAt(0)}${p.nom.charAt(0)}`;
-            const functionsBlock = p.fonctions && p.fonctions.length > 0 ? p.fonctions.map(func => `<div class="info-block"><ion-icon name="shield-half-outline"></ion-icon><span>${func.replace(/ \(.+\)/, '')}</span></div>`).join('') : '<div class="info-block"><ion-icon name="shield-half-outline"></ion-icon><span>Aucune fonction</span></div>';
+            const initials = `${p.prenom.charAt(0)}${p.nom.charAt(0)}`.toUpperCase();
+            const functionsBlock = p.fonctions.length > 0 ? p.fonctions.map(func => `<div class="info-block"><ion-icon name="shield-half-outline"></ion-icon><span>${func.replace(/ \(.+\)/, '')}</span></div>`).join('') : '<div class="info-block"><ion-icon name="shield-half-outline"></ion-icon><span>Aucune fonction</span></div>';
             if ((fullName.toLowerCase().includes(searchTerm)) && (filterTerm === '' || p.fonctions.includes(filterTerm))) {
                 const card = document.createElement('div');
                 card.className = 'personnel-card';
@@ -275,25 +324,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-
     database.ref('personnel').on('value', (snapshot) => {
-        allPersonnel = snapshot.val() || {}; // Mettre à jour allPersonnel
-        renderPersonnel(allPersonnel); // Rerendre la liste du personnel
-        // Si une date est sélectionnée dans la vue équipe, régénérer les équipes
-        if (selectedTeamDate) {
+        allPersonnel = snapshot.val() || {};
+        if (personnelView.classList.contains('visible')) {
+            renderPersonnel(allPersonnel);
+        }
+        if (teamsView.classList.contains('visible') && selectedTeamDate) {
             generateAndDisplayTeams(selectedTeamDate);
         }
+        if (statsView && statsView.classList.contains('visible')) {
+            renderStatistics();
+        }
     });
+
     personnelList.addEventListener('click', (e) => {
         if (!isAdmin) return;
         const target = e.target.closest('.action-btn'); if (!target) return; const id = target.dataset.id;
-        if (target.classList.contains('delete-btn')) { confirmDeleteBtn.dataset.id = id; openModal(confirmModal); }
+        if (target.classList.contains('delete-btn')) { confirmDeleteBtn.dataset.id = id; document.getElementById('confirm-message').textContent = "Êtes-vous sûr de vouloir supprimer ce personnel ? Cette action est irréversible."; openModal(confirmModal); }
         if (target.classList.contains('edit-btn')) {
             database.ref('personnel/' + id).once('value', (snapshot) => {
                 const data = snapshot.val();
-                document.getElementById('nom').value = fromBase64(data.nom); document.getElementById('prenom').value = fromBase64(data.prenom); document.getElementById('commentaire').value = fromBase64(data.commentaire);
+                document.getElementById('nom').value = fromBase64(data.nom); document.getElementById('prenom').value = fromBase64(data.prenom); document.getElementById('commentaire').value = fromBase64(data.commentaire || "");
                 document.querySelectorAll('input[name="fonctions"]').forEach(cb => cb.checked = false);
-                if (data.fonctions) { data.fonctions.map(f => fromBase64(f)).forEach(func => { const checkbox = document.querySelector(`input[value="${func}"]`); if (checkbox) checkbox.checked = true; }); }
+                if (data.fonctions) { data.fonctions.map(f => fromBase64(f)).forEach(func => { const checkbox = document.querySelector(`#personnel-form input[value="${func}"]`); if (checkbox) checkbox.checked = true; }); }
                 personnelIdInput.value = id; modalTitle.textContent = 'Modifier le Personnel'; submitBtn.textContent = 'Modifier'; openModal(personnelModal);
             });
         }
@@ -301,11 +354,10 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmDeleteBtn.addEventListener('click', () => {
         if (!isAdmin) return;
         const idToDelete = confirmDeleteBtn.dataset.id;
-        if (idToDelete) { database.ref('personnel/' + idToDelete).remove(); closeModal(confirmModal); }
+        if (idToDelete) { database.ref('personnel/' + idToDelete).remove().then(() => showMessage('Personnel supprimé.', 'success')); closeModal(confirmModal); }
     });
     if (searchInput) searchInput.addEventListener('input', () => renderPersonnel(allPersonnel));
     if (filterInput) filterInput.addEventListener('change', () => renderPersonnel(allPersonnel));
-
     calendarSearchInput.addEventListener('input', () => {
         const searchTerm = calendarSearchInput.value.toLowerCase();
         calendarSearchResults.innerHTML = '';
@@ -330,7 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
     deselectPersonnelBtn.addEventListener('click', () => {
         selectedPersonnel = null;
         selectedPersonnelName.textContent = 'Aucun';
@@ -338,28 +389,48 @@ document.addEventListener('DOMContentLoaded', () => {
         generateCalendar(currentMonth.value, currentYear.value);
     });
 
-    // --- LOGIQUE DE NAVIGATION (Structure finale modifiée) ---
+    // --- LOGIQUE DE NAVIGATION (Mise à jour) ---
     function updateActiveView(activeItem) {
         document.querySelectorAll('.view-container').forEach(v => v.classList.remove('visible'));
         document.querySelectorAll('.header-controls').forEach(c => c.style.display = 'none');
         addPersonnelBtn.classList.remove('visible');
-        
+
         const activeTabText = activeItem.querySelector('.text b').textContent.trim();
-        
-        if (activeTabText === 'Gestion Personnels') {
+
+        if (activeTabText === 'Gestion Personnels' && isAdmin) {
             personnelView.classList.add('visible');
             addPersonnelBtn.classList.add('visible');
             headerPersonnelControls.style.display = 'flex';
+            renderPersonnel(allPersonnel);
         } else if (activeTabText === 'Disponibilités') {
             calendarView.classList.add('visible');
             headerCalendarControls.style.display = 'flex';
-        } else if (activeTabText === 'Paramètres') {
+            generateCalendar(currentMonth.value, currentYear.value);
+        } else if (activeTabText === 'Paramètres' && isAdmin) {
             settingsView.classList.add('visible');
         } else if (activeTabText === 'Équipes') {
             teamsView.classList.add('visible');
-            // Aucun header spécifique pour les équipes pour l'instant
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+            if (selectedTeamDate) {
+                generateAndDisplayTeams(selectedTeamDate);
+            } else {
+                generatedTeamsContainer.innerHTML = `<div id="teams-placeholder"><ion-icon name="calendar-clear-outline"></ion-icon><h3>Sélectionnez un jour</h3><p>Cliquez sur une date pour voir les équipes.</p></div>`;
+                potentialReplacementsContainer.innerHTML = '';
+            }
+        } else if (activeTabText === 'Statistiques' && isAdmin) {
+            if (statsView) {
+                statsView.classList.add('visible');
+                if (headerStatsControls) headerStatsControls.style.display = 'flex';
+                renderStatistics();
+            } else {
+                 calendarView.classList.add('visible');
+                 headerCalendarControls.style.display = 'flex';
+                 generateCalendar(currentMonth.value, currentYear.value);
+            }
         } else {
-            // Vue par défaut ou autre
+            calendarView.classList.add('visible');
+            headerCalendarControls.style.display = 'flex';
+            generateCalendar(currentMonth.value, currentYear.value);
         }
     }
 
@@ -376,25 +447,19 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const tab = e.currentTarget.closest('li');
-            if (tab.classList.contains('admin-only') && !isAdmin) {
-                showMessage('Cette section est réservée aux administrateurs.', 'warning');
-                return;
-            }
+            if (tab.classList.contains('admin-only') && !isAdmin) { showMessage('Cette section est réservée aux administrateurs.', 'warning'); return; }
             setActiveTab(tab);
         });
     });
-
-    indicator.addEventListener("transitionend", (e) => {
-        if (e.propertyName === "transform" && navUl.classList.contains("indicator-ready")) {
-            indicator.classList.add("landed");
-        }
-    });
-
+    indicator.addEventListener("transitionend", (e) => { if (e.propertyName === "transform" && navUl.classList.contains("indicator-ready")) { indicator.classList.add("landed"); } });
+    
     function setInitialState() {
-        const activeItem = document.querySelector(".navigation .list.active");
-        if(activeItem) {
-            updateActiveView(activeItem);
-            moveIndicator(activeItem);
+        updateAdminUI();
+        const activeItem = document.querySelector(".navigation .list.active") || navItems[0];
+        if (activeItem.classList.contains('admin-only') && !isAdmin) {
+            setActiveTab(navItems[0]);
+        } else {
+            setActiveTab(activeItem);
         }
     }
 
@@ -402,24 +467,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
     const getFebDays = (year) => isLeapYear(year) ? 29 : 28;
     const month_names = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    
-    let calendar = document.querySelector('.calendar');
-    let month_picker = document.querySelector('#month-picker');
-    const dayTextFormate = document.querySelector('.day-text-formate');
-    const timeFormate = document.querySelector('.time-formate');
-    const dateFormate = document.querySelector('.date-formate');
-    if (month_picker) {
-        month_picker.onclick = () => { month_list.classList.remove('hideonce', 'hide'); month_list.classList.add('show'); dayTextFormate.classList.remove('showtime'); dayTextFormate.classList.add('hidetime'); timeFormate.classList.remove('showtime'); timeFormate.classList.add('hideTime'); dateFormate.classList.remove('showtime'); dateFormate.classList.add('hideTime'); };
-    }
+
+    let currentDate = new Date();
+    let currentMonth = { value: currentDate.getMonth() };
+    let currentYear = { value: currentDate.getFullYear() };
 
     const generateCalendar = (month, year) => {
-        if (!calendarDaysContainer) return;
+        if (!calendarDaysContainer || !calendarMonthPicker || !calendarYearHeader) return;
         calendarDaysContainer.innerHTML = '';
-        let calendar_header_year = document.querySelector('#year');
         let days_of_month = [31, getFebDays(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        let currentDate = new Date();
-        month_picker.innerHTML = month_names[month];
-        calendar_header_year.innerHTML = year;
+        calendarMonthPicker.innerHTML = month_names[month];
+        calendarYearHeader.innerHTML = year;
         let first_day = new Date(year, month, 1);
         let day_offset = (first_day.getDay() + 6) % 7;
         for (let i = 0; i < days_of_month[month] + day_offset; i++) {
@@ -429,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
                 day.innerHTML = dayNumber;
                 day.dataset.date = dateId;
-                if (dayNumber === currentDate.getDate() && year === currentDate.getFullYear() && month === currentDate.getMonth()) day.classList.add('current-date');
+                if (dayNumber === new Date().getDate() && year === new Date().getFullYear() && month === new Date().getMonth()) day.classList.add('current-date');
                 if (allAvailabilities[dateId]) {
                     day.classList.add('has-availability');
                     if (selectedPersonnel && allAvailabilities[dateId][selectedPersonnel.id]) day.classList.add('selected-available');
@@ -438,78 +496,87 @@ document.addEventListener('DOMContentLoaded', () => {
             calendarDaysContainer.appendChild(day);
         }
     };
-
-    calendarDaysContainer.addEventListener('click', (e) => {
-        const dayDiv = e.target.closest('div:not(.empty)');
-        if (!dayDiv) return;
-
-        if (!isAdmin && availabilityDeadline && new Date() > new Date(availabilityDeadline)) {
-            showMessage("La date et l'heure limites pour la modification des disponibilités sont passées. L'action est bloquée.", 'error');
-            return;
-        }
-
-        if (!isAdmin) {
-            showMessage("Veuillez vous connecter en tant qu'administrateur pour modifier les disponibilités.", 'warning');
-            return;
-        }
-        if (!selectedPersonnel) { showMessage("Veuillez d'abord sélectionner un pompier dans la barre de recherche.", 'warning'); return; }
-
-        const dateId = dayDiv.dataset.date;
-        const availabilityRef = database.ref(`availabilities/${dateId}/${selectedPersonnel.id}`);
-        availabilityRef.once('value', (snapshot) => {
-            if (snapshot.exists()) availabilityRef.remove();
-            else availabilityRef.set({ nom: toBase64(selectedPersonnel.nom), prenom: toBase64(selectedPersonnel.prenom) });
-        });
-    });
-
-    database.ref('availabilities').on('value', (snapshot) => {
-        allAvailabilities = snapshot.val() || {};
-        generateCalendar(currentMonth.value, currentYear.value);
-        // Si une date est sélectionnée dans la vue équipe, régénérer les équipes
-        if (selectedTeamDate) {
-            generateAndDisplayTeams(selectedTeamDate);
-        }
-    });
-
-    let month_list = calendar.querySelector('.month-list');
-    if (month_list) {
-        month_names.forEach((e, index) => {
-            let month = document.createElement('div');
-            month.innerHTML = `<div>${e}</div>`;
-            month_list.append(month);
-            month.onclick = () => { currentMonth.value = index; generateCalendar(currentMonth.value, currentYear.value); month_list.classList.replace('show', 'hide'); dayTextFormate.classList.remove('hideTime'); dayTextFormate.classList.add('showtime'); timeFormate.classList.remove('hideTime'); timeFormate.classList.add('showtime'); dateFormate.classList.remove('hideTime'); dateFormate.classList.add('showtime'); };
-        });
-        (function() { month_list.classList.add('hideonce'); })();
+    function updateDateTimeDisplay() {
+        if (!dispoDayText || !dispoTimeText || !dispoDateText) return;
+        const now = new Date();
+        const month_names_locale = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+        dispoDayText.textContent = "AUJOURD'HUI";
+        dispoTimeText.textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        dispoDateText.textContent = `${String(now.getDate()).padStart(2, '0')} - ${month_names_locale[now.getMonth()]} - ${now.getFullYear()}`;
     }
 
-    const preYearBtn = document.querySelector('#pre-year');
-    if (preYearBtn) preYearBtn.onclick = () => { --currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
-    const nextYearBtn = document.querySelector('#next-year');
-    if (nextYearBtn) nextYearBtn.onclick = () => { ++currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
 
-    let currentDate = new Date();
-    let currentMonth = { value: currentDate.getMonth() };
-    let currentYear = { value: currentDate.getFullYear() };
-    generateCalendar(currentMonth.value, currentYear.value);
-    
-    // --- NOUVELLE LOGIQUE POUR LE CALENDRIER DES ÉQUIPES ---
+    if (calendarMonthPicker) {
+        calendarMonthPicker.onclick = () => {
+            if (calendarMonthList) {
+                calendarMonthList.classList.remove('hideonce', 'hide');
+                calendarMonthList.classList.add('show');
+                if (dispoDayText) { dispoDayText.classList.remove('showtime'); dispoDayText.classList.add('hidetime'); }
+                if (dispoTimeText) { dispoTimeText.classList.remove('showtime'); dispoTimeText.classList.add('hideTime'); }
+                if (dispoDateText) { dispoDateText.classList.remove('showtime'); dispoDateText.classList.add('hideTime'); }
+            }
+        };
+    }
+    if (calendarMonthList) {
+        month_names.forEach((e, index) => {
+            let monthEl = document.createElement('div');
+            monthEl.innerHTML = `<div>${e}</div>`;
+            calendarMonthList.append(monthEl);
+            monthEl.onclick = () => {
+                currentMonth.value = index;
+                generateCalendar(currentMonth.value, currentYear.value);
+                calendarMonthList.classList.replace('show', 'hide');
+                if (dispoDayText) { dispoDayText.classList.remove('hideTime'); dispoDayText.classList.add('showtime'); }
+                if (dispoTimeText) { dispoTimeText.classList.remove('hideTime'); dispoTimeText.classList.add('showtime'); }
+                if (dispoDateText) { dispoDateText.classList.remove('hideTime'); dispoDateText.classList.add('showtime'); }
+            };
+        });
+        if (!calendarMonthList.classList.contains('show')) { calendarMonthList.classList.add('hideonce'); }
+    }
+    if (calendarPreYearBtn) calendarPreYearBtn.onclick = () => { --currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
+    if (calendarNextYearBtn) calendarNextYearBtn.onclick = () => { ++currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
+    if (calendarDaysContainer) {
+        calendarDaysContainer.addEventListener('click', (e) => {
+            const dayDiv = e.target.closest('div:not(.empty)');
+            if (!dayDiv) return;
+            if (!isAdmin && availabilityDeadline && new Date() > new Date(availabilityDeadline)) { showMessage("La date limite de saisie est dépassée.", 'error'); return; }
+            if (!isAdmin) { showMessage("Veuillez vous connecter en tant qu'administrateur pour gérer les disponibilités.", 'warning'); return; }
+            if (!selectedPersonnel) { showMessage("Veuillez sélectionner un pompier dans la liste pour gérer ses disponibilités.", 'warning'); return; }
+            const dateId = dayDiv.dataset.date;
+            const availabilityRef = database.ref(`availabilities/${dateId}/${selectedPersonnel.id}`);
+            availabilityRef.once('value', (snapshot) => {
+                if (snapshot.exists()) availabilityRef.remove();
+                else availabilityRef.set({ nom: toBase64(selectedPersonnel.nom), prenom: toBase64(selectedPersonnel.prenom) });
+            });
+        });
+    }
+    database.ref('availabilities').on('value', (snapshot) => {
+        allAvailabilities = snapshot.val() || {};
+        if (calendarView.classList.contains('visible')) {
+            generateCalendar(currentMonth.value, currentYear.value);
+        }
+        if (teamsView.classList.contains('visible') && selectedTeamDate) {
+            generateAndDisplayTeams(selectedTeamDate);
+        }
+        if (statsView && statsView.classList.contains('visible')) {
+            renderStatistics();
+        }
+    });
 
+    // --- LOGIQUE POUR LE CALENDRIER DES ÉQUIPES ---
     let teamsCurrentMonth = { value: currentDate.getMonth() };
     let teamsCurrentYear = { value: currentDate.getFullYear() };
-
     const generateTeamsCalendar = (month, year) => {
         if (!teamsCalendarDaysContainer) return;
         teamsCalendarDaysContainer.innerHTML = '';
         let monthPicker = document.querySelector('#teams-month-picker');
         let yearPicker = document.querySelector('#teams-year');
+        if (!monthPicker || !yearPicker) return;
         let days_of_month = [31, getFebDays(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        
         monthPicker.innerHTML = month_names[month];
         yearPicker.innerHTML = year;
-
         let first_day = new Date(year, month, 1);
         let day_offset = (first_day.getDay() + 6) % 7;
-
         for (let i = 0; i < days_of_month[month] + day_offset; i++) {
             let day = document.createElement('div');
             if (i >= day_offset) {
@@ -517,229 +584,549 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
                 day.innerHTML = dayNumber;
                 day.dataset.date = dateId;
-
-                if (dateId === selectedTeamDate) {
-                    day.classList.add('selected-day');
-                }
-                if (allEvents[dateId]) {
-                    day.classList.add('has-event');
-                }
-            } else {
-                day.classList.add('empty');
-            }
+                if (dateId === selectedTeamDate) { day.classList.add('selected-day'); }
+                if (allEvents[dateId]) { day.classList.add('has-event'); }
+            } else { day.classList.add('empty'); }
             teamsCalendarDaysContainer.appendChild(day);
         }
     };
-    
-    // Clic sur un jour du calendrier des équipes
+
     teamsCalendarDaysContainer.addEventListener('click', (e) => {
         const dayDiv = e.target.closest('div:not(.empty)');
-        if (!dayDiv || !isAdmin) return;
-
-        selectedTeamDate = dayDiv.dataset.date;
-        generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); // Redessiner pour montrer la sélection
-        generateAndDisplayTeams(selectedTeamDate);
+        if (!dayDiv) return;
+        const dateId = dayDiv.dataset.date;
+        selectedTeamDate = dateId;
+        generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+        generateAndDisplayTeams(dateId);
     });
-    
-    // Gérer la modale d'événement
+
     function openEventModal(dateId) {
+        if (!eventTypeModal || !eventTypeForm || !eventDateInput || !eventModalTitle) return;
         eventTypeForm.reset();
         eventDateInput.value = dateId;
         const [year, month, day] = dateId.split('-');
-        eventModalTitle.textContent = `Événement du ${day}/${month}/${year}`;
-        
-        // Pré-cocher les cases si un événement existe déjà
+        eventModalTitle.textContent = `Événement du ${day} ${month_names[parseInt(month) - 1]}`;
         if (allEvents[dateId] && allEvents[dateId].types) {
-            allEvents[dateId].types.forEach(type => {
-                const checkbox = eventTypeForm.querySelector(`input[value="${type}"]`);
-                if(checkbox) checkbox.checked = true;
-            });
+            allEvents[dateId].types.forEach(type => { const checkbox = eventTypeForm.querySelector(`input[name="eventTypes"][value="${type}"]`); if (checkbox) checkbox.checked = true; });
         }
-        
         openModal(eventTypeModal);
     }
-    
-    // Sauvegarde de l'événement
     eventTypeForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (!isAdmin) return;
         const dateId = eventDateInput.value;
         const selectedTypes = Array.from(eventTypeForm.querySelectorAll('input[name="eventTypes"]:checked')).map(cb => cb.value);
-        
         const eventRef = database.ref(`events/${dateId}`);
         if (selectedTypes.length > 0) {
-            eventRef.set({ types: selectedTypes });
+            eventRef.set({ types: selectedTypes }).then(() => {
+                showMessage('Événement enregistré !', 'success');
+                closeModal(eventTypeModal);
+            }).catch(err => showMessage('Erreur: ' + err.message, 'error'));
         } else {
-            eventRef.remove(); // Supprimer l'événement s'il n'y a plus de type sélectionné
+             showGenericConfirmModal(
+                "Supprimer cet événement désactivera également les équipes assignées pour cette date. Continuer ?",
+                () => {
+                    Promise.all([
+                        eventRef.remove(),
+                        database.ref(`assignedTeams/${dateId}`).remove()
+                    ]).then(() => {
+                        showMessage('Événement et équipes assignées supprimés.', 'warning');
+                        closeModal(eventTypeModal);
+                    }).catch(err => showMessage('Erreur: ' + err.message, 'error'));
+                }, null, "Confirmation de suppression", "btn-danger", "Oui, supprimer"
+            );
         }
-        
-        closeModal(eventTypeModal);
-        showMessage('Événement enregistré !', 'success');
     });
-    
-    // Listener pour les données d'événements
+
     database.ref('events').on('value', (snapshot) => {
         allEvents = snapshot.val() || {};
-        generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
-        if (selectedTeamDate) {
-             generateAndDisplayTeams(selectedTeamDate);
+        if (teamsView.classList.contains('visible')) {
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+            if (selectedTeamDate) {
+                generateAndDisplayTeams(selectedTeamDate);
+            } else {
+                generatedTeamsContainer.innerHTML = `<div id="teams-placeholder"><ion-icon name="calendar-clear-outline"></ion-icon><h3>Sélectionnez un jour</h3><p>Cliquez sur une date pour voir ou générer les équipes.</p></div>`;
+                potentialReplacementsContainer.innerHTML = '';
+            }
+        }
+        if (statsView && statsView.classList.contains('visible')) {
+            renderStatistics();
         }
     });
 
-    // Navigation du calendrier des équipes
-    const teamsMonthList = document.querySelector('#teams-month-list');
-    month_names.forEach((e, index) => {
-        let month = document.createElement('div');
-        month.innerHTML = `<div>${e}</div>`;
-        teamsMonthList.append(month);
-        month.onclick = () => {
-            teamsCurrentMonth.value = index;
-            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
-            teamsMonthList.classList.replace('show', 'hide');
-        };
+    database.ref('assignedTeams').on('value', (snapshot) => {
+        allAssignedTeams = snapshot.val() || {};
+        if (teamsView.classList.contains('visible') && selectedTeamDate) {
+            generateAndDisplayTeams(selectedTeamDate);
+        }
+         if (statsView && statsView.classList.contains('visible')) {
+            renderStatistics();
+        }
     });
 
-    document.querySelector('#teams-month-picker').onclick = () => teamsMonthList.classList.add('show');
-    document.querySelector('#teams-pre-year').onclick = () => { --teamsCurrentYear.value; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); };
-    document.querySelector('#teams-next-year').onclick = () => { ++teamsCurrentYear.value; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); };
 
-    // --- ALGORITHME DE GÉNÉRATION D'ÉQUIPES ---
+    const teamsMonthList = document.querySelector('#teams-month-list');
+    if (teamsMonthList) {
+        month_names.forEach((e, index) => {
+            let month = document.createElement('div');
+            month.innerHTML = `<div>${e}</div>`;
+            teamsMonthList.append(month);
+            month.onclick = () => { teamsCurrentMonth.value = index; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); teamsMonthList.classList.replace('show', 'hide'); if (!teamsMonthList.classList.contains('show')) { teamsMonthList.classList.add('hideonce'); } };
+        });
+        if (!teamsMonthList.classList.contains('show')) { teamsMonthList.classList.add('hideonce'); }
+    }
+    const teamsMonthPicker = document.querySelector('#teams-month-picker');
+    if (teamsMonthPicker) teamsMonthPicker.onclick = () => { teamsMonthList.classList.remove('hideonce', 'hide'); teamsMonthList.classList.add('show'); };
+    const teamsPreYear = document.querySelector('#teams-pre-year');
+    if (teamsPreYear) teamsPreYear.onclick = () => { --teamsCurrentYear.value; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); };
+    const teamsNextYear = document.querySelector('#teams-next-year');
+    if (teamsNextYear) teamsNextYear.onclick = () => { ++teamsCurrentYear.value; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); };
 
-    const ROLES = {
-        CCF_DRIVER: "Conducteur Poids Lourd (CCF4MHP37)",
-        CCF_LEADER: "Chef d'Agrès FDF (CCF4MHP37)",
-        CCF_TEAMMATE: "Équipier FDF (CCF4MHP37)",
-        MPR_DRIVER: "Conducteur Voiture (MPR12)",
-        MPR_TEAMMATE: "Équipier DIV (MPR12)"
-    };
+    const ROLES = { CCF_DRIVER: "Conducteur Poids Lourd (CCF4MHP37)", CCF_LEADER: "Chef d'Agrès FDF (CCF4MHP37)", CCF_TEAMMATE: "Équipier FDF (CCF4MHP37)", MPR_DRIVER: "Conducteur Voiture (MPR12)", MPR_TEAMMATE: "Équipier DIV (MPR12)" };
 
+    // --- **MODIFIÉ** LOGIQUE DE GÉNÉRATION ET D'AFFICHAGE DES ÉQUIPES ---
     function generateAndDisplayTeams(dateId) {
-        const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
-        
-        if (availablePersonnelIds.length === 0) {
-            generatedTeamsContainer.innerHTML = `
-                <div class="teams-display-header">
-                     <h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>
-                     <p>Aucun personnel disponible pour cette date.</p>
-                </div>`;
+        const eventDetails = allEvents[dateId];
+        potentialReplacementsContainer.innerHTML = '';
+        currentWorkingTeam = null; // Réinitialiser à chaque nouvelle génération
+
+        if (!eventDetails || !eventDetails.types || eventDetails.types.length === 0) {
+            let editBtnHtml = '';
+            if (isAdmin) {
+                editBtnHtml = `<button id="edit-event-btn-nodef" class="btn-primary" style="margin-top:1rem; padding: 0.5rem 1rem;">Définir l'Événement</button>`;
+            }
+            generatedTeamsContainer.innerHTML = `<div class="teams-display-header"><h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3><div class="event-tags"><span class="event-tag" style="background-color: var(--text-secondary);">Aucun événement défini</span></div>${editBtnHtml}</div><div id="teams-placeholder" style="padding-top: 20px; text-align:center;"><p>Aucun événement n'est défini pour cette date.${isAdmin ? " Cliquez ci-dessus pour en définir un." : ""}</p></div>`;
+            const editBtn = document.getElementById('edit-event-btn-nodef');
+            if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId)); }
             return;
         }
 
-        // Créer une copie modifiable des IDs disponibles
-        let availablePool = [...availablePersonnelIds];
-        
-        // Classer les personnels disponibles par fonction
-        const personnelByFunction = {};
-        availablePool.forEach(pId => {
-            const person = allPersonnel[pId];
-            if (person && person.fonctions) {
-                person.fonctions.map(f => fromBase64(f)).forEach(func => {
-                    if (!personnelByFunction[func]) {
-                        personnelByFunction[func] = [];
-                    }
-                    personnelByFunction[func].push(pId);
-                });
-            }
-        });
+        const wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
+        const wantsMpr = eventDetails.types.includes("MPR");
 
-        const ccfTeam = {
-            [ROLES.CCF_DRIVER]: null,
-            [ROLES.CCF_LEADER]: null,
-            [ROLES.CCF_TEAMMATE]: [],
-        };
-
-        const mprTeam = {
-            [ROLES.MPR_DRIVER]: null,
-            [ROLES.MPR_TEAMMATE]: null,
-        };
-
-        // Fonction pour assigner une personne et la retirer du pool
-        const assignPersonnel = (role, pool) => {
-            const candidates = personnelByFunction[role] || [];
-            for (const candidateId of candidates) {
-                if (pool.includes(candidateId)) {
-                    // Retirer la personne du pool global pour qu'elle ne soit pas assignée deux fois
-                    pool.splice(pool.indexOf(candidateId), 1);
-                    return candidateId;
-                }
-            }
-            return null; // Personne non trouvée
-        };
-        
-        // 1. Priorité : Équipe CCF
-        ccfTeam[ROLES.CCF_DRIVER] = assignPersonnel(ROLES.CCF_DRIVER, availablePool);
-        ccfTeam[ROLES.CCF_LEADER] = assignPersonnel(ROLES.CCF_LEADER, availablePool);
-        // On a besoin de 2 équipiers
-        for(let i=0; i<2; i++){
-            const teammate = assignPersonnel(ROLES.CCF_TEAMMATE, availablePool);
-            if(teammate) ccfTeam[ROLES.CCF_TEAMMATE].push(teammate);
+        if (allAssignedTeams[dateId]) {
+            const assigned = allAssignedTeams[dateId];
+            currentWorkingTeam = JSON.parse(JSON.stringify(assigned));
+            renderTeams(dateId, wantsCcf ? assigned.ccfTeam : null, wantsMpr ? assigned.mprTeam : null, wantsCcf, wantsMpr, true);
+            return;
         }
 
-        // 2. Équipe MPR avec le personnel restant
-        mprTeam[ROLES.MPR_DRIVER] = assignPersonnel(ROLES.MPR_DRIVER, availablePool);
-        mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnel(ROLES.MPR_TEAMMATE, availablePool);
+        if (isAdmin) {
+            const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
+            let availablePool = [...availablePersonnelIds];
+            const personnelByFunctionForDay = {};
+            availablePool.forEach(pId => {
+                const person = allPersonnel[pId];
+                if (person && person.fonctions) {
+                    person.fonctions.map(f => fromBase64(f)).forEach(func => {
+                        if (!personnelByFunctionForDay[func]) personnelByFunctionForDay[func] = [];
+                        personnelByFunctionForDay[func].push(pId);
+                    });
+                }
+            });
 
-        // 3. Affichage
-        renderTeams(dateId, ccfTeam, mprTeam);
+            const assignPersonnelForAuto = (role, pool, pbf) => {
+                const candidates = (pbf[role] || []).filter(id => pool.includes(id));
+                if (candidates.length > 0) {
+                    const assignedId = candidates[Math.floor(Math.random() * candidates.length)];
+                    const indexInPool = pool.indexOf(assignedId);
+                    if (indexInPool > -1) pool.splice(indexInPool, 1);
+                    return assignedId;
+                }
+                return null;
+            };
+
+            let ccfTeam = null;
+            let mprTeam = null;
+
+            if (wantsCcf) {
+                ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
+                ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
+                ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
+                ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+                ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+            }
+
+            if (wantsMpr) {
+                mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
+                mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
+                mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
+            }
+            
+            currentWorkingTeam = { ccfTeam, mprTeam };
+            renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false);
+
+        } else {
+            renderTeams(dateId, null, null, wantsCcf, wantsMpr, false);
+        }
     }
-    
-    function renderTeams(dateId, ccfTeam, mprTeam) {
-        const eventInfo = allEvents[dateId];
-        const eventTagsHtml = eventInfo && eventInfo.types 
-            ? `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')}</div>`
-            : `<div class="event-tags"><span class="event-tag" style="background-color: var(--text-secondary);">Aucun événement défini</span></div>`;
 
-        const getPersonnelName = (id) => {
-            if (!id) return '<span class="personnel-name unassigned">Non assigné</span>';
-            const p = allPersonnel[id];
-            return `<span class="personnel-name">${fromBase64(p.prenom)} ${fromBase64(p.nom)}</span>`;
+    function generateEventTagsHtml(dateId) {
+        const eventInfo = allEvents[dateId];
+        return eventInfo && eventInfo.types ? `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')}</div>` : `<div class="event-tags"><span class="event-tag" style="background-color: var(--text-secondary);">Aucun type défini</span></div>`;
+    }
+
+    function getRoleDisplayName(roleKey) {
+        if (roleKey === ROLES.CCF_DRIVER) return "Conducteur PL";
+        if (roleKey === ROLES.CCF_LEADER) return "Chef d'Agrès FDF";
+        if (roleKey === ROLES.CCF_TEAMMATE) return "Équipier FDF";
+        if (roleKey === ROLES.MPR_DRIVER) return "Conducteur VL";
+        if (roleKey === ROLES.MPR_TEAMMATE) return "Équipier DIV";
+        return roleKey;
+    }
+
+    function renderTeams(dateId, ccfTeam, mprTeam, displayCcf, displayMpr, isFrozen = false) {
+        const getPersonnelNameAndButton = (personnelId, roleKey, teamType, teammateIndex = -1) => {
+            let nameHtml;
+            if (!personnelId) {
+                nameHtml = '<span class="personnel-name unassigned">Non assigné</span>';
+            } else {
+                const p = allPersonnel[personnelId];
+                nameHtml = p ? `<span class="personnel-name">${fromBase64(p.prenom)} ${fromBase64(p.nom)}</span>` : '<span class="personnel-name unassigned">Personnel Inconnu</span>';
+            }
+
+            let replaceButtonHtml = '';
+            if (isAdmin && (ccfTeam || mprTeam)) {
+                replaceButtonHtml = `<button class="replace-personnel-btn" 
+                                        data-dateid="${dateId}" 
+                                        data-teamtype="${teamType}" 
+                                        data-rolekey="${roleKey}" 
+                                        data-currentpersonnelid="${personnelId || 'null'}" 
+                                        ${teammateIndex !== -1 ? `data-teammateindex="${teammateIndex}"` : ''} 
+                                        title="Remplacer/Assigner">
+                                        <ion-icon name="swap-horizontal-outline"></ion-icon>
+                                     </button>`;
+            }
+            return `<div class="personnel-name-wrapper">${nameHtml}${replaceButtonHtml}</div>`;
         };
+
+        let teamsHtml = '';
+        let ccfHtml = '';
+        let mprHtml = '';
+        const eventDetails = allEvents[dateId] || { types: [] };
+        const currentDisplayCcf = displayCcf && eventDetails.types.some(type => type.startsWith("GIFF Nord"));
+        const currentDisplayMpr = displayMpr && eventDetails.types.includes("MPR");
+
+        if (currentDisplayCcf) {
+            const isCcfComplete = ccfTeam && ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2 && ccfTeam[ROLES.CCF_TEAMMATE].every(id => id !== null);
+            ccfHtml = `
+                <div class="team-card ${isCcfComplete ? '' : 'incomplete'}">
+                    <h4><ion-icon name="bus-outline"></ion-icon> Équipe CCF4MHP37</h4>
+                    <div class="role"><span class="role-name">Conducteur PL:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_DRIVER], ROLES.CCF_DRIVER, 'ccf')}</div>
+                    <div class="role"><span class="role-name">Chef d'Agrès FDF:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_LEADER], ROLES.CCF_LEADER, 'ccf')}</div>
+                    <div class="role"><span class="role-name">Équipier FDF 1:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_TEAMMATE]?.[0], ROLES.CCF_TEAMMATE, 'ccf', 0)}</div>
+                    <div class="role"><span class="role-name">Équipier FDF 2:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_TEAMMATE]?.[1], ROLES.CCF_TEAMMATE, 'ccf', 1)}</div>
+                </div>`;
+        }
+
+        if (currentDisplayMpr) {
+            const isMprComplete = mprTeam && mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
+            mprHtml = `
+                <div class="team-card ${isMprComplete ? '' : 'incomplete'}">
+                    <h4><ion-icon name="car-sport-outline"></ion-icon> Équipe MPR12</h4>
+                    <div class="role"><span class="role-name">Conducteur VL:</span> ${getPersonnelNameAndButton(mprTeam?.[ROLES.MPR_DRIVER], ROLES.MPR_DRIVER, 'mpr')}</div>
+                    <div class="role"><span class="role-name">Équipier DIV:</span> ${getPersonnelNameAndButton(mprTeam?.[ROLES.MPR_TEAMMATE], ROLES.MPR_TEAMMATE, 'mpr')}</div>
+                </div>`;
+        }
         
-        const isCcfComplete = ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2;
-        const isMprComplete = mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
+        teamsHtml = ccfHtml + mprHtml;
+        const availableTodayCount = Object.keys(allAvailabilities[dateId] || {}).length;
+
+        if (!allEvents[dateId] || !allEvents[dateId].types || allEvents[dateId].types.length === 0) {
+        } else if (teamsHtml === '' && availableTodayCount === 0 && (currentDisplayCcf || currentDisplayMpr)) {
+             teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucun personnel disponible pour cette date.</p>`;
+        } else if (teamsHtml === '' && (currentDisplayCcf || currentDisplayMpr)) {
+            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Pas assez de personnel disponible et/ou qualifié pour former les équipes demandées.</p>`;
+        } else if (!isFrozen && !isAdmin && (currentDisplayCcf || currentDisplayMpr)) {
+            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée par un administrateur.</p>`;
+        }
+
+        let adminActionsHtml = '';
+        if (isAdmin && allEvents[dateId] && allEvents[dateId].types && allEvents[dateId].types.length > 0) {
+            const teamToFreeze = currentWorkingTeam || { ccfTeam, mprTeam };
+            const freezeBtnHtml = !isFrozen ? `<button id="freeze-team-btn" class="btn-primary" style="padding: 0.5rem 1rem;" data-team='${JSON.stringify(teamToFreeze)}'>Figer l'Équipe</button>` : `<button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Réinitialiser Équipe</button>`;
+            adminActionsHtml = `
+            <div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+                <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
+                ${(currentDisplayCcf || currentDisplayMpr) ? freezeBtnHtml : ''} 
+                <button id="deactivate-date-btn" class="btn-danger" style="padding: 0.5rem 1rem;">Désactiver la date</button>
+            </div>`;
+        } else if (isAdmin) {
+             adminActionsHtml = `
+            <div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+                <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
+            </div>`;
+        }
 
         generatedTeamsContainer.innerHTML = `
             <div class="teams-display-header">
                 <h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>
-                ${eventTagsHtml}
-                <button id="edit-event-btn" class="btn-primary" style="margin-top:1rem; padding: 0.5rem 1rem;">Gérer l'Événement</button>
+                ${generateEventTagsHtml(dateId)}
+                ${adminActionsHtml}
             </div>
-            <div class="teams-grid">
-                <div class="team-card ${isCcfComplete ? '' : 'incomplete'}">
-                    <h4><ion-icon name="bus-outline"></ion-icon> Équipe CCF4MHP37</h4>
-                    <div class="role"><span class="role-name">Conducteur PL:</span> ${getPersonnelName(ccfTeam[ROLES.CCF_DRIVER])}</div>
-                    <div class="role"><span class="role-name">Chef d'Agrès FDF:</span> ${getPersonnelName(ccfTeam[ROLES.CCF_LEADER])}</div>
-                    <div class="role"><span class="role-name">Équipier FDF 1:</span> ${getPersonnelName(ccfTeam[ROLES.CCF_TEAMMATE][0])}</div>
-                    <div class="role"><span class="role-name">Équipier FDF 2:</span> ${getPersonnelName(ccfTeam[ROLES.CCF_TEAMMATE][1])}</div>
-                </div>
-                <div class="team-card ${isMprComplete ? '' : 'incomplete'}">
-                    <h4><ion-icon name="car-sport-outline"></ion-icon> Équipe MPR12</h4>
-                    <div class="role"><span class="role-name">Conducteur VL:</span> ${getPersonnelName(mprTeam[ROLES.MPR_DRIVER])}</div>
-                    <div class="role"><span class="role-name">Équipier DIV:</span> ${getPersonnelName(mprTeam[ROLES.MPR_TEAMMATE])}</div>
-                </div>
-            </div>`;
+            <div class="teams-grid">${teamsHtml}</div>`;
 
-        document.getElementById('edit-event-btn').addEventListener('click', () => {
-            openEventModal(dateId);
+        const editBtn = document.getElementById('edit-event-btn-display');
+        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId)); }
+
+        const deactivateBtn = document.getElementById('deactivate-date-btn');
+        if (deactivateBtn) {
+            deactivateBtn.addEventListener('click', () => {
+                const formattedDateForMessage = dateId.split('-').reverse().join('/');
+                showGenericConfirmModal(
+                    `Êtes-vous sûr de vouloir désactiver le <strong>${formattedDateForMessage}</strong> ?<br>L'événement et les équipes assignées (si figées) seront supprimés.`,
+                    () => {
+                        Promise.all([
+                            database.ref(`events/${dateId}`).remove(),
+                            database.ref(`assignedTeams/${dateId}`).remove()
+                        ]).then(() => {
+                            showMessage(`Événement du ${formattedDateForMessage} et équipes assignées supprimés.`, 'success');
+                        }).catch(err => showMessage(`Erreur: ${err.message}`, 'error'));
+                    }, null, "Désactiver la date ?", "btn-danger", "Oui, Désactiver"
+                );
+            });
+        }
+        
+        const resetAssignedTeamBtn = document.getElementById('reset-assigned-team-btn');
+        if (resetAssignedTeamBtn) {
+            resetAssignedTeamBtn.addEventListener('click', () => {
+                showGenericConfirmModal(
+                    "Voulez-vous réinitialiser l'équipe assignée pour cette date ? La génération automatique reprendra.",
+                    () => {
+                        database.ref(`assignedTeams/${dateId}`).remove()
+                            .then(() => {
+                                showMessage("Équipe réinitialisée. La génération automatique est réactivée pour cette date.", "success");
+                            })
+                            .catch(err => showMessage("Erreur lors de la réinitialisation de l'équipe: " + err.message, "error"));
+                    }, null, "Réinitialiser l'équipe ?", "btn-secondary", "Oui, Réinitialiser"
+                );
+            });
+        }
+        
+        const freezeBtn = document.getElementById('freeze-team-btn');
+        if (freezeBtn) {
+            freezeBtn.addEventListener('click', (e) => {
+                let teamDataToFreeze = JSON.parse(e.currentTarget.dataset.team);
+                if (!currentDisplayCcf) teamDataToFreeze.ccfTeam = null;
+                if (!currentDisplayMpr) teamDataToFreeze.mprTeam = null;
+
+                database.ref(`assignedTeams/${dateId}`).set(teamDataToFreeze)
+                    .then(() => showMessage("L'équipe a été figée avec succès.", "success"))
+                    .catch(err => showMessage("Erreur lors du figement de l'équipe: " + err.message, "error"));
+            });
+        }
+
+        document.querySelectorAll('.replace-personnel-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const btn = e.currentTarget;
+                currentReplacementInfo = {
+                    dateId: btn.dataset.dateid,
+                    teamType: btn.dataset.teamtype,
+                    roleKey: btn.dataset.rolekey,
+                    currentPersonnelId: btn.dataset.currentpersonnelid === 'null' ? null : btn.dataset.currentpersonnelid,
+                    teammateIndex: btn.dataset.teammateindex ? parseInt(btn.dataset.teammateindex) : -1
+                };
+                openReplacePersonnelModal();
+            });
+        });
+
+        if (isAdmin && (ccfTeam || mprTeam || isFrozen) && (currentDisplayCcf || currentDisplayMpr)) {
+             const teamForReplacements = currentWorkingTeam;
+             if (teamForReplacements) {
+                renderPotentialReplacements(dateId, teamForReplacements.ccfTeam, teamForReplacements.mprTeam);
+             }
+        } else {
+            potentialReplacementsContainer.innerHTML = '';
+        }
+    }
+
+    function renderPotentialReplacements(dateId, ccfTeam, mprTeam) {
+        const availableOnDate = Object.keys(allAvailabilities[dateId] || {});
+        const currentTeamAssignmentsOnDate = new Set();
+        const teamsToConsider = [];
+        if(ccfTeam) teamsToConsider.push(ccfTeam);
+        if(mprTeam) teamsToConsider.push(mprTeam);
+
+        teamsToConsider.forEach(team => {
+            if (!team) return;
+            Object.values(team).flat().forEach(id => {
+                if (id) currentTeamAssignmentsOnDate.add(id);
+            });
+        });
+
+        const potentialReplacementsByRole = {};
+        Object.values(ROLES).forEach(roleKey => {
+            const qualifiedPersonnel = Object.keys(allPersonnel).filter(pId => {
+                const pData = allPersonnel[pId];
+                return pData.fonctions && pData.fonctions.map(f => fromBase64(f)).includes(roleKey);
+            });
+
+            const availableAndUnassignedForRole = qualifiedPersonnel.filter(pId =>
+                availableOnDate.includes(pId) && !currentTeamAssignmentsOnDate.has(pId)
+            );
+
+            if (availableAndUnassignedForRole.length > 0) {
+                potentialReplacementsByRole[roleKey] = availableAndUnassignedForRole;
+            }
+        });
+
+        if (Object.keys(potentialReplacementsByRole).length === 0) {
+            potentialReplacementsContainer.innerHTML = '<h3><ion-icon name="people-circle-outline"></ion-icon> Remplaçants Potentiels</h3><p style="color:var(--text-secondary); text-align:center;">Aucun remplaçant potentiel disponible actuellement.</p>';
+            return;
+        }
+
+        let html = `<h3><ion-icon name="people-circle-outline"></ion-icon> Remplaçants Potentiels</h3><div class="potential-replacements-list">`;
+        for (const roleKey in potentialReplacementsByRole) {
+            html += `<div class="replacement-role-group">
+                        <h4>${getRoleDisplayName(roleKey)}</h4>
+                        <ul>`;
+            potentialReplacementsByRole[roleKey].forEach(pId => {
+                const person = allPersonnel[pId];
+                html += `<li>${fromBase64(person.prenom)} ${fromBase64(person.nom)}</li>`;
+            });
+            html += `   </ul>
+                    </div>`;
+        }
+        html += `</div>`;
+        potentialReplacementsContainer.innerHTML = html;
+    }
+
+    function openReplacePersonnelModal() {
+        if (!isAdmin || !currentWorkingTeam) {
+            showMessage("Impossible d'ouvrir le remplacement : aucune équipe de travail active.", "error");
+            return;
+        }
+        const { dateId, roleKey, currentPersonnelId } = currentReplacementInfo;
+
+        if (roleToReplaceEl) roleToReplaceEl.textContent = getRoleDisplayName(roleKey);
+        if (replacementOptionsContainer) replacementOptionsContainer.innerHTML = '';
+
+        const availableOnDate = Object.keys(allAvailabilities[dateId] || {});
+        const currentAssignments = new Set();
+
+        const { ccfTeam, mprTeam } = currentWorkingTeam;
+        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignments.add(id); }); }
+        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignments.add(id); }); }
+
+        const potentialReplacementsList = Object.keys(allPersonnel).filter(pId => {
+            const person = allPersonnel[pId];
+            return person &&
+                availableOnDate.includes(pId) &&
+                person.fonctions && person.fonctions.map(f => fromBase64(f)).includes(roleKey) &&
+                pId !== currentPersonnelId &&
+                !currentAssignments.has(pId);
+        });
+
+        const unassignOptionDiv = document.createElement('div');
+        unassignOptionDiv.className = 'replacement-option';
+        unassignOptionDiv.textContent = "Laisser Non Assigné";
+        unassignOptionDiv.addEventListener('click', () => performReplacement(null));
+        replacementOptionsContainer.appendChild(unassignOptionDiv);
+
+        if (potentialReplacementsList.length > 0) {
+            potentialReplacementsList.forEach(pId => {
+                const person = allPersonnel[pId];
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'replacement-option';
+                optionDiv.textContent = `${fromBase64(person.prenom)} ${fromBase64(person.nom)}`;
+                optionDiv.addEventListener('click', () => performReplacement(pId));
+                replacementOptionsContainer.appendChild(optionDiv);
+            });
+        } else {
+            replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun autre remplaçant.</div>');
+        }
+
+        openModal(replacePersonnelModal);
+    }
+
+    function performReplacement(replacementPersonnelId) {
+        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) return;
+
+        const { dateId, teamType, roleKey, teammateIndex } = currentReplacementInfo;
+        const teamToUpdate = currentWorkingTeam[teamType + 'Team'];
+
+        if (!teamToUpdate) {
+            showMessage("Erreur: L'équipe à mettre à jour n'existe pas.", "error");
+            return;
+        }
+        
+        if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) {
+            teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId;
+        } else {
+            teamToUpdate[roleKey] = replacementPersonnelId;
+        }
+
+        database.ref(`assignedTeams/${dateId}`).set(currentWorkingTeam)
+            .then(() => {
+                showMessage("Remplacement effectué et équipe validée !", "success");
+                closeModal(replacePersonnelModal);
+            })
+            .catch(err => {
+                showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error");
+            });
+    }
+
+    // --- LOGIQUE POUR LES STATISTIQUES (Placeholder) ---
+    function renderStatistics() {
+        if (!statsView) {
+            return;
+        }
+        if (statsList) {
+            statsList.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-secondary);">Section Statistiques en cours de développement.</p>';
+        }
+    }
+
+    if (statsSearchInput) statsSearchInput.addEventListener('input', renderStatistics);
+    if (statsFilterInput) statsFilterInput.addEventListener('change', renderStatistics);
+
+    // --- LOGIQUE DE RÉINITIALISATION DES DONNÉES ---
+    if (resetAllDataBtn) {
+        resetAllDataBtn.addEventListener('click', () => {
+            if (!isAdmin) {
+                showMessage("Accès refusé. Seuls les administrateurs peuvent effectuer cette action.", "error");
+                return;
+            }
+            
+            const onFinalConfirm = () => {
+                const promises = [];
+                promises.push(database.ref('availabilities').remove());
+                promises.push(database.ref('events').remove());
+                promises.push(database.ref('assignedTeams').remove());
+
+                Promise.all(promises)
+                    .then(() => {
+                        showMessage("Toutes les disponibilités, événements et équipes assignées ont été réinitialisés.", "success");
+                    })
+                    .catch(err => {
+                        showMessage("Erreur lors de la réinitialisation : " + err.message, "error");
+                    });
+            };
+
+            showGenericConfirmModal(
+                "Êtes-vous <strong>ABSOLUMENT SÛR</strong> de vouloir tout réinitialiser ?<br><br>Cette action supprime <strong>TOUTES</strong> les disponibilités de <strong>TOUS</strong> les personnels et désactive <strong>TOUTES</strong> les dates d'événements (y compris les équipes assignées).<br><br><strong style='color:var(--fire-red);'>CETTE ACTION EST IRRÉVERSIBLE.</strong>",
+                () => {
+                    closeModal(genericConfirmModal);
+                    showCustomPrompt("Pour confirmer la suppression DÉFINITIVE, veuillez taper \"RESET\" ci-dessous :", (typedValue) => {
+                        if (typedValue === "RESET") {
+                            onFinalConfirm();
+                        } else if (typedValue !== null) {
+                            showMessage("Réinitialisation annulée. Le texte de confirmation était incorrect.", "warning");
+                        } else {
+                             showMessage("Réinitialisation annulée.", "info");
+                        }
+                    });
+                }, 
+                null,
+                "CONFIRMATION REQUISE", 
+                "btn-danger", 
+                "Oui, je comprends les risques"
+            );
         });
     }
 
 
-    // --- AFFICHAGE DE L'HEURE ET DATE ACTUELLES ---
-    const todayShowTime = document.querySelector('.time-formate');
-    const todayShowDate = document.querySelector('.date-formate');
-    const currshowDate = new Date();
-    const showCurrentDateOption = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-    const currentDateFormate = new Intl.DateTimeFormat('fr-FR', showCurrentDateOption).format(currshowDate);
-    if(todayShowDate) todayShowDate.textContent = currentDateFormate;
-    setInterval(() => {
-        const timer = new Date();
-        const option = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-        const formateTimer = new Intl.DateTimeFormat('fr-FR', option).format(timer);
-       if(todayShowTime) todayShowTime.textContent = formateTimer;
-    }, 1000);
-
-    // Initialisation finale
-    updateAdminUI();
+    // --- INITIALISATION ---
+    updateDateTimeDisplay();
+    setInterval(updateDateTimeDisplay, 1000);
     setInitialState();
-    generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); // Générer le calendrier des équipes au démarrage
 });
