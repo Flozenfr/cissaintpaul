@@ -22,15 +22,15 @@
             </select>
         </div>
         <div id="header-calendar-controls" class="header-controls">
-             <div id="calendar-personnel-selector">
-                 <input type="text" id="calendar-search-input" placeholder="Rechercher un pompier pour gérer les dispos...">
-                 <div id="calendar-search-results"></div>
-                 <div id="calendar-selected-personnel">
-                     <span>Pompier sélectionné:</span>
-                     <strong id="selected-personnel-name">Aucun</strong>
-                     <button id="deselect-personnel-btn" class="deselect-btn" title="Déselectionner">&times;</button>
-                 </div>
-             </div>
+            <div id="calendar-personnel-selector">
+                <input type="text" id="calendar-search-input" placeholder="Rechercher un pompier pour gérer les dispos...">
+                <div id="calendar-search-results"></div>
+                <div id="calendar-selected-personnel">
+                    <span>Pompier sélectionné:</span>
+                    <strong id="selected-personnel-name">Aucun</strong>
+                    <button id="deselect-personnel-btn" class="deselect-btn" title="Déselectionner">&times;</button>
+                </div>
+            </div>
         </div>
         <button id="top-login-btn" class="top-login-btn" title="Connexion">
             <ion-icon name="log-in-outline"></ion-icon>
@@ -101,9 +101,10 @@
             <div id="teams-placeholder">
                 <ion-icon name="calendar-clear-outline"></ion-icon>
                 <h3>Sélectionnez un jour</h3>
-                <p>Cliquez sur une date dans le calendrier pour définir un événement et générer les équipes.</p>
+                <p>Cliquez sur une date dans le calendrier pour voir ou générer les équipes.</p>
             </div>
         </div>
+         <div id="potential-replacements-container"></div>
     </div>
 
 
@@ -115,7 +116,18 @@
                 <input type="datetime-local" id="deadline-input">
                 <button id="save-deadline-btn" class="btn-primary">Enregistrer</button>
             </div>
-        </div>
+
+            <div class="setting-item danger-zone">
+                <label for="reset-all-data-btn">Zone de Danger</label>
+                <p class="warning-text">
+                    Cette action supprime <strong>toutes</strong> les disponibilités de <strong>tous</strong> les personnels et désactive <strong>toutes</strong> les dates d'événements.
+                </p>
+                <p class="irreversible-text">
+                    Cette action est irréversible.
+                </p>
+                <button id="reset-all-data-btn" class="btn-danger">Tout Réinitialiser</button>
+            </div>
+            </div>
     </div>
 
     <div id="personnel-modal" class="modal">
@@ -163,7 +175,7 @@
 
     <div id="event-type-modal" class="modal">
         <div class="modal-content">
-             <span class="close-button">&times;</span>
+            <span class="close-button">&times;</span>
             <h2 id="event-modal-title">Définir l'événement du jour</h2>
             <form id="event-type-form">
                 <input type="hidden" id="event-date">
@@ -181,6 +193,21 @@
             </form>
         </div>
     </div>
+    
+    <div id="replace-personnel-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="replace-modal-title">Remplacer Personnel</h2>
+            <p>Rôle à remplacer : <strong id="role-to-replace"></strong></p>
+            <h3>Choisir un remplaçant disponible :</h3>
+            <div id="replacement-options-container">
+                </div>
+            <div class="modal-actions" style="margin-top: 1.5rem;">
+                <button id="replace-cancel-btn" class="btn-secondary">Annuler</button>
+            </div>
+        </div>
+    </div>
+
 
     <button id="add-personnel-btn" class="fab">+</button>
     <div class="navigation">
@@ -200,7 +227,7 @@
                     <span class="text"><b>Gestion Personnels</b></span>
                 </a>
             </li>
-            <li class="list admin-only">
+            <li class="list">
                 <a href="#">
                     <div class="particles"><span></span><span></span><span></span><span></span><span></span></div>
                     <span class="icon"><ion-icon name="shield-checkmark-outline"></ion-icon></span>
