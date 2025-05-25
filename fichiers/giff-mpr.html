@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Pompier</title>
+    <link href="https://cdn.jsdelivr.net/npm/vanilla-js-calendar@2.6.0/build/vanilla-js-calendar.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/giff-mpr.css">
+</head>
+<body>
+
+    <div id="global-header">
+        <div id="header-personnel-controls" class="header-controls">
+            <input type="text" id="searchInput" placeholder="Rechercher un personnel...">
+            <select id="filterInput">
+                <option value="">Toutes les fonctions</option>
+                <option value="Conducteur Poids Lourd (CCF4MHP37)">Conducteur Poids Lourd</option>
+                <option value="Chef d'Agrès FDF (CCF4MHP37)">Chef d'Agrès FDF</option>
+                <option value="Équipier FDF (CCF4MHP37)">Équipier FDF</option>
+                <option value="Conducteur Voiture (MPR12)">Conducteur Voiture</option>
+                <option value="Équipier DIV (MPR12)">Équipier DIV</option>
+            </select>
+        </div>
+        <div id="header-calendar-controls" class="header-controls">
+             <div id="calendar-personnel-selector">
+                 <input type="text" id="calendar-search-input" placeholder="Rechercher un pompier pour gérer les dispos...">
+                 <div id="calendar-search-results"></div>
+                 <div id="calendar-selected-personnel">
+                     <span>Pompier sélectionné:</span>
+                     <strong id="selected-personnel-name">Aucun</strong>
+                     <button id="deselect-personnel-btn" class="deselect-btn" title="Déselectionner">&times;</button>
+                 </div>
+             </div>
+        </div>
+        <button id="top-login-btn" class="top-login-btn" title="Connexion">
+            <ion-icon name="log-in-outline"></ion-icon>
+        </button>
+    </div>
+
+    <div class="background-embers"></div>
+
+    <div id="calendar-view" class="view-container">
+        <div id="deadline-message" class="deadline-message" style="display: none;"></div>
+
+        <div class="calendar">
+            <div class="calendar-header">
+                <span class="month-picker" id="month-picker">Mai</span>
+                <div class="year-picker" id="year-picker">
+                    <span class="year-change" id="pre-year"><pre><</pre></span>
+                    <span id="year">2025</span>
+                    <span class="year-change" id="next-year"><pre>></pre></span>
+                </div>
+            </div>
+            <div class="calendar-body">
+                <div class="calendar-week-days">
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mer</div>
+                    <div>Jeu</div>
+                    <div>Ven</div>
+                    <div>Sam</div>
+                    <div>Dim</div>
+                </div>
+                <div class="calendar-days"></div>
+            </div>
+            <div class="calendar-footer"></div>
+            <div class="date-time-formate">
+                <div class="day-text-formate">AUJOURD'HUI</div>
+                <div class="date-time-value">
+                    <div class="time-formate">01:41:20</div>
+                    <div class="date-formate">03 - mars - 2022</div>
+                </div>
+            </div>
+            <div class="month-list"></div>
+        </div>
+    </div>
+
+    <div id="personnel-view" class="view-container">
+        <div id="personnel-list" class="personnel-list"></div>
+    </div>
+
+    <div id="teams-view" class="view-container">
+        <div id="teams-calendar-container" class="calendar">
+            <div class="calendar-header">
+                <span class="month-picker" id="teams-month-picker">Mai</span>
+                <div class="year-picker" id="teams-year-picker">
+                    <span class="year-change" id="teams-pre-year"><pre><</pre></span>
+                    <span id="teams-year">2025</span>
+                    <span class="year-change" id="teams-next-year"><pre>></pre></span>
+                </div>
+            </div>
+            <div class="calendar-body">
+                <div class="calendar-week-days">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                </div>
+                <div id="teams-calendar-days" class="calendar-days"></div>
+            </div>
+            <div class="month-list" id="teams-month-list"></div>
+        </div>
+        <div id="generated-teams-container">
+            <div id="teams-placeholder">
+                <ion-icon name="calendar-clear-outline"></ion-icon>
+                <h3>Sélectionnez un jour</h3>
+                <p>Cliquez sur une date dans le calendrier pour définir un événement et générer les équipes.</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="settings-view" class="view-container">
+        <div class="settings-container">
+            <h2>Paramètres Administrateur</h2>
+            <div class="setting-item">
+                <label for="deadline-input">Date et heure limites de saisie :</label>
+                <input type="datetime-local" id="deadline-input">
+                <button id="save-deadline-btn" class="btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="personnel-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modal-title">Ajouter du Personnel</h2>
+            <form id="personnel-form">
+                <input type="hidden" id="personnel-id">
+                <input type="text" id="nom" placeholder="Nom" required>
+                <input type="text" id="prenom" placeholder="Prénom" required>
+                <div class="functions-container">
+                    <h3>Fonctions</h3>
+                    <label><input type="checkbox" name="fonctions" value="Conducteur Poids Lourd (CCF4MHP37)"> Conducteur Poids Lourd</label>
+                    <label><input type="checkbox" name="fonctions" value="Chef d'Agrès FDF (CCF4MHP37)"> Chef d'Agrès FDF</label>
+                    <label><input type="checkbox" name="fonctions" value="Équipier FDF (CCF4MHP37)"> Équipier FDF</label>
+                    <label><input type="checkbox" name="fonctions" value="Conducteur Voiture (MPR12)"> Conducteur Voiture</label>
+                    <label><input type="checkbox" name="fonctions" value="Équipier DIV (MPR12)"> Équipier DIV</label>
+                </div>
+                <textarea id="commentaire" placeholder="Commentaire..."></textarea>
+                <button type="submit" id="submit-btn" class="btn-primary">Ajouter</button>
+            </form>
+        </div>
+    </div>
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h4 class="modal-title-confirm">Confirmation requise</h4>
+            <p id="confirm-message">Êtes-vous sûr de vouloir supprimer ce personnel ? Cette action est irréversible.</p>
+            <div class="modal-actions">
+                <button id="confirm-cancel-btn" class="btn-secondary">Annuler</button>
+                <button id="confirm-delete-btn" class="btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+    <div id="custom-prompt-modal" class="modal">
+        <div class="modal-content">
+            <h3>Connexion Administrateur</h3>
+            <p>Veuillez entrer le mot de passe administrateur :</p>
+            <input type="password" id="custom-password-input" placeholder="Mot de passe">
+            <div class="modal-actions">
+                <button id="custom-prompt-cancel-btn" class="btn-secondary">Annuler</button>
+                <button id="custom-prompt-ok-btn" class="btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="event-type-modal" class="modal">
+        <div class="modal-content">
+             <span class="close-button">&times;</span>
+            <h2 id="event-modal-title">Définir l'événement du jour</h2>
+            <form id="event-type-form">
+                <input type="hidden" id="event-date">
+                <div class="event-types-container">
+                    <h3>Type(s) d'intervention :</h3>
+                    <label><input type="checkbox" name="eventTypes" value="GIFF Nord 1"> GIFF Nord 1</label>
+                    <label><input type="checkbox" name="eventTypes" value="GIFF Nord 2"> GIFF Nord 2</label>
+                    <label><input type="checkbox" name="eventTypes" value="GIFF Nord 3"> GIFF Nord 3</label>
+                    <label><input type="checkbox" name="eventTypes" value="MPR"> MPR</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="event-cancel-btn" class="btn-secondary">Annuler</button>
+                    <button type="submit" class="btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <button id="add-personnel-btn" class="fab">+</button>
+    <div class="navigation">
+        <ul>
+            <div class="indicator"><div class="shockwave"></div></div>
+            <li class="list active">
+                <a href="#">
+                    <div class="particles"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span class="icon"><ion-icon name="calendar-outline"></ion-icon></span>
+                    <span class="text"><b>Disponibilités</b></span>
+                </a>
+            </li>
+            <li class="list admin-only">
+                <a href="#">
+                    <div class="particles"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span class="icon"><ion-icon name="people-outline"></ion-icon></span>
+                    <span class="text"><b>Gestion Personnels</b></span>
+                </a>
+            </li>
+            <li class="list admin-only">
+                <a href="#">
+                    <div class="particles"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span class="icon"><ion-icon name="shield-checkmark-outline"></ion-icon></span>
+                    <span class="text"><b>Équipes</b></span>
+                </a>
+            </li>
+            <li class="list admin-only">
+                <a href="#">
+                    <div class="particles"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span>
+                    <span class="text"><b>Statistiques</b></span>
+                </a>
+            </li>
+            <li class="list admin-only">
+                <a href="#">
+                    <div class="particles"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span class="icon"><ion-icon name="settings-outline"></ion-icon></span>
+                    <span class="text"><b>Paramètres</b></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-js-calendar@2.6.0/build/vanilla-js-calendar.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="js/giff-mpr.js"></script>
+</body>
+</html>
