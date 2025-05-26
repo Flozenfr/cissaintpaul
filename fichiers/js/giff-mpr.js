@@ -52,6 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const customPromptCancelBtn = document.getElementById('custom-prompt-cancel-btn');
     const resetAllDataBtn = document.getElementById('reset-all-data-btn');
 
+    // --- NOUVEAU: Sélecteurs pour la modale de matricule ---
+    const matriculeConfirmModal = document.getElementById('matricule-confirm-modal');
+    const matriculeInput = document.getElementById('matricule-input');
+    const matriculeOkBtn = document.getElementById('matricule-ok-btn');
+    const matriculeCancelBtn = document.getElementById('matricule-cancel-btn');
+
+
     // --- SÉLECTEURS CALENDRIER DISPONIBILITÉS (Spécifiques) ---
     const calendarDaysContainer = document.querySelector('#calendar-view .calendar-days');
     const calendarMonthPicker = document.querySelector('#calendar-view #month-picker');
@@ -100,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedTeamDate = null; // Utilisé pour la vue Équipes
     let currentReplacementInfo = {}; // Pour stocker les infos lors d'un remplacement
     let currentWorkingTeam = null; // Pour stocker l'équipe en cours de modification (figée ou non)
-
+    let matriculeSessionAuth = {}; // NOUVEAU: Pour stocker les authentifications par matricule de la session
 
     // --- FONCTIONS UTILITAIRES (showMessage, showCustomPrompt, showGenericConfirmModal) ---
     function showMessage(message, type) {
@@ -144,23 +151,23 @@ document.addEventListener('DOMContentLoaded', () => {
         okButtonClass.split(' ').forEach(cls => { if (cls) genericConfirmOkBtn.classList.add(cls); });
         genericConfirmOkBtn.textContent = okButtonText;
         genericConfirmModal.classList.add('visible');
-        
+
         genericConfirmOkBtn.currentOnConfirm = onConfirm;
         genericConfirmCancelBtn.currentOnCancel = onCancel;
 
-        genericConfirmOkBtn.onclick = () => { 
-            closeModal(genericConfirmModal); 
-            if (genericConfirmOkBtn.currentOnConfirm) genericConfirmOkBtn.currentOnConfirm(); 
+        genericConfirmOkBtn.onclick = () => {
+            closeModal(genericConfirmModal);
+            if (genericConfirmOkBtn.currentOnConfirm) genericConfirmOkBtn.currentOnConfirm();
         };
-        genericConfirmCancelBtn.onclick = () => { 
-            closeModal(genericConfirmModal); 
-            if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel(); 
+        genericConfirmCancelBtn.onclick = () => {
+            closeModal(genericConfirmModal);
+            if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel();
         };
-        genericConfirmModal.onclick = (e) => { 
-            if (e.target === genericConfirmModal) { 
-                closeModal(genericConfirmModal); 
-                if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel(); 
-            } 
+        genericConfirmModal.onclick = (e) => {
+            if (e.target === genericConfirmModal) {
+                closeModal(genericConfirmModal);
+                if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel();
+            }
         };
     }
 
@@ -210,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAdmin) {
             isAdmin = false;
             sessionStorage.removeItem('isAdmin');
+            matriculeSessionAuth = {}; // Réinitialiser l'authentification matricule
             showMessage('Vous avez été déconnecté.', 'warning');
             updateAdminUI();
             const activeTab = document.querySelector('.navigation .list.active');
@@ -219,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (password === ADMIN_PASSWORD) {
                     isAdmin = true;
                     sessionStorage.setItem('isAdmin', 'true');
+                    matriculeSessionAuth = {}; // Réinitialiser l'authentification matricule
                     showMessage('Connexion réussie !', 'success');
                     updateAdminUI();
                     const activeTab = document.querySelector('.navigation .list.active');
@@ -272,11 +281,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (eventTypeModal) eventTypeModal.querySelector('.close-button').addEventListener('click', () => closeModal(eventTypeModal));
     if (eventCancelBtn) eventCancelBtn.addEventListener('click', () => closeModal(eventTypeModal));
     if (customPromptCancelBtn) customPromptCancelBtn.addEventListener('click', () => closeModal(customPromptModal));
+    if (matriculeCancelBtn) matriculeCancelBtn.addEventListener('click', () => closeModal(matriculeConfirmModal));
+
     window.addEventListener('click', (e) => {
         if (e.target === personnelModal) closeModal(personnelModal);
         if (e.target === confirmModal) closeModal(confirmModal);
         if (e.target === eventTypeModal) closeModal(eventTypeModal);
         if (e.target === customPromptModal) closeModal(customPromptModal);
+        if (e.target === matriculeConfirmModal) closeModal(matriculeConfirmModal);
         if (replacePersonnelModal && e.target === replacePersonnelModal) closeModal(replacePersonnelModal);
         if (genericConfirmModal && e.target === genericConfirmModal) {
              closeModal(genericConfirmModal);
@@ -288,9 +300,15 @@ document.addEventListener('DOMContentLoaded', () => {
     personnelForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!isAdmin) return;
+        const matriculeValue = document.getElementById('matricule').value;
+        if (!/^\d{3,6}$/.test(matriculeValue)) {
+            showMessage('Le matricule doit contenir entre 3 et 6 chiffres.', 'error');
+            return;
+        }
         const personnelData = {
             nom: toBase64(document.getElementById('nom').value),
             prenom: toBase64(document.getElementById('prenom').value),
+            matricule: toBase64(matriculeValue),
             commentaire: toBase64(document.getElementById('commentaire').value),
             fonctions: Array.from(document.querySelectorAll('input[name="fonctions"]:checked')).map(el => toBase64(el.value))
         };
@@ -298,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dbRef = id ? database.ref('personnel/' + id) : database.ref('personnel').push();
         dbRef.update(personnelData).then(() => { closeModal(personnelModal); showMessage(id ? 'Personnel modifié !' : 'Personnel ajouté !', 'success'); }).catch(err => showMessage('Erreur: ' + err.message, 'error'));
     });
+
     const renderPersonnel = (personnelDataToRender) => {
         if (!personnelList) return;
         personnelList.innerHTML = '';
@@ -310,16 +329,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: id,
                 nom: fromBase64(pData.nom),
                 prenom: fromBase64(pData.prenom),
+                matricule: fromBase64(pData.matricule || ""),
                 commentaire: fromBase64(pData.commentaire || ""),
                 fonctions: pData.fonctions ? pData.fonctions.map(f => fromBase64(f)) : []
             };
             const fullName = `${p.prenom} ${p.nom}`;
             const initials = `${p.prenom.charAt(0)}${p.nom.charAt(0)}`.toUpperCase();
+
+            const matriculeBlock = p.matricule ? `<div class="info-block"><ion-icon name="keypad-outline"></ion-icon><span>Matricule: ******</span></div>` : '<div class="info-block"><ion-icon name="alert-circle-outline"></ion-icon><span>Pas de matricule</span></div>';
+
             const functionsBlock = p.fonctions.length > 0 ? p.fonctions.map(func => `<div class="info-block"><ion-icon name="shield-half-outline"></ion-icon><span>${func.replace(/ \(.+\)/, '')}</span></div>`).join('') : '<div class="info-block"><ion-icon name="shield-half-outline"></ion-icon><span>Aucune fonction</span></div>';
             if ((fullName.toLowerCase().includes(searchTerm)) && (filterTerm === '' || p.fonctions.includes(filterTerm))) {
                 const card = document.createElement('div');
                 card.className = 'personnel-card';
-                card.innerHTML = `<div class="personnel-avatar">${initials}</div><div class="personnel-info"><h3>${fullName}</h3>${functionsBlock}${p.commentaire ? `<div class="info-block"><ion-icon name="chatbox-ellipses-outline"></ion-icon><span>${p.commentaire}</span></div>` : ''}</div><div class="personnel-actions"><button class="action-btn edit-btn" data-id="${p.id}"><ion-icon name="pencil-outline"></ion-icon></button><button class="action-btn delete-btn" data-id="${p.id}"><ion-icon name="trash-outline"></ion-icon></button></div>`;
+                card.innerHTML = `<div class="personnel-avatar">${initials}</div><div class="personnel-info"><h3>${fullName}</h3>${matriculeBlock}${functionsBlock}${p.commentaire ? `<div class="info-block"><ion-icon name="chatbox-ellipses-outline"></ion-icon><span>${p.commentaire}</span></div>` : ''}</div><div class="personnel-actions"><button class="action-btn edit-btn" data-id="${p.id}"><ion-icon name="pencil-outline"></ion-icon></button><button class="action-btn delete-btn" data-id="${p.id}"><ion-icon name="trash-outline"></ion-icon></button></div>`;
                 personnelList.appendChild(card);
             }
         }
@@ -345,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             database.ref('personnel/' + id).once('value', (snapshot) => {
                 const data = snapshot.val();
                 document.getElementById('nom').value = fromBase64(data.nom); document.getElementById('prenom').value = fromBase64(data.prenom); document.getElementById('commentaire').value = fromBase64(data.commentaire || "");
+                document.getElementById('matricule').value = fromBase64(data.matricule || "");
                 document.querySelectorAll('input[name="fonctions"]').forEach(cb => cb.checked = false);
                 if (data.fonctions) { data.fonctions.map(f => fromBase64(f)).forEach(func => { const checkbox = document.querySelector(`#personnel-form input[value="${func}"]`); if (checkbox) checkbox.checked = true; }); }
                 personnelIdInput.value = id; modalTitle.textContent = 'Modifier le Personnel'; submitBtn.textContent = 'Modifier'; openModal(personnelModal);
@@ -371,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.textContent = fullName;
                 item.dataset.id = p.id;
                 item.addEventListener('click', () => {
+                    matriculeSessionAuth = {}; // MODIFIÉ: Réinitialiser l'auth à chaque changement de personne
                     selectedPersonnel = { id: p.id, nom: p.nom, prenom: p.prenom };
                     selectedPersonnelName.textContent = `${p.prenom} ${p.nom}`;
                     calendarPersonnelSelector.classList.add('person-selected');
@@ -384,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     deselectPersonnelBtn.addEventListener('click', () => {
         selectedPersonnel = null;
+        matriculeSessionAuth = {}; // MODIFIÉ: Réinitialiser l'auth lors de la déselection
         selectedPersonnelName.textContent = 'Aucun';
         calendarPersonnelSelector.classList.remove('person-selected');
         generateCalendar(currentMonth.value, currentYear.value);
@@ -452,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     indicator.addEventListener("transitionend", (e) => { if (e.propertyName === "transform" && navUl.classList.contains("indicator-ready")) { indicator.classList.add("landed"); } });
-    
+
     function setInitialState() {
         updateAdminUI();
         const activeItem = document.querySelector(".navigation .list.active") || navItems[0];
@@ -535,21 +561,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (calendarPreYearBtn) calendarPreYearBtn.onclick = () => { --currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
     if (calendarNextYearBtn) calendarNextYearBtn.onclick = () => { ++currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
+
+    function setAvailability(dateId) {
+        const availabilityRef = database.ref(`availabilities/${dateId}/${selectedPersonnel.id}`);
+        availabilityRef.once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                availabilityRef.remove();
+            } else {
+                availabilityRef.set({
+                    nom: toBase64(selectedPersonnel.nom),
+                    prenom: toBase64(selectedPersonnel.prenom)
+                });
+            }
+        });
+    }
+
+    function promptForMatricule(dateId) {
+        matriculeInput.value = '';
+        openModal(matriculeConfirmModal);
+        matriculeInput.focus();
+
+        matriculeOkBtn.onclick = () => {
+            const enteredMatricule = matriculeInput.value;
+            if (!enteredMatricule) {
+                showMessage("Veuillez entrer votre matricule.", "error");
+                return;
+            }
+
+            const correctMatricule = fromBase64(allPersonnel[selectedPersonnel.id].matricule || "");
+            if (!correctMatricule) {
+                 showMessage("Aucun matricule n'est configuré pour ce compte. Contactez un administrateur.", "error");
+                 closeModal(matriculeConfirmModal);
+                 return;
+            }
+
+            if (enteredMatricule === correctMatricule) {
+                matriculeSessionAuth[selectedPersonnel.id] = true; // MODIFIÉ: Enregistrer l'authentification réussie
+                showMessage(`Bonjour ${selectedPersonnel.prenom}, vous êtes authentifié.`, "success");
+                closeModal(matriculeConfirmModal);
+                setAvailability(dateId);
+            } else {
+                showMessage("Matricule incorrect.", "error");
+                matriculeInput.value = '';
+            }
+        };
+    }
+
     if (calendarDaysContainer) {
         calendarDaysContainer.addEventListener('click', (e) => {
             const dayDiv = e.target.closest('div:not(.empty)');
             if (!dayDiv) return;
-            if (!isAdmin && availabilityDeadline && new Date() > new Date(availabilityDeadline)) { showMessage("La date limite de saisie est dépassée.", 'error'); return; }
-            if (!isAdmin) { showMessage("Veuillez vous connecter en tant qu'administrateur pour gérer les disponibilités.", 'warning'); return; }
-            if (!selectedPersonnel) { showMessage("Veuillez sélectionner un pompier dans la liste pour gérer ses disponibilités.", 'warning'); return; }
+
+            if (availabilityDeadline && new Date() > new Date(availabilityDeadline)) {
+                showMessage("La date limite de saisie est dépassée.", "error");
+                return;
+            }
+
+            if (!selectedPersonnel) {
+                showMessage("Veuillez d'abord vous sélectionner dans la liste.", "warning");
+                return;
+            }
+
             const dateId = dayDiv.dataset.date;
-            const availabilityRef = database.ref(`availabilities/${dateId}/${selectedPersonnel.id}`);
-            availabilityRef.once('value', (snapshot) => {
-                if (snapshot.exists()) availabilityRef.remove();
-                else availabilityRef.set({ nom: toBase64(selectedPersonnel.nom), prenom: toBase64(selectedPersonnel.prenom) });
-            });
+
+            if (isAdmin) {
+                // L'admin peut modifier sans confirmation
+                setAvailability(dateId);
+            } else {
+                // MODIFIÉ: L'utilisateur doit confirmer avec son matricule une seule fois
+                if (matriculeSessionAuth[selectedPersonnel.id]) {
+                    setAvailability(dateId); // Déjà authentifié
+                } else {
+                    promptForMatricule(dateId); // Demander le matricule
+                }
+            }
         });
     }
+
     database.ref('availabilities').on('value', (snapshot) => {
         allAvailabilities = snapshot.val() || {};
         if (calendarView.classList.contains('visible')) {
@@ -611,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!eventTypeModal || !eventTypeForm || !eventDateInput || !eventModalTitle) return;
         eventTypeForm.reset();
         eventDateInput.value = dateId;
-        
+
         // Stocker l'information si c'est une activation
         eventTypeForm.dataset.isActivation = isActivation;
 
@@ -641,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // S'assurer de ne figer que ce qui est demandé par les types d'événements
                 const wantsCcf = selectedTypes.some(type => type.startsWith("GIFF Nord"));
                 const wantsMpr = selectedTypes.includes("MPR");
-                
+
                 // Only include parts of the team that correspond to selected event types
                 const finalTeamToFreeze = {};
                 if (wantsCcf && teamToFreeze.ccfTeam) {
@@ -649,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // If CCF not wanted by event, but was in currentWorkingTeam, don't freeze it.
                     // Or ensure it's explicitly nulled if the structure requires ccfTeam/mprTeam keys
-                     finalTeamToFreeze.ccfTeam = null; 
+                     finalTeamToFreeze.ccfTeam = null;
                 }
                 if (wantsMpr && teamToFreeze.mprTeam) {
                     finalTeamToFreeze.mprTeam = teamToFreeze.mprTeam;
@@ -763,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return null;
         };
-        
+
         let ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
         let mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
 
@@ -820,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Determine what to display from the frozen team
             const displayCcfFromFrozen = !!assigned.ccfTeam; // Display if ccfTeam key exists and is not null/empty
             const displayMprFromFrozen = !!assigned.mprTeam; // Display if mprTeam key exists and is not null/empty
-            
+
             renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, displayCcfFromFrozen, displayMprFromFrozen, true, false); // isFrozen = true, isProvisional = false
             return;
         }
@@ -892,12 +980,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let replaceButtonHtml = '';
             if (isAdmin && isFrozen) { // Replacement only on frozen teams
-                replaceButtonHtml = `<button class="replace-personnel-btn" 
-                                            data-dateid="${dateId}" 
-                                            data-teamtype="${teamType}" 
-                                            data-rolekey="${roleKey}" 
-                                            data-currentpersonnelid="${personnelId || 'null'}" 
-                                            ${teammateIndex !== -1 ? `data-teammateindex="${teammateIndex}"` : ''} 
+                replaceButtonHtml = `<button class="replace-personnel-btn"
+                                            data-dateid="${dateId}"
+                                            data-teamtype="${teamType}"
+                                            data-rolekey="${roleKey}"
+                                            data-currentpersonnelid="${personnelId || 'null'}"
+                                            ${teammateIndex !== -1 ? `data-teammateindex="${teammateIndex}"` : ''}
                                             title="Remplacer/Assigner">
                                             <ion-icon name="swap-horizontal-outline"></ion-icon>
                                          </button>`;
@@ -932,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="role"><span class="role-name">Équipier DIV:</span> ${getPersonnelNameAndButton(mprTeam[ROLES.MPR_TEAMMATE], ROLES.MPR_TEAMMATE, 'mpr')}</div>
                 </div>`;
         }
-        
+
         teamsHtml = ccfHtml + mprHtml;
         if (teamsHtml === '') {
             if (Object.keys(allAvailabilities[dateId] || {}).length > 0) { // People available but no team displayed per logic
@@ -941,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucun personnel disponible pour cette date.</p>`;
             }
         }
-        
+
         let adminActionsHtml = '';
         if (isAdmin) {
              if (isFrozen) {
@@ -949,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement/Modifier</button>
                                         <button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Défiger l'Équipe</button>
                                     </div>`;
-            } else if (Object.keys(allAvailabilities[dateId] || {}).length > 0 && (ccfTeam || mprTeam)) { 
+            } else if (Object.keys(allAvailabilities[dateId] || {}).length > 0 && (ccfTeam || mprTeam)) {
                 // Only show activate button if there's a team (even partial) generated from available personnel
                 adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
                                         <button id="activate-day-btn" class="btn-primary" style="padding: 0.5rem 1rem; background-color: var(--available-green);">Activer Journée et Figer Équipe(s)</button>
@@ -980,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${adminActionsHtml}
             </div>
             <div class="teams-grid">${teamsHtml}</div>`;
-        
+
         // --- GESTIONNAIRES D'ÉVÉNEMENTS POUR LES BOUTONS ---
 
         const editBtn = document.getElementById('edit-event-btn-display');
@@ -988,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const activateDayBtn = document.getElementById('activate-day-btn');
         if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); } // true: this is an activation
-        
+
         const defineEventTypeBtn = document.getElementById('define-event-type-btn');
         if (defineEventTypeBtn) { defineEventTypeBtn.addEventListener('click', () => openEventModal(dateId, false));}
 
@@ -1008,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
             });
         }
-        
+
         document.querySelectorAll('.replace-personnel-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const btn = e.currentTarget;
@@ -1101,7 +1189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { ccfTeam, mprTeam } = currentWorkingTeam; // This is the team we are modifying
         if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
         if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
-        
+
         // A person is a potential replacement if:
         // 1. They are available on the date.
         // 2. They have the required function (roleKey).
@@ -1115,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pId !== currentPersonnelId && // Not the person being replaced
                 !currentAssignmentsInWorkingTeam.has(pId); // Not already in another slot of this frozen team
         });
-        
+
         // Option to unassign the current person
         if (currentPersonnelId) { // Only show if someone is currently assigned
             const unassignOptionDiv = document.createElement('div');
@@ -1152,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const { dateId, teamType, roleKey, teammateIndex, currentPersonnelId } = currentReplacementInfo;
-        
+
         // Ensure currentWorkingTeam is the source of truth for modification
         // It should be a deep copy of the frozen team if one exists, or the generated one.
         const teamToUpdate = currentWorkingTeam[teamType + 'Team'];
@@ -1161,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage("Erreur: L'équipe à mettre à jour n'existe pas dans currentWorkingTeam.", "error");
             return;
         }
-        
+
         // If replacing with someone already in another role in currentWorkingTeam, this needs careful handling.
         // For now, assume replacementPersonnelId is either null or not currently in another slot of currentWorkingTeam.
         // The filtering in openReplacePersonnelModal should handle this.
@@ -1284,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showMessage("Accès refusé. Seuls les administrateurs peuvent effectuer cette action.", "error");
                 return;
             }
-            
+
             const onFinalConfirm = () => {
                 const promises = [];
                 promises.push(database.ref('availabilities').remove());
@@ -1313,10 +1401,10 @@ document.addEventListener('DOMContentLoaded', () => {
                              showMessage("Réinitialisation annulée.", "info");
                         }
                     });
-                }, 
+                },
                 null,
-                "CONFIRMATION REQUISE", 
-                "btn-danger", 
+                "CONFIRMATION REQUISE",
+                "btn-danger",
                 "Oui, je comprends les risques"
             );
         });
