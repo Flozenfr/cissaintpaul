@@ -10,6 +10,7 @@
     --background-card: #2a2a2e;
     --text-secondary: #b0b0b0;
     --available-green: #2a9d8f;
+    --provisional-blue: #0077b6; /* NOUVEAU: Couleur pour les équipes provisoires */
     --header-height: 70px; /* Hauteur de la barre supérieure */
 }
 
@@ -44,7 +45,9 @@ body { background-color: var(--charcoal); color: var(--smoke-white); position: r
 
 #global-header #searchInput,
 #global-header #filterInput,
-#global-header #calendar-search-input {
+#global-header #calendar-search-input,
+#global-header #statsSearchInput,
+#global-header #statsFilterInput {
     width: 100%;
     padding: 0.8rem;
     border-radius: 5px;
@@ -132,10 +135,8 @@ body { background-color: var(--charcoal); color: var(--smoke-white); position: r
 .particle:nth-child(5) { animation-delay: 0.15s; left: 20px; }
 
 .admin-only { display: none; }
-
 .view-container { max-width: 100%; margin: auto; display: none; }
 .view-container.visible { display: block; }
-
 #personnel-view, #calendar-view { padding-top: 0; }
 
 .deadline-message {
@@ -171,7 +172,6 @@ body { background-color: var(--charcoal); color: var(--smoke-white); position: r
     font-size: 1rem;
     color: var(--smoke-white);
 }
-/* MODIFIÉ: Style appliqué à datetime-local aussi */
 .setting-item input[type="date"],
 .setting-item input[type="datetime-local"] {
     background-color: var(--charcoal);
@@ -182,7 +182,7 @@ body { background-color: var(--charcoal); color: var(--smoke-white); position: r
     font-family: 'Russo One', sans-serif;
     width: 100%;
     max-width: 250px;
-    color-scheme: dark; /* Améliore l'apparence du sélecteur sur certains navigateurs */
+    color-scheme: dark; 
 }
 .setting-item button {
     margin-top: 1rem;
@@ -191,7 +191,7 @@ body { background-color: var(--charcoal); color: var(--smoke-white); position: r
 }
 
 /* --- STYLES PAGE GESTION PERSONNEL --- */
-select#filterInput option { background-color: var(--background-card); color: white; }
+select#filterInput option, select#statsFilterInput option { background-color: var(--background-card); color: white; }
 .personnel-list { display: grid; gap: 1rem; padding-top: 1rem; }
 .personnel-card { background-color: var(--background-card); border-radius: 12px; padding: 1rem; display: grid; grid-template-columns: 50px 1fr 50px; gap: 1rem; align-items: center; position: relative; border-left: 4px solid var(--ember-orange); box-shadow: 0 4px 15px rgba(0,0,0,0.4); overflow: hidden; }
 .personnel-avatar { width: 50px; height: 50px; background-color: var(--charcoal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5em; color: var(--ember-orange); font-weight: bold; }
@@ -256,18 +256,31 @@ select#filterInput option { background-color: var(--background-card); color: whi
     content: '';
     position: absolute;
     bottom: 5px;
-    left: 5px; /* Changé de right à left pour le différencier de 'has-availability' */
+    left: 5px; 
     width: 8px;
     height: 8px;
-    background-color: var(--fire-red); /* Couleur différente pour les événements */
+    background-color: var(--fire-red);
     border-radius: 50%;
+    box-shadow: 0 0 5px var(--fire-red);
 }
+/* NOUVEAU: Style pour les jours avec équipe provisoire */
+#teams-calendar-days div.has-provisional-team::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px; 
+    width: 8px;
+    height: 8px;
+    background-color: var(--provisional-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--provisional-blue);
+}
+
 #teams-calendar-days div.selected-day {
-    background-color: var(--ember-orange) !important; /* Style pour le jour sélectionné */
+    background-color: var(--ember-orange) !important;
     color: var(--charcoal) !important;
     border: 2px solid var(--smoke-white);
 }
-
 
 .month-list { position: relative; left: 0; top: -130px; background-color: var(--background-card); color: var(--smoke-white); display: grid; grid-template-columns: repeat(3, auto); gap: 5px; border-radius: 20px; }
 .month-list>div { display: grid; place-content: center; margin: 5px 10px; transition: all 0.2s ease-in-out; }
@@ -286,6 +299,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
 @keyframes to-right { 10% { transform: translatex(0); opacity: 1; } 100% { transform: translatex(-150%); opacity: 1; } }
 @keyframes showtime { from { transform: translatex(250%); opacity: 1; } to { transform: translatex(0%); opacity: 1; } }
 @keyframes hidetime { from { transform: translatex(0%); opacity: 1; } to { transform: translatex(-370%); opacity: 1; } }
+
 .fab { position: fixed; z-index: 50; bottom: 95px; right: 2rem; width: 60px; height: 60px; border-radius: 50%; background-color: var(--fire-red); color: white; font-size: 2rem; border: none; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: none; transition: transform 0.2s ease-in-out; }
 .fab.visible { display: block; }
 .fab:active { transform: scale(0.95); }
@@ -305,7 +319,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
 #confirm-message { margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.5; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; }
 
-/* NOUVEAUX STYLES POUR LA VUE DES ÉQUIPES */
+/* --- STYLES VUE ÉQUIPES --- */
 #teams-view {
     display: none; /* Caché par défaut */
     flex-direction: column;
@@ -314,7 +328,6 @@ select#filterInput option { background-color: var(--background-card); color: whi
 #teams-view.visible {
     display: flex; /* Rendu visible par JS */
 }
-
 #generated-teams-container {
     background-color: var(--background-card);
     border-radius: 12px;
@@ -323,7 +336,6 @@ select#filterInput option { background-color: var(--background-card); color: whi
     display: flex;
     flex-direction: column;
 }
-
 #teams-placeholder {
     display: flex;
     flex-direction: column;
@@ -331,7 +343,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     justify-content: center;
     text-align: center;
     color: var(--text-secondary);
-    flex-grow: 1; 
+    flex-grow: 1;  
     padding: 2rem;
 }
 #teams-placeholder ion-icon {
@@ -343,7 +355,6 @@ select#filterInput option { background-color: var(--background-card); color: whi
     color: var(--smoke-white);
     margin-bottom: 0.5rem;
 }
-
 .teams-display-header {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
@@ -363,6 +374,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     justify-content: center;
     gap: 0.5rem;
     margin-top: 0.5rem;
+    flex-wrap: wrap; /* Pour les petits écrans */
 }
 .event-tag {
     background-color: var(--fire-red);
@@ -371,12 +383,17 @@ select#filterInput option { background-color: var(--background-card); color: whi
     border-radius: 15px;
     font-size: 0.8em;
 }
+.event-tag.provisional { /* NOUVEAU */
+    background-color: var(--provisional-blue);
+}
+.event-tag.none { /* NOUVEAU */
+    background-color: var(--text-secondary);
+}
 
 .teams-grid {
     display: grid;
     gap: 1.5rem;
 }
-
 .team-card {
     background-color: var(--charcoal);
     border-radius: 10px;
@@ -386,7 +403,6 @@ select#filterInput option { background-color: var(--background-card); color: whi
 .team-card.incomplete {
     border-left-color: var(--fire-red);
 }
-
 .team-card h4 {
     color: var(--ember-orange);
     margin-top: 0;
@@ -399,7 +415,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     align-items: center;
     gap: 0.8rem;
     margin-bottom: 0.8rem;
-    justify-content: space-between; /* Pour espacer nom et bouton */
+    justify-content: space-between;
 }
 .team-card .role-name {
     color: var(--text-secondary);
@@ -455,7 +471,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     border-radius: 5px;
 }
 
-/* NOUVEAU: STYLES POUR LA MODALE DE REMPLACEMENT */
+/* MODALE DE REMPLACEMENT */
 #replacement-options-container {
     display: flex;
     flex-direction: column;
@@ -489,7 +505,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     color: var(--text-secondary);
 }
 
-/* NOUVEAU: STYLES POUR LE CONTENEUR DES REMPLAÇANTS POTENTIELS */
+/* CONTENEUR DES REMPLAÇANTS POTENTIELS */
 #potential-replacements-container {
     background-color: var(--background-card);
     border-radius: 12px;
@@ -523,6 +539,64 @@ select#filterInput option { background-color: var(--background-card); color: whi
     font-size: 0.9em;
 }
 
+/* NOUVEAU: STYLES POUR LA VUE STATISTIQUES */
+.stats-list {
+    display: grid;
+    gap: 1rem;
+    padding-top: 1rem;
+}
+
+.stat-card {
+    background-color: var(--background-card);
+    border-radius: 12px;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 1rem;
+    align-items: center;
+    border-left: 4px solid var(--provisional-blue);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.stat-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.stat-card-info h3 {
+    margin: 0;
+    color: var(--smoke-white);
+    font-size: 1.1em;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--charcoal);
+    padding: 0.5rem 0.8rem;
+    border-radius: 5px;
+}
+
+.stat-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+.stat-label ion-icon {
+    font-size: 1.2em;
+    color: var(--ember-orange);
+}
+
+.stat-value {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--smoke-white);
+}
+
 
 @media (max-width: 420px) {
     .navigation { height: 70px; }
@@ -536,6 +610,7 @@ select#filterInput option { background-color: var(--background-card); color: whi
     .personnel-actions { grid-column: 1 / -1; grid-row: 2; flex-direction: row; justify-content: flex-end; padding-top: 0.5rem; border-top: 1px solid var(--charcoal); margin-top: 0.5rem; }
     .calendar { padding: 15px 15px 0 15px; }
     .calendar-days div { height: 45px; font-size: 1rem; }
+    .stat-card { grid-template-columns: 40px 1fr; }
 }
 
 /* Styles pour les messages stylisés */
@@ -554,140 +629,33 @@ select#filterInput option { background-color: var(--background-card); color: whi
     border-left: 4px solid var(--ember-orange);
     animation: slideIn 0.5s ease-out;
 }
-
-.message-container.show {
-    display: block;
-}
-
-.message-container.success {
-    border-left-color: var(--available-green);
-}
-
-.message-container.error {
-    border-left-color: var(--fire-red);
-}
-
-.message-container.warning {
-    border-left-color: var(--ember-orange);
-}
-
-.message-container h3 {
-    margin-top: 0;
-    color: var(--ember-orange);
-}
-
-.message-container p {
-    margin-bottom: 0;
-}
-
+.message-container.show { display: block; }
+.message-container.success { border-left-color: var(--available-green); }
+.message-container.error { border-left-color: var(--fire-red); }
+.message-container.warning { border-left-color: var(--ember-orange); }
+.message-container h3 { margin-top: 0; color: var(--ember-orange); }
+.message-container p { margin-bottom: 0; }
 @keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
 /* Styles pour la boîte de dialogue personnalisée */
-#custom-prompt-modal {
-    display: none;
-    position: fixed;
-    z-index: 1002; /* S'assurer qu'il est au-dessus des autres modales si nécessaire */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.7);
-    align-items: center;
-    justify-content: center;
-}
+#custom-prompt-modal { display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+#custom-prompt-modal.visible { display: flex; }
+#custom-prompt-modal .modal-content { background-color: var(--background-card); padding: 2rem; border-top: 4px solid var(--ember-orange); width: 90%; max-width: 400px; border-radius: 10px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.5); text-align: center; }
+#custom-prompt-modal h3 { margin-top: 0; color: var(--ember-orange); }
+#custom-prompt-modal p { margin-bottom: 1rem; }
+#custom-prompt-modal input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid var(--smoke-white); background-color: #333; color: var(--smoke-white); font-family: 'Russo One', sans-serif; }
+#custom-prompt-modal .modal-actions { display: flex; justify-content: center; gap: 1rem; }
 
-#custom-prompt-modal.visible {
-    display: flex;
-}
-
-#custom-prompt-modal .modal-content {
-    background-color: var(--background-card);
-    padding: 2rem;
-    border-top: 4px solid var(--ember-orange);
-    width: 90%;
-    max-width: 400px;
-    border-radius: 10px;
-    position: relative;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    text-align: center;
-}
-
-#custom-prompt-modal h3 {
-    margin-top: 0;
-    color: var(--ember-orange);
-}
-
-#custom-prompt-modal p {
-    margin-bottom: 1rem;
-}
-
-#custom-prompt-modal input {
-    width: 100%;
-    padding: 0.8rem;
-    margin-bottom: 1rem;
-    border-radius: 5px;
-    border: 1px solid var(--smoke-white);
-    background-color: #333;
-    color: var(--smoke-white);
-    font-family: 'Russo One', sans-serif;
-}
-
-#custom-prompt-modal .modal-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-}
-
-/* Styles pour la modale de confirmation générique (réutilise les styles existants) */
-#generic-confirm-modal .modal-content {
-    max-width: 450px; /* Peut être ajusté */
-}
-#generic-confirm-modal p { /* Style pour le message de confirmation */
-    margin-bottom: 2rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-/* ... (tout le CSS existant) ... */
+/* Styles pour la modale de confirmation générique */
+#generic-confirm-modal .modal-content { max-width: 450px; }
+#generic-confirm-modal p { margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.5; }
 
 /* STYLES POUR LA ZONE DE DANGER DANS LES PARAMÈTRES */
-.settings-container .danger-zone {
-    margin-top: 2.5rem;
-    border-top: 2px solid var(--fire-red);
-    padding-top: 1.5rem;
-}
-
-.settings-container .danger-zone > label {
-    color: var(--fire-red);
-    font-size: 1.2em;
-    margin-bottom: 0.5rem;
-}
-
-.settings-container .danger-zone .warning-text {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    text-align: center;
-    max-width: 400px;
-    line-height: 1.4;
-    margin-bottom: 0.5rem;
-}
-
-.settings-container .danger-zone .irreversible-text {
-    font-size: 0.9em;
-    color: var(--ember-orange);
-    text-align: center;
-    font-weight: bold;
-}
-
-.settings-container .danger-zone > button {
-    margin-top: 1rem;
-}
+.settings-container .danger-zone { margin-top: 2.5rem; border-top: 2px solid var(--fire-red); padding-top: 1.5rem; }
+.settings-container .danger-zone > label { color: var(--fire-red); font-size: 1.2em; margin-bottom: 0.5rem; }
+.settings-container .danger-zone .warning-text { font-size: 0.9em; color: var(--text-secondary); text-align: center; max-width: 400px; line-height: 1.4; margin-bottom: 0.5rem; }
+.settings-container .danger-zone .irreversible-text { font-size: 0.9em; color: var(--ember-orange); text-align: center; font-weight: bold; }
+.settings-container .danger-zone > button { margin-top: 1rem; }
