@@ -182,7 +182,7 @@ body { background-color: var(--charcoal); color: var(--smoke-white); position: r
     font-family: 'Russo One', sans-serif;
     width: 100%;
     max-width: 250px;
-    color-scheme: dark; 
+    color-scheme: dark;
 }
 .setting-item button {
     margin-top: 1rem;
@@ -256,7 +256,7 @@ select#filterInput option, select#statsFilterInput option { background-color: va
     content: '';
     position: absolute;
     bottom: 5px;
-    left: 5px; 
+    left: 5px;
     width: 8px;
     height: 8px;
     background-color: var(--fire-red);
@@ -268,7 +268,7 @@ select#filterInput option, select#statsFilterInput option { background-color: va
     content: '';
     position: absolute;
     top: 5px;
-    right: 5px; 
+    right: 5px;
     width: 8px;
     height: 8px;
     background-color: var(--provisional-blue);
@@ -343,7 +343,7 @@ select#filterInput option, select#statsFilterInput option { background-color: va
     justify-content: center;
     text-align: center;
     color: var(--text-secondary);
-    flex-grow: 1;  
+    flex-grow: 1;
     padding: 2rem;
 }
 #teams-placeholder ion-icon {
@@ -641,13 +641,55 @@ select#filterInput option, select#statsFilterInput option { background-color: va
 }
 
 /* Styles pour la boîte de dialogue personnalisée */
-#custom-prompt-modal { display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
-#custom-prompt-modal.visible { display: flex; }
-#custom-prompt-modal .modal-content { background-color: var(--background-card); padding: 2rem; border-top: 4px solid var(--ember-orange); width: 90%; max-width: 400px; border-radius: 10px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.5); text-align: center; }
-#custom-prompt-modal h3 { margin-top: 0; color: var(--ember-orange); }
-#custom-prompt-modal p { margin-bottom: 1rem; }
-#custom-prompt-modal input { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid var(--smoke-white); background-color: #333; color: var(--smoke-white); font-family: 'Russo One', sans-serif; }
-#custom-prompt-modal .modal-actions { display: flex; justify-content: center; gap: 1rem; }
+#custom-prompt-modal, #matricule-confirm-modal {
+    display: none;
+    position: fixed;
+    z-index: 1002;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+    align-items: center;
+    justify-content: center;
+}
+#custom-prompt-modal.visible, #matricule-confirm-modal.visible {
+    display: flex;
+}
+#custom-prompt-modal .modal-content, #matricule-confirm-modal .modal-content {
+    background-color: var(--background-card);
+    padding: 2rem;
+    border-top: 4px solid var(--ember-orange);
+    width: 90%;
+    max-width: 400px;
+    border-radius: 10px;
+    position: relative;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    text-align: center;
+}
+#custom-prompt-modal h3, #matricule-confirm-modal h3 {
+    margin-top: 0;
+    color: var(--ember-orange);
+}
+#custom-prompt-modal p, #matricule-confirm-modal p {
+    margin-bottom: 1rem;
+}
+#custom-prompt-modal input, #matricule-confirm-modal input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 5px;
+    border: 1px solid var(--smoke-white);
+    background-color: #333;
+    color: var(--smoke-white);
+    font-family: 'Russo One', sans-serif;
+}
+#custom-prompt-modal .modal-actions, #matricule-confirm-modal .modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
 
 /* Styles pour la modale de confirmation générique */
 #generic-confirm-modal .modal-content { max-width: 450px; }
