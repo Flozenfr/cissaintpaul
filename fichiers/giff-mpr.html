@@ -25,12 +25,15 @@
             <div id="calendar-personnel-selector">
                 <input type="text" id="calendar-search-input" placeholder="Rechercher un pompier pour gérer les dispos...">
                 <div id="calendar-search-results"></div>
-                <div id="calendar-selected-personnel">
-                    <span>Pompier sélectionné:</span>
-                    <strong id="selected-personnel-name">Aucun</strong>
-                    <button id="deselect-personnel-btn" class="deselect-btn" title="Déselectionner">&times;</button>
-                </div>
             </div>
+            <div id="calendar-selected-personnel">
+                <span>Pompier sélectionné:</span>
+                <strong id="selected-personnel-name">Aucun</strong>
+                <button id="deselect-personnel-btn" title="Déselectionner">&times;</button>
+            </div>
+        </div>
+         <div id="header-teams-controls" class="header-controls">
+            <input type="text" id="teamsSearchInput" placeholder="Rechercher un personnel dans les équipes...">
         </div>
         <div id="header-stats-controls" class="header-controls">
              <input type="text" id="statsSearchInput" placeholder="Rechercher un personnel...">
@@ -54,7 +57,11 @@
         <div id="deadline-message" class="deadline-message" style="display: none;"></div>
         <div class="calendar">
             <div class="calendar-header">
-                <span class="month-picker" id="month-picker">Mai</span>
+                <div class="month-navigation-controls">
+                    <span class="month-arrow" id="prev-month-btn">&lt;</span>
+                    <span class="month-picker" id="month-picker">Mai</span>
+                    <span class="month-arrow" id="next-month-btn">&gt;</span>
+                </div>
                 <div class="year-picker" id="year-picker">
                     <span class="year-change" id="pre-year"><pre><</pre></span>
                     <span id="year">2025</span>
@@ -75,8 +82,7 @@
                     <div class="date-formate">03 - mars - 2022</div>
                 </div>
             </div>
-            <div class="month-list"></div>
-        </div>
+            </div>
     </div>
 
     <div id="personnel-view" class="view-container">
@@ -86,21 +92,41 @@
     <div id="teams-view" class="view-container">
         <div id="teams-calendar-container" class="calendar">
             <div class="calendar-header">
-                <span class="month-picker" id="teams-month-picker">Mai</span>
+                 <div class="month-navigation-controls">
+                    <span class="month-arrow" id="teams-prev-month-btn">&lt;</span>
+                    <span class="month-picker" id="teams-month-picker">Mai</span>
+                    <span class="month-arrow" id="teams-next-month-btn">&gt;</span>
+                </div>
                 <div class="year-picker" id="teams-year-picker">
                     <span class="year-change" id="teams-pre-year"><pre><</pre></span>
                     <span id="teams-year">2025</span>
                     <span class="year-change" id="teams-next-year"><pre>></pre></span>
                 </div>
             </div>
+            
+            <div id="teams-calendar-legend">
+                <h4>Légende (Gauche: CCF / Droite: MPR)</h4>
+                <div class="legend-grid">
+                    <div class="legend-item"><span class="legend-color ccf-complete"></span> CCF Complet</div>
+                    <div class="legend-item"><span class="legend-color ccf-incomplete"></span> CCF Incomplet</div>
+                    <div class="legend-item"><span class="legend-color mpr-complete"></span> MPR Complet</div>
+                    <div class="legend-item"><span class="legend-color mpr-incomplete"></span> MPR Incomplet</div>
+                </div>
+            </div>
+
+            <div id="teams-export-controls" class="export-controls admin-only-flex">
+                <button id="export-proposals-btn" class="btn-secondary">Exporter Propositions du Mois</button>
+                <button id="export-activated-btn" class="btn-primary">Exporter Équipes Figées du Mois</button>
+            </div>
+
             <div class="calendar-body">
                 <div class="calendar-week-days">
                     <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
                 </div>
                 <div id="teams-calendar-days" class="calendar-days"></div>
             </div>
-            <div class="month-list" id="teams-month-list"></div>
         </div>
+
         <div id="generated-teams-container">
             <div id="teams-placeholder">
                 <ion-icon name="calendar-clear-outline"></ion-icon>
@@ -112,6 +138,35 @@
     </div>
 
     <div id="stats-view" class="view-container">
+        <div id="global-stats-container">
+            <h3>Statistiques Globales</h3>
+            <div class="global-stats-grid">
+                <div class="global-stat-item">
+                    <span class="stat-label">Total Personnel</span>
+                    <span class="stat-value" id="global-total-personnel">0</span>
+                </div>
+                <div class="global-stat-item">
+                    <span class="stat-label">Disponibilités Enregistrées</span>
+                    <span class="stat-value" id="global-total-availabilities">0</span>
+                </div>
+                <div class="global-stat-item">
+                    <span class="stat-label">Jours d'Événements</span>
+                    <span class="stat-value" id="global-total-event-days">0</span>
+                </div>
+                <div class="global-stat-item">
+                    <span class="stat-label">Jours d'Équipes Figées</span>
+                    <span class="stat-value" id="global-total-frozen-team-days">0</span>
+                </div>
+                 <div class="global-stat-item">
+                    <span class="stat-label">Total Assignations CCF</span>
+                    <span class="stat-value" id="global-total-ccf-assignments">0</span>
+                </div>
+                <div class="global-stat-item">
+                    <span class="stat-label">Total Assignations MPR</span>
+                    <span class="stat-value" id="global-total-mpr-assignments">0</span>
+                </div>
+            </div>
+        </div>
         <div id="stats-list" class="stats-list">
             </div>
     </div>
@@ -266,6 +321,7 @@
         </ul>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vanilla-js-calendar@2.6.0/build/vanilla-js-calendar.min.js"></script>
