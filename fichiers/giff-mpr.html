@@ -10,41 +10,58 @@
 <body>
 
     <div id="global-header">
-        <div id="header-personnel-controls" class="header-controls">
-            <input type="text" id="searchInput" placeholder="Rechercher un personnel...">
-            <select id="filterInput">
-                <option value="">Toutes les fonctions</option>
-                <option value="Conducteur Poids Lourd (CCF4MHP37)">Conducteur Poids Lourd</option>
-                <option value="Chef d'Agrès FDF (CCF4MHP37)">Chef d'Agrès FDF</option>
-                <option value="Équipier FDF (CCF4MHP37)">Équipier FDF</option>
-                <option value="Conducteur Voiture (MPR12)">Conducteur Voiture</option>
-                <option value="Équipier DIV (MPR12)">Équipier DIV</option>
-            </select>
-        </div>
-        <div id="header-calendar-controls" class="header-controls">
-            <div id="calendar-personnel-selector">
-                <input type="text" id="calendar-search-input" placeholder="Rechercher un pompier pour gérer les dispos...">
-                <div id="calendar-search-results"></div>
+        <div id="main-header-content">
+            <div id="header-personnel-controls" class="header-controls">
+                <div class="search-wrapper">
+                    <input type="text" id="searchInput" placeholder="Rechercher un personnel...">
+                    <ion-icon name="chevron-down-outline" class="dropdown-arrow"></ion-icon>
+                    <div class="search-results-list"></div>
+                </div>
+                <select id="filterInput">
+                    <option value="">Toutes les fonctions</option>
+                    <option value="Conducteur Poids Lourd (CCF4MHP37)">Conducteur Poids Lourd</option>
+                    <option value="Chef d'Agrès FDF (CCF4MHP37)">Chef d'Agrès FDF</option>
+                    <option value="Équipier FDF (CCF4MHP37)">Équipier FDF</option>
+                    <option value="Conducteur Voiture (MPR12)">Conducteur Voiture</option>
+                    <option value="Équipier DIV (MPR12)">Équipier DIV</option>
+                </select>
             </div>
-            <div id="calendar-selected-personnel">
-                <span>Pompier sélectionné:</span>
-                <strong id="selected-personnel-name">Aucun</strong>
-                <button id="deselect-personnel-btn" title="Déselectionner">&times;</button>
+            <div id="header-calendar-controls" class="header-controls">
+                <div id="calendar-personnel-selector">
+                    <div class="search-wrapper">
+                        <input type="text" id="calendar-search-input" placeholder="Rechercher un pompier...">
+                        <ion-icon name="chevron-down-outline" class="dropdown-arrow"></ion-icon>
+                        <div id="calendar-search-results"></div>
+                    </div>
+                </div>
+                <div id="calendar-selected-personnel">
+                    <span>Pompier sélectionné:</span>
+                    <strong id="selected-personnel-name">Aucun</strong>
+                    <button id="deselect-personnel-btn" title="Déselectionner">&times;</button>
+                </div>
             </div>
-        </div>
-         <div id="header-teams-controls" class="header-controls">
-            <input type="text" id="teamsSearchInput" placeholder="Rechercher un personnel dans les équipes...">
-        </div>
-        <div id="header-stats-controls" class="header-controls">
-             <input type="text" id="statsSearchInput" placeholder="Rechercher un personnel...">
-             <select id="statsFilterInput">
-                <option value="">Toutes les fonctions</option>
-                <option value="Conducteur Poids Lourd (CCF4MHP37)">Conducteur Poids Lourd</option>
-                <option value="Chef d'Agrès FDF (CCF4MHP37)">Chef d'Agrès FDF</option>
-                <option value="Équipier FDF (CCF4MHP37)">Équipier FDF</option>
-                <option value="Conducteur Voiture (MPR12)">Conducteur Voiture</option>
-                <option value="Équipier DIV (MPR12)">Équipier DIV</option>
-             </select>
+            <div id="header-teams-controls" class="header-controls">
+                <div class="search-wrapper">
+                    <input type="text" id="teamsSearchInput" placeholder="Rechercher dans les équipes...">
+                    <ion-icon name="chevron-down-outline" class="dropdown-arrow"></ion-icon>
+                    <div class="search-results-list"></div>
+                </div>
+            </div>
+            <div id="header-stats-controls" class="header-controls">
+                <div class="search-wrapper">
+                    <input type="text" id="statsSearchInput" placeholder="Rechercher un personnel...">
+                    <ion-icon name="chevron-down-outline" class="dropdown-arrow"></ion-icon>
+                    <div class="search-results-list"></div>
+                </div>
+                <select id="statsFilterInput">
+                    <option value="">Toutes les fonctions</option>
+                    <option value="Conducteur Poids Lourd (CCF4MHP37)">Conducteur Poids Lourd</option>
+                    <option value="Chef d'Agrès FDF (CCF4MHP37)">Chef d'Agrès FDF</option>
+                    <option value="Équipier FDF (CCF4MHP37)">Équipier FDF</option>
+                    <option value="Conducteur Voiture (MPR12)">Conducteur Voiture</option>
+                    <option value="Équipier DIV (MPR12)">Équipier DIV</option>
+                </select>
+            </div>
         </div>
         <button id="top-login-btn" class="top-login-btn" title="Connexion">
             <ion-icon name="log-in-outline"></ion-icon>
