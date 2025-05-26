@@ -590,6 +590,9 @@ document.addEventListener('DOMContentLoaded', () => {
                      day.classList.add('has-availability');
                 }
                 if (allEvents[dateId]) { day.classList.add('has-event'); }
+                // NOUVEAU: Marqueur pour équipe provisoire (si une équipe est assignée/figée pour ce jour)
+                if (allAssignedTeams[dateId]) { day.classList.add('has-provisional-team'); } // Note: CSS class name might need adjustment if it implies "not yet frozen"
+
             } else { day.classList.add('empty'); }
             teamsCalendarDaysContainer.appendChild(day);
         }
@@ -634,14 +637,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Si c'est une activation, figer l'équipe actuelle
             if (isActivation && currentWorkingTeam) {
-                 const teamToFreeze = JSON.parse(JSON.stringify(currentWorkingTeam));
-                 // S'assurer de ne figer que ce qui est demandé par les types d'événements
-                 const wantsCcf = selectedTypes.some(type => type.startsWith("GIFF Nord"));
-                 const wantsMpr = selectedTypes.includes("MPR");
-                 if (!wantsCcf) teamToFreeze.ccfTeam = null;
-                 if (!wantsMpr) teamToFreeze.mprTeam = null;
+                const teamToFreeze = JSON.parse(JSON.stringify(currentWorkingTeam));
+                // S'assurer de ne figer que ce qui est demandé par les types d'événements
+                const wantsCcf = selectedTypes.some(type => type.startsWith("GIFF Nord"));
+                const wantsMpr = selectedTypes.includes("MPR");
+                
+                // Only include parts of the team that correspond to selected event types
+                const finalTeamToFreeze = {};
+                if (wantsCcf && teamToFreeze.ccfTeam) {
+                    finalTeamToFreeze.ccfTeam = teamToFreeze.ccfTeam;
+                } else {
+                    // If CCF not wanted by event, but was in currentWorkingTeam, don't freeze it.
+                    // Or ensure it's explicitly nulled if the structure requires ccfTeam/mprTeam keys
+                     finalTeamToFreeze.ccfTeam = null; 
+                }
+                if (wantsMpr && teamToFreeze.mprTeam) {
+                    finalTeamToFreeze.mprTeam = teamToFreeze.mprTeam;
+                } else {
+                     finalTeamToFreeze.mprTeam = null;
+                }
+                // Only save if there's something to save for assignedTeams
+                if (finalTeamToFreeze.ccfTeam || finalTeamToFreeze.mprTeam) {
+                    promises.push(database.ref(`assignedTeams/${dateId}`).set(finalTeamToFreeze));
+                } else {
+                    // If nothing matches event types, maybe remove existing assigned team
+                    promises.push(database.ref(`assignedTeams/${dateId}`).remove());
+                }
 
-                 promises.push(database.ref(`assignedTeams/${dateId}`).set(teamToFreeze));
+
             }
 
             Promise.all(promises).then(() => {
@@ -683,8 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     database.ref('assignedTeams').on('value', (snapshot) => {
         allAssignedTeams = snapshot.val() || {};
-        if (teamsView.classList.contains('visible') && selectedTeamDate) {
-            generateAndDisplayTeams(selectedTeamDate);
+         if (teamsView.classList.contains('visible')) { // Added to refresh teams calendar markers
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+            if (selectedTeamDate) {
+                generateAndDisplayTeams(selectedTeamDate);
+            }
         }
          if (statsView && statsView.classList.contains('visible')) {
             renderStatistics();
@@ -711,10 +737,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ROLES = { CCF_DRIVER: "Conducteur Poids Lourd (CCF4MHP37)", CCF_LEADER: "Chef d'Agrès FDF (CCF4MHP37)", CCF_TEAMMATE: "Équipier FDF (CCF4MHP37)", MPR_DRIVER: "Conducteur Voiture (MPR12)", MPR_TEAMMATE: "Équipier DIV (MPR12)" };
 
-    // --- **MODIFIÉ** LOGIQUE DE GÉNÉRATION ET D'AFFICHAGE DES ÉQUIPES ---
-    function generateProvisionalTeam(dateId) {
+    // --- **MODIFIED** LOGIQUE DE GÉNÉRATION ET D'AFFICHAGE DES ÉQUIPES ---
+    function generateProvisionalTeam(dateId, wantsCcf, wantsMpr) {
         const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
-        let availablePool = [...availablePersonnelIds];
+        let availablePool = [...availablePersonnelIds]; // Use a fresh pool for each call context
         const personnelByFunctionForDay = {};
 
         availablePool.forEach(pId => {
@@ -727,82 +753,123 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const assignPersonnelForAuto = (role, pool, pbf) => {
-            const candidates = (pbf[role] || []).filter(id => pool.includes(id));
+        const assignPersonnelForAuto = (role, currentPool, pbfd) => {
+            const candidates = (pbfd[role] || []).filter(id => currentPool.includes(id));
             if (candidates.length > 0) {
                 const assignedId = candidates[Math.floor(Math.random() * candidates.length)];
-                const indexInPool = pool.indexOf(assignedId);
-                if (indexInPool > -1) pool.splice(indexInPool, 1);
+                const indexInPool = currentPool.indexOf(assignedId);
+                if (indexInPool > -1) currentPool.splice(indexInPool, 1);
                 return assignedId;
             }
             return null;
         };
         
         let ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
-        ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
-        ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
-        ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
-        ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
-
         let mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
-        mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
-        mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
 
+        if (wantsCcf && !wantsMpr) { // CCF Only
+            ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
+            ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
+            ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+            ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+        } else if (!wantsCcf && wantsMpr) { // MPR Only
+            mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
+            mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
+        } else if (wantsCcf && wantsMpr) { // Both Active - distribute
+            // Prioritize critical roles, then others, from the shared pool
+            ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
+            mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
+            ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
+            ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+            mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
+            ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+        }
+        // If neither wantsCcf nor wantsMpr (e.g. no event and no available personnel for default), both teams remain with nulls.
         return { ccfTeam, mprTeam };
     }
 
 
     function generateAndDisplayTeams(dateId) {
         potentialReplacementsContainer.innerHTML = '';
-        currentWorkingTeam = null;
+        currentWorkingTeam = null; // Reset before generation
 
-        // 1. L'équipe est-elle déjà figée ? C'est la priorité absolue.
-        if (allAssignedTeams[dateId] && isAdmin) {
-            const assigned = allAssignedTeams[dateId];
-            currentWorkingTeam = JSON.parse(JSON.stringify(assigned));
-            const eventDetails = allEvents[dateId] || { types: [] };
-            const wantsCcf = assigned.ccfTeam || eventDetails.types.some(type => type.startsWith("GIFF Nord"));
-            const wantsMpr = assigned.mprTeam || eventDetails.types.includes("MPR");
-            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, wantsCcf, wantsMpr, true);
-            return;
-        }
+        let wantsCcf = false;
+        let wantsMpr = false;
+        let isProvisionalDisplayState = true; // Is the displayed team a mere suggestion or based on a firm event/frozen state?
 
-        // 2. Pas d'équipe figée. Y a-t-il du personnel disponible ?
-        const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
-        if (availablePersonnelIds.length === 0) {
-            generatedTeamsContainer.innerHTML = `<div id="teams-placeholder"><ion-icon name="close-circle-outline"></ion-icon><h3>Aucun personnel disponible</h3><p>Aucun personnel n'a indiqué de disponibilité pour cette date.</p></div>`;
-            return;
-        }
-
-        // 3. Du personnel est dispo. On génère une équipe PROVISOIRE.
-        const { ccfTeam, mprTeam } = generateProvisionalTeam(dateId);
-        currentWorkingTeam = { ccfTeam, mprTeam };
-
-        // Par défaut, on affiche les deux compositions possibles.
-        let wantsCcf = true;
-        let wantsMpr = true;
-        let isProvisional = true;
-
-        // Si un événement existe déjà, il dicte ce qu'il faut afficher.
         const eventDetails = allEvents[dateId];
         if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
             wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
             wantsMpr = eventDetails.types.includes("MPR");
-            isProvisional = false; // Ce n'est plus une simple proposition, mais une génération basée sur un événement
+            isProvisionalDisplayState = false; // Team generation is guided by a specific event
+        } else {
+            // No event: default to wanting both if people are available (for provisional display)
+            const availablePersonnelIdsForCheck = Object.keys(allAvailabilities[dateId] || {});
+            if (availablePersonnelIdsForCheck.length > 0) {
+                wantsCcf = true;
+                wantsMpr = true;
+            }
+            // If no personnel, wantsCcf/Mpr remain false, leading to empty provisional teams
         }
-        
-        // 4. Afficher le résultat (figé ou auto-généré)
-        renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false, isProvisional);
+
+        // 1. Check for a Frozens team first for display.
+        if (allAssignedTeams[dateId]) {
+            const assigned = allAssignedTeams[dateId];
+            currentWorkingTeam = JSON.parse(JSON.stringify(assigned)); // This is the active team for potential modifications
+
+            // Determine what to display from the frozen team
+            const displayCcfFromFrozen = !!assigned.ccfTeam; // Display if ccfTeam key exists and is not null/empty
+            const displayMprFromFrozen = !!assigned.mprTeam; // Display if mprTeam key exists and is not null/empty
+            
+            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, displayCcfFromFrozen, displayMprFromFrozen, true, false); // isFrozen = true, isProvisional = false
+            return;
+        }
+
+        // 2. No frozen team. Check for available personnel.
+        const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
+        if (availablePersonnelIds.length === 0) {
+            let noPersonnelHtml = `<div id="teams-placeholder"><ion-icon name="close-circle-outline"></ion-icon><h3>Aucun personnel disponible</h3><p>Aucun personnel n'a indiqué de disponibilité pour cette date.</p></div>`;
+            if (eventDetails && eventDetails.types && eventDetails.types.length > 0) { // Event was set but no one available
+                noPersonnelHtml = `
+                    <div class="teams-display-header">
+                        <h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>
+                        ${generateEventTagsHtml(dateId)}
+                         <p style="text-align:center; margin-top:1rem; color:var(--fire-red);">Aucun personnel disponible pour former les équipes pour cet événement.</p>
+                    </div>`;
+            }
+            generatedTeamsContainer.innerHTML = noPersonnelHtml;
+            potentialReplacementsContainer.innerHTML = ''; // Clear replacements if no team can be formed
+            return;
+        }
+
+        // 3. Personnel available, no frozen team. Generate a team based on `wantsCcf` and `wantsMpr`.
+        const { ccfTeam, mprTeam } = generateProvisionalTeam(dateId, wantsCcf, wantsMpr);
+        currentWorkingTeam = { ccfTeam, mprTeam }; // This generated team is now the working team
+
+        // 4. Render the generated team.
+        // `wantsCcf` & `wantsMpr` here reflect the *intended* structure for the generation.
+        // `isProvisionalDisplayState` indicates if it was a pure suggestion or based on an event.
+        renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false, isProvisionalDisplayState);
     }
 
     function generateEventTagsHtml(dateId) {
         const eventInfo = allEvents[dateId];
-        if (eventInfo && eventInfo.types) {
-            return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')}</div>`;
+        const assignedTeamInfo = allAssignedTeams[dateId];
+
+        if (assignedTeamInfo) { // If team is frozen, that's the primary status
+            if (eventInfo && eventInfo.types && eventInfo.types.length > 0) {
+                return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')} <span class="event-tag provisional" style="background-color: var(--available-green);">Équipe Figée</span></div>`;
+            } else {
+                 // Team is frozen, but no specific event types recorded (e.g. manually frozen provisional)
+                return `<div class="event-tags"><span class="event-tag provisional" style="background-color: var(--available-green);">Équipe Figée</span></div>`;
+            }
+        } else if (eventInfo && eventInfo.types && eventInfo.types.length > 0) { // Event defined, team not yet frozen
+            return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')} <span class="event-tag" style="background-color: var(--provisional-blue);">Prévu (Non Figé)</span></div>`;
         }
-        // Nouveau : tag pour indiquer une proposition automatique
-        return `<div class="event-tags"><span class="event-tag" style="background-color: var(--available-green);">Proposition Automatique</span></div>`;
+        // No event, no frozen team => pure provisional
+        return `<div class="event-tags"><span class="event-tag" style="background-color: var(--ember-orange);">Proposition Automatique</span></div>`;
     }
+
 
     function getRoleDisplayName(roleKey) {
         if (roleKey === ROLES.CCF_DRIVER) return "Conducteur PL";
@@ -824,8 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let replaceButtonHtml = '';
-            // Le remplacement n'est possible que sur une équipe figée.
-            if (isAdmin && isFrozen) {
+            if (isAdmin && isFrozen) { // Replacement only on frozen teams
                 replaceButtonHtml = `<button class="replace-personnel-btn" 
                                             data-dateid="${dateId}" 
                                             data-teamtype="${teamType}" 
@@ -835,6 +901,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                             title="Remplacer/Assigner">
                                             <ion-icon name="swap-horizontal-outline"></ion-icon>
                                          </button>`;
+            } else if (isAdmin && !isFrozen && personnelId) { // Option to "remove" from provisional before freezing
+                 // This could be an advanced feature, for now, replacement is on frozen.
             }
             return `<div class="personnel-name-wrapper">${nameHtml}${replaceButtonHtml}</div>`;
         };
@@ -843,50 +911,66 @@ document.addEventListener('DOMContentLoaded', () => {
         let ccfHtml = '';
         let mprHtml = '';
 
-        if (displayCcf) {
-            const isCcfComplete = ccfTeam && ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2 && ccfTeam[ROLES.CCF_TEAMMATE].every(id => id !== null);
+        if (displayCcf && ccfTeam) { // ccfTeam might exist but be empty if displayCcf was true but no one could be assigned
+            const isCcfComplete = ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2 && ccfTeam[ROLES.CCF_TEAMMATE].every(id => id !== null);
             ccfHtml = `
                 <div class="team-card ${isCcfComplete ? '' : 'incomplete'}">
                     <h4><ion-icon name="bus-outline"></ion-icon> Équipe CCF4MHP37</h4>
-                    <div class="role"><span class="role-name">Conducteur PL:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_DRIVER], ROLES.CCF_DRIVER, 'ccf')}</div>
-                    <div class="role"><span class="role-name">Chef d'Agrès FDF:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_LEADER], ROLES.CCF_LEADER, 'ccf')}</div>
-                    <div class="role"><span class="role-name">Équipier FDF 1:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_TEAMMATE]?.[0], ROLES.CCF_TEAMMATE, 'ccf', 0)}</div>
-                    <div class="role"><span class="role-name">Équipier FDF 2:</span> ${getPersonnelNameAndButton(ccfTeam?.[ROLES.CCF_TEAMMATE]?.[1], ROLES.CCF_TEAMMATE, 'ccf', 1)}</div>
+                    <div class="role"><span class="role-name">Conducteur PL:</span> ${getPersonnelNameAndButton(ccfTeam[ROLES.CCF_DRIVER], ROLES.CCF_DRIVER, 'ccf')}</div>
+                    <div class="role"><span class="role-name">Chef d'Agrès FDF:</span> ${getPersonnelNameAndButton(ccfTeam[ROLES.CCF_LEADER], ROLES.CCF_LEADER, 'ccf')}</div>
+                    <div class="role"><span class="role-name">Équipier FDF 1:</span> ${getPersonnelNameAndButton(ccfTeam[ROLES.CCF_TEAMMATE]?.[0], ROLES.CCF_TEAMMATE, 'ccf', 0)}</div>
+                    <div class="role"><span class="role-name">Équipier FDF 2:</span> ${getPersonnelNameAndButton(ccfTeam[ROLES.CCF_TEAMMATE]?.[1], ROLES.CCF_TEAMMATE, 'ccf', 1)}</div>
                 </div>`;
         }
 
-        if (displayMpr) {
-            const isMprComplete = mprTeam && mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
+        if (displayMpr && mprTeam) { // mprTeam might exist but be empty
+            const isMprComplete = mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
             mprHtml = `
                 <div class="team-card ${isMprComplete ? '' : 'incomplete'}">
                     <h4><ion-icon name="car-sport-outline"></ion-icon> Équipe MPR12</h4>
-                    <div class="role"><span class="role-name">Conducteur VL:</span> ${getPersonnelNameAndButton(mprTeam?.[ROLES.MPR_DRIVER], ROLES.MPR_DRIVER, 'mpr')}</div>
-                    <div class="role"><span class="role-name">Équipier DIV:</span> ${getPersonnelNameAndButton(mprTeam?.[ROLES.MPR_TEAMMATE], ROLES.MPR_TEAMMATE, 'mpr')}</div>
+                    <div class="role"><span class="role-name">Conducteur VL:</span> ${getPersonnelNameAndButton(mprTeam[ROLES.MPR_DRIVER], ROLES.MPR_DRIVER, 'mpr')}</div>
+                    <div class="role"><span class="role-name">Équipier DIV:</span> ${getPersonnelNameAndButton(mprTeam[ROLES.MPR_TEAMMATE], ROLES.MPR_TEAMMATE, 'mpr')}</div>
                 </div>`;
         }
         
         teamsHtml = ccfHtml + mprHtml;
         if (teamsHtml === '') {
-            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucune composition d'équipe à afficher pour les critères actuels.</p>`;
+            if (Object.keys(allAvailabilities[dateId] || {}).length > 0) { // People available but no team displayed per logic
+                 teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucune composition d'équipe à afficher pour les types d'événements sélectionnés ou les disponibilités.</p>`;
+            } else { // No one available in the first place
+                 teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucun personnel disponible pour cette date.</p>`;
+            }
         }
         
         let adminActionsHtml = '';
         if (isAdmin) {
              if (isFrozen) {
                 adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
-                                        <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
-                                        <button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Réinitialiser Équipe</button>
+                                        <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement/Modifier</button>
+                                        <button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Défiger l'Équipe</button>
                                     </div>`;
-            } else {
-                 // Bouton pour activer la journée et figer l'équipe provisoire
+            } else if (Object.keys(allAvailabilities[dateId] || {}).length > 0 && (ccfTeam || mprTeam)) { 
+                // Only show activate button if there's a team (even partial) generated from available personnel
+                adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+                                        <button id="activate-day-btn" class="btn-primary" style="padding: 0.5rem 1rem; background-color: var(--available-green);">Activer Journée et Figer Équipe(s)</button>
+                                    </div>`;
+                 // If no event is defined yet, "Activer Journée" will prompt for event types.
+                 // If event types are defined, it will use those.
+            } else if (allEvents[dateId] && allEvents[dateId].types && allEvents[dateId].types.length > 0) {
+                // Event is defined, but no personnel to form team. Still allow event management.
                  adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
-                                        <button id="activate-day-btn" class="btn-primary" style="padding: 0.5rem 1rem; background-color: var(--available-green);">Activer et Figer l'Équipe</button>
+                                        <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
+                                     </div>`;
+            } else {
+                // No event, no personnel, no team. Maybe a button to define event types.
+                adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+                                        <button id="define-event-type-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Définir Type d'Événement</button>
                                      </div>`;
             }
-        } else if (isFrozen) {
-            // Vue utilisateur normal, l'équipe est visible
-        } else {
-             teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée par un administrateur.</p>`;
+        } else if (isFrozen) { // Non-admin view of a frozen team
+            // No actions, just view. The event tags already show status.
+        } else { // Non-admin view, team not frozen
+            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée.</p>`;
         }
 
         generatedTeamsContainer.innerHTML = `
@@ -900,24 +984,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- GESTIONNAIRES D'ÉVÉNEMENTS POUR LES BOUTONS ---
 
         const editBtn = document.getElementById('edit-event-btn-display');
-        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); }
+        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); } // false: not an activation, just editing event type
 
         const activateDayBtn = document.getElementById('activate-day-btn');
-        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); }
+        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); } // true: this is an activation
         
+        const defineEventTypeBtn = document.getElementById('define-event-type-btn');
+        if (defineEventTypeBtn) { defineEventTypeBtn.addEventListener('click', () => openEventModal(dateId, false));}
+
+
         const resetAssignedTeamBtn = document.getElementById('reset-assigned-team-btn');
         if (resetAssignedTeamBtn) {
             resetAssignedTeamBtn.addEventListener('click', () => {
                 showGenericConfirmModal(
-                    "Voulez-vous réinitialiser l'équipe assignée ? La génération automatique reprendra.",
+                    "Voulez-vous défiger l'équipe assignée ? La génération automatique (si applicable) reprendra. L'événement défini pour le jour sera conservé.",
                     () => {
-                        Promise.all([
-                            database.ref(`assignedTeams/${dateId}`).remove(),
-                            database.ref(`events/${dateId}`).remove() // On supprime aussi l'événement associé
-                        ]).then(() => {
-                            showMessage("Équipe et événement réinitialisés.", "success");
+                        database.ref(`assignedTeams/${dateId}`).remove()
+                        .then(() => {
+                            showMessage("Équipe défigée. L'événement est conservé.", "success");
+                            // generateAndDisplayTeams(dateId); // Already handled by listener on assignedTeams
                         }).catch(err => showMessage("Erreur: " + err.message, "error"));
-                    }, null, "Réinitialiser l'équipe ?", "btn-secondary", "Oui, Réinitialiser"
+                    }, null, "Défiger l'équipe ?", "btn-secondary", "Oui, Défiger"
                 );
             });
         }
@@ -936,8 +1023,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        if (isAdmin && isFrozen) {
-            const teamForReplacements = currentWorkingTeam;
+        if (isAdmin && isFrozen && (ccfTeam || mprTeam)) { // Only show replacements if team is frozen AND has members
+            const teamForReplacements = currentWorkingTeam; // currentWorkingTeam should be the frozen team
              if (teamForReplacements) {
                 renderPotentialReplacements(dateId, teamForReplacements.ccfTeam, teamForReplacements.mprTeam);
              }
@@ -956,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         teamsToConsider.forEach(team => {
             if (!team) return;
-            Object.values(team).flat().forEach(id => {
+            Object.values(team).flat().forEach(id => { // .flat() handles single IDs and arrays of IDs (like CCF_TEAMMATE)
                 if (id) currentTeamAssignmentsOnDate.add(id);
             });
         });
@@ -978,29 +1065,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (Object.keys(potentialReplacementsByRole).length === 0) {
-            potentialReplacementsContainer.innerHTML = '<h3><ion-icon name="people-circle-outline"></ion-icon> Remplaçants Potentiels</h3><p style="color:var(--text-secondary); text-align:center;">Aucun remplaçant potentiel disponible actuellement.</p>';
+            potentialReplacementsContainer.innerHTML = '<h3><ion-icon name="people-circle-outline"></ion-icon> Remplaçants Potentiels</h3><p style="color:var(--text-secondary); text-align:center;">Aucun remplaçant potentiel disponible actuellement (personnel disponible non assigné ayant la fonction requise).</p>';
             return;
         }
 
         let html = `<h3><ion-icon name="people-circle-outline"></ion-icon> Remplaçants Potentiels</h3><div class="potential-replacements-list">`;
         for (const roleKey in potentialReplacementsByRole) {
             html += `<div class="replacement-role-group">
-                         <h4>${getRoleDisplayName(roleKey)}</h4>
-                         <ul>`;
+                          <h4>${getRoleDisplayName(roleKey)}</h4>
+                          <ul>`;
             potentialReplacementsByRole[roleKey].forEach(pId => {
                 const person = allPersonnel[pId];
                 html += `<li>${fromBase64(person.prenom)} ${fromBase64(person.nom)}</li>`;
             });
             html += `   </ul>
-                     </div>`;
+                      </div>`;
         }
         html += `</div>`;
         potentialReplacementsContainer.innerHTML = html;
     }
 
     function openReplacePersonnelModal() {
-        if (!isAdmin || !currentWorkingTeam) {
-            showMessage("Impossible d'ouvrir le remplacement : aucune équipe de travail active.", "error");
+        if (!isAdmin || !currentWorkingTeam) { // currentWorkingTeam should be set if we are replacing
+            showMessage("Impossible d'ouvrir le remplacement : aucune équipe de travail active ou sélectionnée.", "error");
             return;
         }
         const { dateId, roleKey, currentPersonnelId } = currentReplacementInfo;
@@ -1009,26 +1096,35 @@ document.addEventListener('DOMContentLoaded', () => {
         if (replacementOptionsContainer) replacementOptionsContainer.innerHTML = '';
 
         const availableOnDate = Object.keys(allAvailabilities[dateId] || {});
-        const currentAssignments = new Set();
+        const currentAssignmentsInWorkingTeam = new Set(); // Consider only assignments in the *current working* (frozen) team
 
-        const { ccfTeam, mprTeam } = currentWorkingTeam;
-        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignments.add(id); }); }
-        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignments.add(id); }); }
-
+        const { ccfTeam, mprTeam } = currentWorkingTeam; // This is the team we are modifying
+        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
+        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
+        
+        // A person is a potential replacement if:
+        // 1. They are available on the date.
+        // 2. They have the required function (roleKey).
+        // 3. They are NOT the person currently in the slot (if a person is already there).
+        // 4. They are NOT already assigned elsewhere IN THE CURRENTLY FROZEN TEAM.
         const potentialReplacementsList = Object.keys(allPersonnel).filter(pId => {
             const person = allPersonnel[pId];
             return person &&
                 availableOnDate.includes(pId) &&
                 person.fonctions && person.fonctions.map(f => fromBase64(f)).includes(roleKey) &&
-                pId !== currentPersonnelId &&
-                !currentAssignments.has(pId);
+                pId !== currentPersonnelId && // Not the person being replaced
+                !currentAssignmentsInWorkingTeam.has(pId); // Not already in another slot of this frozen team
         });
+        
+        // Option to unassign the current person
+        if (currentPersonnelId) { // Only show if someone is currently assigned
+            const unassignOptionDiv = document.createElement('div');
+            unassignOptionDiv.className = 'replacement-option';
+            unassignOptionDiv.textContent = `Laisser "${getRoleDisplayName(roleKey)}" Non Assigné`;
+            unassignOptionDiv.addEventListener('click', () => performReplacement(null)); // Pass null to unassign
+            replacementOptionsContainer.appendChild(unassignOptionDiv);
+        }
 
-        const unassignOptionDiv = document.createElement('div');
-        unassignOptionDiv.className = 'replacement-option';
-        unassignOptionDiv.textContent = "Laisser Non Assigné";
-        unassignOptionDiv.addEventListener('click', () => performReplacement(null));
-        replacementOptionsContainer.appendChild(unassignOptionDiv);
 
         if (potentialReplacementsList.length > 0) {
             potentialReplacementsList.forEach(pId => {
@@ -1040,33 +1136,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 replacementOptionsContainer.appendChild(optionDiv);
             });
         } else {
-            replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun autre remplaçant.</div>');
+            if (!currentPersonnelId) { // No one assigned and no one to assign
+                 replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun personnel disponible pour ce rôle.</div>');
+            } else { // Someone assigned, but no one else to replace them with
+                 replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun autre remplaçant disponible pour ce rôle.</div>');
+            }
         }
-
         openModal(replacePersonnelModal);
     }
 
     function performReplacement(replacementPersonnelId) {
-        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) return;
+        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) {
+             showMessage("Erreur: Remplacement impossible (pas d'admin, d'info de remplacement ou d'équipe active).", "error");
+            return;
+        }
 
-        const { dateId, teamType, roleKey, teammateIndex } = currentReplacementInfo;
+        const { dateId, teamType, roleKey, teammateIndex, currentPersonnelId } = currentReplacementInfo;
+        
+        // Ensure currentWorkingTeam is the source of truth for modification
+        // It should be a deep copy of the frozen team if one exists, or the generated one.
         const teamToUpdate = currentWorkingTeam[teamType + 'Team'];
 
         if (!teamToUpdate) {
-            showMessage("Erreur: L'équipe à mettre à jour n'existe pas.", "error");
+            showMessage("Erreur: L'équipe à mettre à jour n'existe pas dans currentWorkingTeam.", "error");
             return;
         }
         
+        // If replacing with someone already in another role in currentWorkingTeam, this needs careful handling.
+        // For now, assume replacementPersonnelId is either null or not currently in another slot of currentWorkingTeam.
+        // The filtering in openReplacePersonnelModal should handle this.
+
         if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) {
             teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId;
         } else {
             teamToUpdate[roleKey] = replacementPersonnelId;
         }
 
+        // Now, save the modified currentWorkingTeam back to Firebase as the new frozen team.
         database.ref(`assignedTeams/${dateId}`).set(currentWorkingTeam)
             .then(() => {
-                showMessage("Remplacement effectué et équipe validée !", "success");
+                showMessage("Remplacement effectué et équipe mise à jour !", "success");
                 closeModal(replacePersonnelModal);
+                // The Firebase listener on 'assignedTeams' will trigger generateAndDisplayTeams to refresh the view.
             })
             .catch(err => {
                 showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error");
@@ -1103,15 +1214,15 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const date in allAssignedTeams) {
             const teamData = allAssignedTeams[date];
             if (teamData.ccfTeam) {
-                const ccfAssignments = Object.values(teamData.ccfTeam).flat();
+                const ccfAssignments = Object.values(teamData.ccfTeam).flat().filter(id => id); // Filter out nulls
                 ccfAssignments.forEach(pId => {
-                    if (pId && stats[pId]) stats[pId].ccfCount++;
+                    if (stats[pId]) stats[pId].ccfCount++;
                 });
             }
             if (teamData.mprTeam) {
-                const mprAssignments = Object.values(teamData.mprTeam).flat();
+                const mprAssignments = Object.values(teamData.mprTeam).flat().filter(id => id); // Filter out nulls
                 mprAssignments.forEach(pId => {
-                    if (pId && stats[pId]) stats[pId].mprCount++;
+                    if (stats[pId]) stats[pId].mprCount++;
                 });
             }
         }
@@ -1140,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredPersonnelIds.forEach(pId => {
             const p = stats[pId];
             const card = document.createElement('div');
-            card.className = 'personnel-card';
+            card.className = 'personnel-card'; // Using existing class for similar styling
             card.innerHTML = `
                 <div class="personnel-avatar">${p.prenom.charAt(0)}${p.nom.charAt(0)}</div>
                 <div class="personnel-info">
@@ -1149,11 +1260,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <ion-icon name="calendar-number-outline"></ion-icon>
                         <span><strong>${p.availabilities}</strong> Disponibilités</span>
                     </div>
-                    <div class="info-block" title="Nombre de fois assigné à une équipe CCF">
+                    <div class="info-block" title="Nombre de fois assigné à une équipe CCF (rôle quelconque)">
                         <ion-icon name="bus-outline"></ion-icon>
                         <span><strong>${p.ccfCount}</strong> Gardes CCF</span>
                     </div>
-                    <div class="info-block" title="Nombre de fois assigné à une équipe MPR">
+                    <div class="info-block" title="Nombre de fois assigné à une équipe MPR (rôle quelconque)">
                         <ion-icon name="car-sport-outline"></ion-icon>
                         <span><strong>${p.mprCount}</strong> Gardes MPR</span>
                     </div>
