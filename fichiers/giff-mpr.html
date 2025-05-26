@@ -32,6 +32,17 @@
                 </div>
             </div>
         </div>
+        <div id="header-stats-controls" class="header-controls">
+             <input type="text" id="statsSearchInput" placeholder="Rechercher un personnel...">
+             <select id="statsFilterInput">
+                <option value="">Toutes les fonctions</option>
+                <option value="Conducteur Poids Lourd (CCF4MHP37)">Conducteur Poids Lourd</option>
+                <option value="Chef d'Agrès FDF (CCF4MHP37)">Chef d'Agrès FDF</option>
+                <option value="Équipier FDF (CCF4MHP37)">Équipier FDF</option>
+                <option value="Conducteur Voiture (MPR12)">Conducteur Voiture</option>
+                <option value="Équipier DIV (MPR12)">Équipier DIV</option>
+             </select>
+        </div>
         <button id="top-login-btn" class="top-login-btn" title="Connexion">
             <ion-icon name="log-in-outline"></ion-icon>
         </button>
@@ -41,7 +52,6 @@
 
     <div id="calendar-view" class="view-container">
         <div id="deadline-message" class="deadline-message" style="display: none;"></div>
-
         <div class="calendar">
             <div class="calendar-header">
                 <span class="month-picker" id="month-picker">Mai</span>
@@ -53,13 +63,7 @@
             </div>
             <div class="calendar-body">
                 <div class="calendar-week-days">
-                    <div>Lun</div>
-                    <div>Mar</div>
-                    <div>Mer</div>
-                    <div>Jeu</div>
-                    <div>Ven</div>
-                    <div>Sam</div>
-                    <div>Dim</div>
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
                 </div>
                 <div class="calendar-days"></div>
             </div>
@@ -107,6 +111,10 @@
          <div id="potential-replacements-container"></div>
     </div>
 
+    <div id="stats-view" class="view-container">
+        <div id="stats-list" class="stats-list">
+            </div>
+    </div>
 
     <div id="settings-view" class="view-container">
         <div class="settings-container">
@@ -116,7 +124,6 @@
                 <input type="datetime-local" id="deadline-input">
                 <button id="save-deadline-btn" class="btn-primary">Enregistrer</button>
             </div>
-
             <div class="setting-item danger-zone">
                 <label for="reset-all-data-btn">Zone de Danger</label>
                 <p class="warning-text">
@@ -172,7 +179,6 @@
             </div>
         </div>
     </div>
-
     <div id="event-type-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
@@ -193,21 +199,18 @@
             </form>
         </div>
     </div>
-    
     <div id="replace-personnel-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h2 id="replace-modal-title">Remplacer Personnel</h2>
             <p>Rôle à remplacer : <strong id="role-to-replace"></strong></p>
             <h3>Choisir un remplaçant disponible :</h3>
-            <div id="replacement-options-container">
-                </div>
+            <div id="replacement-options-container"></div>
             <div class="modal-actions" style="margin-top: 1.5rem;">
                 <button id="replace-cancel-btn" class="btn-secondary">Annuler</button>
             </div>
         </div>
     </div>
-
 
     <button id="add-personnel-btn" class="fab">+</button>
     <div class="navigation">
@@ -250,6 +253,7 @@
             </li>
         </ul>
     </div>
+
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vanilla-js-calendar@2.6.0/build/vanilla-js-calendar.min.js"></script>
