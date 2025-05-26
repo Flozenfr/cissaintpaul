@@ -46,7 +46,7 @@
                 <a href="#" class="submenu-toggle nav-link"><img src="images/icons/formulaires.png" alt="" class="menu-icon">Formulaires <span class="arrow">&#9662;</span></a>
                 <ul class="submenu">
                     <li><a href="fichiers/retours-vsav.html" target="content-frame" class="nav-link"><img src="images/icons/vsav.png" alt="" class="menu-icon">Retours VSAV</a></li>
-                    <li><a href="fichiers/taches.html" target="content-frame" class="nav-link"><img src="images/icons/taches.png" alt="" class="menu-icon">TÃ¢ches</a></li>
+                    <li><a href="fichiers/taches.html" target="content-frame" class="nav-link"><img src="images/icons/taches.png" alt="" class="menu-icon">Tâches</a></li>
                     <li><a href="fichiers/habillement.html" target="content-frame" class="nav-link"><img src="images/icons/habillement.png" alt="" class="menu-icon">Habillement</a></li>
                 </ul>
             </li>
@@ -54,6 +54,7 @@
             <li><a href="fichiers/rh.html" target="content-frame" class="nav-link"><img src="images/icons/rh.png" alt="" class="menu-icon">RH</a></li>
             <li><a href="fichiers/giff-mpr.html" target="content-frame" class="nav-link"><img src="images/icons/giff.png" alt="" class="menu-icon">GIFF & MPR</a></li>
             <li><a href="fichiers/amicale.html" target="content-frame" class="nav-link"><img src="images/icons/amicale.png" alt="" class="menu-icon">Amicale</a></li>
+            <li><a href="fichiers/cours.html" target="content-frame" class="nav-link"><img src="images/icons/cours.png" alt="" class="menu-icon">Cours</a></li>
         </ul>
         <div class="nav-footer">
             <p>&copy; <span id="current-year"></span> La Tenaille - Pompiers PRO</p>
@@ -70,7 +71,7 @@
             const appMain = document.getElementById('app-main');
             const pageLoader = document.getElementById('page-loader');
 
-            // --- La dÃ©tection iOS + Chrome et le code associÃ© ont Ã©tÃ© supprimÃ©s ---
+            // --- La détection iOS + Chrome et le code associé ont été supprimés ---
 
             // Le reste du code JS de l'application (menu, etc.)
             const menuToggle = document.getElementById('menu-toggle-btn');
@@ -90,13 +91,13 @@
                     setTimeout(() => pageLoader.style.display = 'none', 500);
                 });
 
-                // SÃ©curitÃ© pour masquer le loader si l'iframe prend trop de temps ou Ã©choue
+                // Sécurité pour masquer le loader si l'iframe prend trop de temps ou échoue
                 setTimeout(() => {
-                    if (pageLoader.style.opacity !== '0') { // VÃ©rifie si le loader est toujours visible
+                    if (pageLoader.style.opacity !== '0') { // Vérifie si le loader est toujours visible
                         pageLoader.style.opacity = '0';
                         setTimeout(() => pageLoader.style.display = 'none', 500);
                     }
-                }, 3000); // AugmentÃ© Ã  3 secondes pour plus de marge
+                }, 3000); // Augmenté à 3 secondes pour plus de marge
             }
 
             // Menu functions
@@ -150,8 +151,8 @@
                     if (parentSubmenuItem) {
                         const parentToggle = parentSubmenuItem.querySelector('.submenu-toggle');
                         if (parentToggle && !currentLink.classList.contains('submenu-toggle')) {
-                             // Si on clique sur un enfant d'un sous-menu, on active aussi le parent.
-                            parentToggle.classList.add('active-link');
+                                // Si on clique sur un enfant d'un sous-menu, on active aussi le parent.
+                                parentToggle.classList.add('active-link');
                         }
                     }
 
@@ -196,10 +197,10 @@
 
                     if (parentLi.classList.contains('open')) {
                         submenu.style.maxHeight = submenu.scrollHeight + "px";
-                        if (arrow) arrow.innerHTML = '&#9652;'; // FlÃ¨che vers le haut
+                        if (arrow) arrow.innerHTML = '&#9652;'; // Flèche vers le haut
                     } else {
                         submenu.style.maxHeight = null;
-                        if (arrow) arrow.innerHTML = '&#9662;'; // FlÃ¨che vers le bas
+                        if (arrow) arrow.innerHTML = '&#9662;'; // Flèche vers le bas
                     }
                 });
             });
