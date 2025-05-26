@@ -20,19 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminOnlyFlexContainers = document.querySelectorAll('.admin-only-flex');
     const headerPersonnelControls = document.getElementById('header-personnel-controls');
     const headerCalendarControls = document.getElementById('header-calendar-controls');
-    const headerStatsControls = document.getElementById('header-stats-controls'); 
-    const headerTeamsControls = document.getElementById('header-teams-controls'); // NOUVEAU
+    const headerStatsControls = document.getElementById('header-stats-controls');
+    const headerTeamsControls = document.getElementById('header-teams-controls');
     const personnelView = document.getElementById('personnel-view');
     const calendarView = document.getElementById('calendar-view');
-    const statsView = document.getElementById('stats-view'); 
+    const statsView = document.getElementById('stats-view');
     const personnelList = document.getElementById('personnel-list');
-    const statsList = document.getElementById('stats-list'); 
+    const statsList = document.getElementById('stats-list');
     const addPersonnelBtn = document.getElementById('add-personnel-btn');
     const searchInput = document.getElementById('searchInput');
     const filterInput = document.getElementById('filterInput');
-    const statsSearchInput = document.getElementById('statsSearchInput'); 
-    const statsFilterInput = document.getElementById('statsFilterInput'); 
-    const teamsSearchInput = document.getElementById('teamsSearchInput'); // NOUVEAU
+    const statsSearchInput = document.getElementById('statsSearchInput');
+    const statsFilterInput = document.getElementById('statsFilterInput');
+    const teamsSearchInput = document.getElementById('teamsSearchInput');
     const personnelModal = document.getElementById('personnel-modal');
     const confirmModal = document.getElementById('confirm-modal');
     const closeButton = document.querySelector('#personnel-modal .close-button');
@@ -107,16 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let allPersonnel = {};
     let allAvailabilities = {};
     let allEvents = {};
-    let allAssignedTeams = {}; 
+    let allAssignedTeams = {};
     let selectedPersonnel = null;
     let isAdmin = false;
     let availabilityDeadline = null;
-    let selectedTeamDate = null; 
-    let currentReplacementInfo = {}; 
-    let currentWorkingTeam = null; 
-    let matriculeSessionAuth = {}; 
+    let selectedTeamDate = null;
+    let currentReplacementInfo = {};
+    let currentWorkingTeam = null;
+    let matriculeSessionAuth = {};
 
-    // --- FONCTIONS UTILITAIRES (showMessage, showCustomPrompt, showGenericConfirmModal) ---
+    // --- FONCTIONS UTILITAIRES (showMessage, showCustomPrompt, etc.) ---
     function showMessage(message, type) {
         const messageContainer = document.createElement('div');
         messageContainer.className = `message-container ${type}`;
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showGenericConfirmModal(message, onConfirm, onCancel, title = "Confirmation requise", okButtonClass = "btn-danger", okButtonText = "Confirmer") {
         genericConfirmTitleEl.textContent = title;
         genericConfirmMessageEl.innerHTML = message;
-        genericConfirmOkBtn.className = 'btn-primary'; // Clear existing classes
+        genericConfirmOkBtn.className = 'btn-primary';
         okButtonClass.split(' ').forEach(cls => { if (cls) genericConfirmOkBtn.classList.add(cls); });
         genericConfirmOkBtn.textContent = okButtonText;
         genericConfirmModal.classList.add('visible');
@@ -177,6 +177,83 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+
+    const toBase64 = (str) => str ? btoa(unescape(encodeURIComponent(str))) : "";
+    const fromBase64 = (str) => str ? decodeURIComponent(escape(atob(str))) : "";
+    const openModal = (modal) => modal.classList.add('visible');
+    const closeModal = (modal) => modal.classList.remove('visible');
+
+
+    // --- NOUVELLE LOGIQUE POUR LES MENUS DÉROULANTS DE RECHERCHE ---
+
+    function setupSearchDropdown(arrow) {
+        const wrapper = arrow.closest('.search-wrapper');
+        if (!wrapper) return;
+        const listContainer = wrapper.querySelector('.search-results-list, #calendar-search-results');
+        const searchInput = wrapper.querySelector('input');
+
+        if (!listContainer || !searchInput) return;
+
+        arrow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = listContainer.classList.toggle('visible');
+            arrow.classList.toggle('open', isVisible);
+
+            // Fermer les autres menus déroulants
+            document.querySelectorAll('.search-results-list.visible, #calendar-search-results.visible').forEach(otherList => {
+                if (otherList !== listContainer) {
+                    otherList.classList.remove('visible');
+                    const otherArrow = otherList.closest('.search-wrapper')?.querySelector('.dropdown-arrow');
+                    if (otherArrow) otherArrow.classList.remove('open');
+                }
+            });
+
+            if (isVisible) {
+                // Si la liste est vide (ou pour forcer le rafraîchissement), la peupler
+                populatePersonnelListForInput(listContainer, searchInput);
+            }
+        });
+    }
+
+    function populatePersonnelListForInput(listContainer, searchInput) {
+        listContainer.innerHTML = '';
+        const personnelArray = Object.entries(allPersonnel).map(([id, p]) => ({
+            id,
+            nom: fromBase64(p.nom),
+            prenom: fromBase64(p.prenom)
+        }));
+
+        personnelArray.sort((a, b) => a.nom.localeCompare(b.nom));
+
+        personnelArray.forEach(p => {
+            const fullName = `${p.prenom} ${p.nom}`;
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.textContent = fullName;
+            item.dataset.id = p.id;
+            item.addEventListener('click', () => {
+                // Le champ de recherche du calendrier a un comportement spécial
+                if (searchInput.id === 'calendar-search-input') {
+                    matriculeSessionAuth = {};
+                    selectedPersonnel = { id: p.id, nom: toBase64(p.nom), prenom: toBase64(p.prenom) };
+                    selectedPersonnelName.textContent = fullName;
+                    headerCalendarControls.classList.add('person-selected');
+                    searchInput.value = '';
+                    generateCalendar(currentMonth.value, currentYear.value);
+                } else {
+                    searchInput.value = fullName;
+                    // Déclencher l'événement 'input' pour appliquer le filtre principal
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                listContainer.classList.remove('visible');
+                const arrow = searchInput.closest('.search-wrapper')?.querySelector('.dropdown-arrow');
+                if (arrow) arrow.classList.remove('open');
+            });
+            listContainer.appendChild(item);
+        });
+    }
+
+    // --- FIN NOUVELLE LOGIQUE MENUS DÉROULANTS ---
 
 
     // --- LOGIQUE DE NAVIGATION ---
@@ -226,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAdmin) {
             isAdmin = false;
             sessionStorage.removeItem('isAdmin');
-            matriculeSessionAuth = {}; 
+            matriculeSessionAuth = {};
             showMessage('Vous avez été déconnecté.', 'warning');
             updateAdminUI();
             const activeTab = document.querySelector('.navigation .list.active');
@@ -236,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (password === ADMIN_PASSWORD) {
                     isAdmin = true;
                     sessionStorage.setItem('isAdmin', 'true');
-                    matriculeSessionAuth = {}; 
+                    matriculeSessionAuth = {};
                     showMessage('Connexion réussie !', 'success');
                     updateAdminUI();
                     const activeTab = document.querySelector('.navigation .list.active');
@@ -272,11 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- FONCTIONS UTILITAIRES ET GESTION MODALS ---
-    const toBase64 = (str) => str ? btoa(unescape(encodeURIComponent(str))) : "";
-    const fromBase64 = (str) => str ? decodeURIComponent(escape(atob(str))) : "";
-    const openModal = (modal) => modal.classList.add('visible');
-    const closeModal = (modal) => modal.classList.remove('visible');
-
     addPersonnelBtn.addEventListener('click', () => {
         if (!isAdmin) return;
         personnelForm.reset();
@@ -293,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (matriculeCancelBtn) matriculeCancelBtn.addEventListener('click', () => closeModal(matriculeConfirmModal));
 
     window.addEventListener('click', (e) => {
+        // Fermer modales
         if (e.target === personnelModal) closeModal(personnelModal);
         if (e.target === confirmModal) closeModal(confirmModal);
         if (e.target === eventTypeModal) closeModal(eventTypeModal);
@@ -302,6 +375,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (genericConfirmModal && e.target === genericConfirmModal) {
              closeModal(genericConfirmModal);
              if (genericConfirmCancelBtn.currentOnCancel) genericConfirmCancelBtn.currentOnCancel();
+        }
+
+        // Fermer les menus déroulants si on clique à l'extérieur
+        if (!e.target.closest('.search-wrapper')) {
+            document.querySelectorAll('.search-results-list.visible, #calendar-search-results.visible').forEach(list => {
+                list.classList.remove('visible');
+                const arrow = list.closest('.search-wrapper')?.querySelector('.dropdown-arrow');
+                if (arrow) arrow.classList.remove('open');
+            });
         }
     });
 
@@ -358,6 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     database.ref('personnel').on('value', (snapshot) => {
         allPersonnel = snapshot.val() || {};
+        // Initialiser les menus déroulants une fois que les données sont chargées
+        document.querySelectorAll('.dropdown-arrow').forEach(setupSearchDropdown);
+
         if (personnelView.classList.contains('visible')) {
             renderPersonnel(allPersonnel);
         }
@@ -368,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (statsView && statsView.classList.contains('visible')) {
-            renderGlobalStatistics(); 
+            renderGlobalStatistics();
             renderStatistics();
         }
     });
@@ -395,36 +480,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (searchInput) searchInput.addEventListener('input', () => renderPersonnel(allPersonnel));
     if (filterInput) filterInput.addEventListener('change', () => renderPersonnel(allPersonnel));
+
+    // Écouteur pour la recherche dans le calendrier (logique modifiée)
     calendarSearchInput.addEventListener('input', () => {
         const searchTerm = calendarSearchInput.value.toLowerCase();
-        calendarSearchResults.innerHTML = '';
-        if (searchTerm.length === 0) return;
-        for (const id in allPersonnel) {
-            const p = { id: id, nom: fromBase64(allPersonnel[id].nom), prenom: fromBase64(allPersonnel[id].prenom) };
-            const fullName = `${p.prenom} ${p.nom}`;
-            if (fullName.toLowerCase().includes(searchTerm)) {
-                const item = document.createElement('div');
-                item.className = 'search-result-item';
-                item.textContent = fullName;
-                item.dataset.id = p.id;
-                item.addEventListener('click', () => {
-                    matriculeSessionAuth = {}; 
-                    selectedPersonnel = { id: p.id, nom: p.nom, prenom: p.prenom };
-                    selectedPersonnelName.textContent = `${p.prenom} ${p.nom}`;
-                    calendarPersonnelSelector.parentElement.classList.add('person-selected'); // MODIFIÉ
-                    calendarSearchInput.value = '';
-                    calendarSearchResults.innerHTML = '';
-                    generateCalendar(currentMonth.value, currentYear.value);
-                });
-                calendarSearchResults.appendChild(item);
-            }
+        const arrow = calendarSearchInput.closest('.search-wrapper')?.querySelector('.dropdown-arrow');
+
+        if (searchTerm.length === 0) {
+            calendarSearchResults.classList.remove('visible'); // Cacher si vide
+            if (arrow) arrow.classList.remove('open');
+            return;
         }
+
+        calendarSearchResults.innerHTML = '';
+        calendarSearchResults.classList.add('visible'); // Montrer pendant la frappe
+        if (arrow) arrow.classList.add('open');
+
+        const filteredPersonnel = Object.entries(allPersonnel).filter(([id, p]) => {
+            const fullName = `${fromBase64(p.prenom)} ${fromBase64(p.nom)}`;
+            return fullName.toLowerCase().includes(searchTerm);
+        });
+
+        filteredPersonnel.forEach(([id, pData]) => {
+            const p = { id, nom: fromBase64(pData.nom), prenom: fromBase64(pData.prenom) };
+            const fullName = `${p.prenom} ${p.nom}`;
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.textContent = fullName;
+            item.dataset.id = p.id;
+            item.addEventListener('click', () => {
+                matriculeSessionAuth = {};
+                selectedPersonnel = { id: p.id, nom: toBase64(p.nom), prenom: toBase64(p.prenom) };
+                selectedPersonnelName.textContent = fullName;
+                headerCalendarControls.classList.add('person-selected');
+                calendarSearchInput.value = '';
+                calendarSearchResults.classList.remove('visible');
+                if (arrow) arrow.classList.remove('open');
+                generateCalendar(currentMonth.value, currentYear.value);
+            });
+            calendarSearchResults.appendChild(item);
+        });
     });
+
     deselectPersonnelBtn.addEventListener('click', () => {
         selectedPersonnel = null;
-        matriculeSessionAuth = {}; 
+        matriculeSessionAuth = {};
         selectedPersonnelName.textContent = 'Aucun';
-        calendarPersonnelSelector.parentElement.classList.remove('person-selected'); // MODIFIÉ
+        headerCalendarControls.classList.remove('person-selected');
         generateCalendar(currentMonth.value, currentYear.value);
     });
 
@@ -449,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsView.classList.add('visible');
         } else if (activeTabText === 'Équipes') {
             teamsView.classList.add('visible');
-            headerTeamsControls.style.display = 'flex'; // MODIFIÉ
+            headerTeamsControls.style.display = 'flex';
             generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
             if (selectedTeamDate) {
                 generateAndDisplayTeams(selectedTeamDate);
@@ -506,6 +608,8 @@ document.addEventListener('DOMContentLoaded', () => {
         moveIndicator(activeItem);
     }
 
+    // --- LE RESTE DU FICHIER JS (INCHANGÉ) ---
+    // (Toute la logique de calendrier, équipes, statistiques, etc., reste la même)
     // --- LOGIQUE DU CALENDRIER DE DISPONIBILITÉS ---
     const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
     const getFebDays = (year) => isLeapYear(year) ? 29 : 28;
@@ -568,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
             generateCalendar(currentMonth.value, currentYear.value);
         });
     }
-    
+
     if (calendarPreYearBtn) calendarPreYearBtn.onclick = () => { --currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
     if (calendarNextYearBtn) calendarNextYearBtn.onclick = () => { ++currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
 
@@ -579,8 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 availabilityRef.remove();
             } else {
                 availabilityRef.set({
-                    nom: toBase64(selectedPersonnel.nom),
-                    prenom: toBase64(selectedPersonnel.prenom)
+                    nom: selectedPersonnel.nom,
+                    prenom: selectedPersonnel.prenom
                 });
             }
         });
@@ -606,8 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (enteredMatricule === correctMatricule) {
-                matriculeSessionAuth[selectedPersonnel.id] = true; 
-                showMessage(`Bonjour ${selectedPersonnel.prenom}, vous êtes authentifié.`, "success");
+                matriculeSessionAuth[selectedPersonnel.id] = true;
+                showMessage(`Bonjour ${fromBase64(selectedPersonnel.prenom)}, vous êtes authentifié.`, "success");
                 closeModal(matriculeConfirmModal);
                 setAvailability(dateId);
             } else {
@@ -640,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (matriculeSessionAuth[selectedPersonnel.id]) {
                     setAvailability(dateId);
                 } else {
-                    promptForMatricule(dateId); 
+                    promptForMatricule(dateId);
                 }
             }
         });
@@ -651,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (calendarView.classList.contains('visible')) {
             generateCalendar(currentMonth.value, currentYear.value);
         }
-        if (teamsView.classList.contains('visible')) { 
+        if (teamsView.classList.contains('visible')) {
             generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
             if (selectedTeamDate) {
                 generateAndDisplayTeams(selectedTeamDate);
@@ -745,19 +849,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (i >= day_offset) {
                 const dayNumber = i - day_offset + 1;
                 const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
-                
+
                 day.innerHTML = `<span class="day-number">${dayNumber}</span>`;
                 day.dataset.date = dateId;
 
                 if (dateId === selectedTeamDate) { day.classList.add('selected-day'); }
-                
+
                 const teamStatus = getTeamStatusForDate(dateId);
                 if (teamStatus.ccfStatus === 'complete') day.classList.add('ccf-complete');
                 else if (teamStatus.ccfStatus === 'incomplete') day.classList.add('ccf-incomplete');
 
                 if (teamStatus.mprStatus === 'complete') day.classList.add('mpr-complete');
                 else if (teamStatus.mprStatus === 'incomplete') day.classList.add('mpr-incomplete');
-                
+
                 if (searchedPersonnelId) {
                     let isPresent = false;
                     if (allAssignedTeams[dateId]) {
@@ -909,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     database.ref('assignedTeams').on('value', (snapshot) => {
         allAssignedTeams = snapshot.val() || {};
-         if (teamsView.classList.contains('visible')) { 
+         if (teamsView.classList.contains('visible')) {
             generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
             if (selectedTeamDate) {
                 generateAndDisplayTeams(selectedTeamDate);
@@ -943,11 +1047,11 @@ document.addEventListener('DOMContentLoaded', () => {
         t ^= t + Math.imul(t ^ t >>> 7, t | 61);
         return ((t ^ t >>> 14) >>> 0) / 4294967296;
     }
-    
+
     function generateProvisionalTeam(dateId, wantsCcf, wantsMpr) {
         let seed = createSeedFromDate(dateId);
         const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
-        let availablePool = [...availablePersonnelIds]; 
+        let availablePool = [...availablePersonnelIds];
         const personnelByFunctionForDay = {};
 
         availablePool.forEach(pId => {
@@ -998,17 +1102,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function generateAndDisplayTeams(dateId) {
         potentialReplacementsContainer.innerHTML = '';
-        currentWorkingTeam = null; 
+        currentWorkingTeam = null;
 
         let wantsCcf = false;
         let wantsMpr = false;
-        let isProvisionalDisplayState = true; 
+        let isProvisionalDisplayState = true;
 
         const eventDetails = allEvents[dateId];
         if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
             wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
             wantsMpr = eventDetails.types.includes("MPR");
-            isProvisionalDisplayState = false; 
+            isProvisionalDisplayState = false;
         } else {
             const availablePersonnelIdsForCheck = Object.keys(allAvailabilities[dateId] || {});
             if (availablePersonnelIdsForCheck.length > 0) {
@@ -1019,19 +1123,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (allAssignedTeams[dateId]) {
             const assigned = allAssignedTeams[dateId];
-            currentWorkingTeam = JSON.parse(JSON.stringify(assigned)); 
+            currentWorkingTeam = JSON.parse(JSON.stringify(assigned));
 
-            const displayCcfFromFrozen = !!assigned.ccfTeam; 
-            const displayMprFromFrozen = !!assigned.mprTeam; 
+            const displayCcfFromFrozen = !!assigned.ccfTeam;
+            const displayMprFromFrozen = !!assigned.mprTeam;
 
-            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, displayCcfFromFrozen, displayMprFromFrozen, true, false); 
+            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, displayCcfFromFrozen, displayMprFromFrozen, true, false);
             return;
         }
 
         const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
         if (availablePersonnelIds.length === 0) {
             let noPersonnelHtml = `<div id="teams-placeholder"><ion-icon name="close-circle-outline"></ion-icon><h3>Aucun personnel disponible</h3><p>Aucun personnel n'a indiqué de disponibilité pour cette date.</p></div>`;
-            if (eventDetails && eventDetails.types && eventDetails.types.length > 0) { 
+            if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
                 noPersonnelHtml = `
                     <div class="teams-display-header">
                         <h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>
@@ -1040,12 +1144,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
             }
             generatedTeamsContainer.innerHTML = noPersonnelHtml;
-            potentialReplacementsContainer.innerHTML = ''; 
+            potentialReplacementsContainer.innerHTML = '';
             return;
         }
 
         const { ccfTeam, mprTeam } = generateProvisionalTeam(dateId, wantsCcf, wantsMpr);
-        currentWorkingTeam = { ccfTeam, mprTeam }; 
+        currentWorkingTeam = { ccfTeam, mprTeam };
 
         renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false, isProvisionalDisplayState);
     }
@@ -1054,13 +1158,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventInfo = allEvents[dateId];
         const assignedTeamInfo = allAssignedTeams[dateId];
 
-        if (assignedTeamInfo) { 
+        if (assignedTeamInfo) {
             if (eventInfo && eventInfo.types && eventInfo.types.length > 0) {
                 return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')} <span class="event-tag provisional" style="background-color: var(--available-green);">Équipe Figée</span></div>`;
             } else {
                 return `<div class="event-tags"><span class="event-tag provisional" style="background-color: var(--available-green);">Équipe Figée</span></div>`;
             }
-        } else if (eventInfo && eventInfo.types && eventInfo.types.length > 0) { 
+        } else if (eventInfo && eventInfo.types && eventInfo.types.length > 0) {
             return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')} <span class="event-tag" style="background-color: var(--provisional-blue);">Prévu (Non Figé)</span></div>`;
         }
         return `<div class="event-tags"><span class="event-tag" style="background-color: var(--ember-orange);">Proposition Automatique</span></div>`;
@@ -1097,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             title="Remplacer/Assigner">
                                             <ion-icon name="swap-horizontal-outline"></ion-icon>
                                          </button>`;
-            } else if (isAdmin && !isFrozen && personnelId) { 
+            } else if (isAdmin && !isFrozen && personnelId) {
             }
             return `<div class="personnel-name-wrapper">${nameHtml}${replaceButtonHtml}</div>`;
         };
@@ -1106,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let ccfHtml = '';
         let mprHtml = '';
 
-        if (displayCcf && ccfTeam) { 
+        if (displayCcf && ccfTeam) {
             const isCcfComplete = ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2 && ccfTeam[ROLES.CCF_TEAMMATE].every(id => id !== null);
             ccfHtml = `
                 <div class="team-card ${isCcfComplete ? '' : 'incomplete'}">
@@ -1118,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }
 
-        if (displayMpr && mprTeam) { 
+        if (displayMpr && mprTeam) {
             const isMprComplete = mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
             mprHtml = `
                 <div class="team-card ${isMprComplete ? '' : 'incomplete'}">
@@ -1130,9 +1234,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         teamsHtml = ccfHtml + mprHtml;
         if (teamsHtml === '') {
-            if (Object.keys(allAvailabilities[dateId] || {}).length > 0) { 
+            if (Object.keys(allAvailabilities[dateId] || {}).length > 0) {
                  teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucune composition d'équipe à afficher pour les types d'événements sélectionnés ou les disponibilités.</p>`;
-            } else { 
+            } else {
                  teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucun personnel disponible pour cette date.</p>`;
             }
         }
@@ -1157,8 +1261,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <button id="define-event-type-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Définir Type d'Événement</button>
                                      </div>`;
             }
-        } else if (isFrozen) { 
-        } else { 
+        } else if (isFrozen) {
+        } else {
             teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée.</p>`;
         }
 
@@ -1171,10 +1275,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="teams-grid">${teamsHtml}</div>`;
 
         const editBtn = document.getElementById('edit-event-btn-display');
-        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); } 
+        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); }
 
         const activateDayBtn = document.getElementById('activate-day-btn');
-        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); } 
+        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); }
 
         const defineEventTypeBtn = document.getElementById('define-event-type-btn');
         if (defineEventTypeBtn) { defineEventTypeBtn.addEventListener('click', () => openEventModal(dateId, false));}
@@ -1209,8 +1313,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        if (isAdmin && isFrozen && (ccfTeam || mprTeam)) { 
-            const teamForReplacements = currentWorkingTeam; 
+        if (isAdmin && isFrozen && (ccfTeam || mprTeam)) {
+            const teamForReplacements = currentWorkingTeam;
              if (teamForReplacements) {
                 renderPotentialReplacements(dateId, teamForReplacements.ccfTeam, teamForReplacements.mprTeam);
              }
@@ -1272,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openReplacePersonnelModal() {
-        if (!isAdmin || !currentWorkingTeam) { 
+        if (!isAdmin || !currentWorkingTeam) {
             showMessage("Impossible d'ouvrir le remplacement : aucune équipe de travail active ou sélectionnée.", "error");
             return;
         }
@@ -1282,9 +1386,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (replacementOptionsContainer) replacementOptionsContainer.innerHTML = '';
 
         const availableOnDate = Object.keys(allAvailabilities[dateId] || {});
-        const currentAssignmentsInWorkingTeam = new Set(); 
+        const currentAssignmentsInWorkingTeam = new Set();
 
-        const { ccfTeam, mprTeam } = currentWorkingTeam; 
+        const { ccfTeam, mprTeam } = currentWorkingTeam;
         if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
         if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
 
@@ -1293,15 +1397,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return person &&
                 availableOnDate.includes(pId) &&
                 person.fonctions && person.fonctions.map(f => fromBase64(f)).includes(roleKey) &&
-                pId !== currentPersonnelId && 
-                !currentAssignmentsInWorkingTeam.has(pId); 
+                pId !== currentPersonnelId &&
+                !currentAssignmentsInWorkingTeam.has(pId);
         });
 
-        if (currentPersonnelId) { 
+        if (currentPersonnelId) {
             const unassignOptionDiv = document.createElement('div');
             unassignOptionDiv.className = 'replacement-option';
             unassignOptionDiv.textContent = `Laisser "${getRoleDisplayName(roleKey)}" Non Assigné`;
-            unassignOptionDiv.addEventListener('click', () => performReplacement(null)); 
+            unassignOptionDiv.addEventListener('click', () => performReplacement(null));
             replacementOptionsContainer.appendChild(unassignOptionDiv);
         }
 
@@ -1316,9 +1420,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 replacementOptionsContainer.appendChild(optionDiv);
             });
         } else {
-            if (!currentPersonnelId) { 
+            if (!currentPersonnelId) {
                  replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun personnel disponible pour ce rôle.</div>');
-            } else { 
+            } else {
                  replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun autre remplaçant disponible pour ce rôle.</div>');
             }
         }
@@ -1356,7 +1460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // --- NOUVEAU : Fonction pour rendre les statistiques globales ---
+    // ---  Fonction pour rendre les statistiques globales ---
     function renderGlobalStatistics() {
         const totalPersonnel = Object.keys(allPersonnel).length;
         let totalAvailabilitiesLogged = 0;
@@ -1377,7 +1481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalMprAssignments += Object.values(teamData.mprTeam).flat().filter(id => id).length;
             }
         }
-        
+
         const globalTotalPersonnelEl = document.getElementById('global-total-personnel');
         const globalTotalAvailabilitiesEl = document.getElementById('global-total-availabilities');
         const globalTotalEventDaysEl = document.getElementById('global-total-event-days');
@@ -1423,19 +1527,19 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const date in allAssignedTeams) {
             const teamData = allAssignedTeams[date];
             if (teamData.ccfTeam) {
-                const ccfAssignments = Object.values(teamData.ccfTeam).flat().filter(id => id); 
+                const ccfAssignments = Object.values(teamData.ccfTeam).flat().filter(id => id);
                 ccfAssignments.forEach(pId => {
                     if (stats[pId]) stats[pId].ccfCount++;
                 });
             }
             if (teamData.mprTeam) {
-                const mprAssignments = Object.values(teamData.mprTeam).flat().filter(id => id); 
+                const mprAssignments = Object.values(teamData.mprTeam).flat().filter(id => id);
                 mprAssignments.forEach(pId => {
                     if (stats[pId]) stats[pId].mprCount++;
                 });
             }
         }
-        
+
         for (const pId in stats) {
             if (stats[pId].availabilities > 0) {
                 stats[pId].mprPercentage = (stats[pId].mprCount / stats[pId].availabilities) * 100;
@@ -1465,7 +1569,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredPersonnelIds.forEach(pId => {
             const p = stats[pId];
             const card = document.createElement('div');
-            card.className = 'personnel-card'; 
+            card.className = 'personnel-card';
             card.innerHTML = `
                 <div class="personnel-avatar">${p.prenom.charAt(0)}${p.nom.charAt(0)}</div>
                 <div class="personnel-info">
@@ -1541,7 +1645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NOUVEAU: LOGIQUE D'EXPORTATION PDF (AMÉLIORÉE) ---
+    // ---  LOGIQUE D'EXPORTATION PDF (AMÉLIORÉE) ---
     const PDF_COLORS = {
         fireRed: '#e5383b',
         emberOrange: '#ff9100',
@@ -1591,7 +1695,7 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.addPage();
             currentY = 25; // Reset Y position on new page (allowing for header)
         }
-        
+
         // --- Separator Line ---
         if (currentY > 30) {
             doc.setDrawColor(PDF_COLORS.lineColor);
@@ -1608,7 +1712,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let cardStartY = currentY;
         let startX = PADDING;
-        
+
         // --- Draw CCF Card ---
         if (ccfTeam) {
             const isComplete = ccfRoles.every(r => r.id);
@@ -1623,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(PDF_COLORS.black);
             doc.text("Équipe CCF4MHP37", startX + CARD_PADDING, cardStartY + 6);
-            
+
             let roleY = cardStartY + 13;
             doc.setFontSize(8);
             ccfRoles.forEach(role => {
@@ -1669,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 roleY += LINE_HEIGHT;
             });
         }
-        
+
         if (!ccfTeam && !mprTeam) {
             doc.setFontSize(9);
             doc.setFont('helvetica', 'italic');
@@ -1679,7 +1783,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return cardStartY + maxCardHeight + 8; // Return new Y position with a small margin
     }
-    
+
     function addPdfHeaderFooter(doc, title) {
         const pageCount = doc.internal.getNumberOfPages();
         const generationDate = new Date().toLocaleDateString('fr-FR');
@@ -1707,12 +1811,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isAdmin) return;
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        
+
         const month = teamsCurrentMonth.value;
         const year = teamsCurrentYear.value;
         const monthName = month_names[month];
         const title = `Propositions Automatiques - ${monthName} ${year}`;
-        
+
         let currentY = 25; // Start after header
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         let teamsFound = false;
@@ -1725,7 +1829,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentY = drawTeamInPdf(doc, dateId, provisionalTeam, currentY);
             }
         }
-        
+
         if (!teamsFound) {
             doc.setFontSize(12);
             doc.setTextColor(PDF_COLORS.textSecondary);
@@ -1748,11 +1852,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let currentY = 25; // Start after header
         const monthStr = String(month + 1).padStart(2, '0');
-        
+
         const activatedDatesInMonth = Object.keys(allAssignedTeams)
             .filter(dateId => dateId.startsWith(`${year}-${monthStr}`))
             .sort();
-        
+
         if (activatedDatesInMonth.length === 0) {
             doc.setFontSize(12);
             doc.setTextColor(PDF_COLORS.textSecondary);
@@ -1763,7 +1867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentY = drawTeamInPdf(doc, dateId, teamData, currentY);
             });
         }
-        
+
         addPdfHeaderFooter(doc, title);
         doc.save(`equipes-figees-${monthName}-${year}.pdf`);
     }
