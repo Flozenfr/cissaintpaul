@@ -19,17 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminOnlyTabs = document.querySelectorAll('.admin-only');
     const headerPersonnelControls = document.getElementById('header-personnel-controls');
     const headerCalendarControls = document.getElementById('header-calendar-controls');
-    const headerStatsControls = document.getElementById('header-stats-controls');
+    const headerStatsControls = document.getElementById('header-stats-controls'); // Assurez-vous que cet ID existe dans le HTML
     const personnelView = document.getElementById('personnel-view');
     const calendarView = document.getElementById('calendar-view');
-    const statsView = document.getElementById('stats-view');
+    const statsView = document.getElementById('stats-view'); // Assurez-vous que cet ID existe dans le HTML
     const personnelList = document.getElementById('personnel-list');
-    const statsList = document.getElementById('stats-list');
+    const statsList = document.getElementById('stats-list'); // Assurez-vous que cet ID existe dans le HTML de la vue stats
     const addPersonnelBtn = document.getElementById('add-personnel-btn');
     const searchInput = document.getElementById('searchInput');
     const filterInput = document.getElementById('filterInput');
-    const statsSearchInput = document.getElementById('statsSearchInput');
-    const statsFilterInput = document.getElementById('statsFilterInput');
+    const statsSearchInput = document.getElementById('statsSearchInput'); // Assurez-vous que cet ID existe dans le HTML
+    const statsFilterInput = document.getElementById('statsFilterInput'); // Assurez-vous que cet ID existe dans le HTML
     const personnelModal = document.getElementById('personnel-modal');
     const confirmModal = document.getElementById('confirm-modal');
     const closeButton = document.querySelector('#personnel-modal .close-button');
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let availabilityDeadline = null;
     let selectedTeamDate = null; // Utilisé pour la vue Équipes
     let currentReplacementInfo = {}; // Pour stocker les infos lors d'un remplacement
-    let currentWorkingTeam = null; // **MODIFIÉ**: Pour stocker l'équipe en cours de modification (figée ou non)
+    let currentWorkingTeam = null; // Pour stocker l'équipe en cours de modification (figée ou non)
 
 
     // --- FONCTIONS UTILITAIRES (showMessage, showCustomPrompt, showGenericConfirmModal) ---
@@ -585,6 +585,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 day.innerHTML = dayNumber;
                 day.dataset.date = dateId;
                 if (dateId === selectedTeamDate) { day.classList.add('selected-day'); }
+                // Marqueur visuel si des disponibilités existent pour ce jour
+                if (allAvailabilities[dateId] && Object.keys(allAvailabilities[dateId]).length > 0) {
+                     day.classList.add('has-availability');
+                }
                 if (allEvents[dateId]) { day.classList.add('has-event'); }
             } else { day.classList.add('empty'); }
             teamsCalendarDaysContainer.appendChild(day);
@@ -600,10 +604,14 @@ document.addEventListener('DOMContentLoaded', () => {
         generateAndDisplayTeams(dateId);
     });
 
-    function openEventModal(dateId) {
+    function openEventModal(dateId, isActivation = false) {
         if (!eventTypeModal || !eventTypeForm || !eventDateInput || !eventModalTitle) return;
         eventTypeForm.reset();
         eventDateInput.value = dateId;
+        
+        // Stocker l'information si c'est une activation
+        eventTypeForm.dataset.isActivation = isActivation;
+
         const [year, month, day] = dateId.split('-');
         eventModalTitle.textContent = `Événement du ${day} ${month_names[parseInt(month) - 1]}`;
         if (allEvents[dateId] && allEvents[dateId].types) {
@@ -617,11 +625,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateId = eventDateInput.value;
         const selectedTypes = Array.from(eventTypeForm.querySelectorAll('input[name="eventTypes"]:checked')).map(cb => cb.value);
         const eventRef = database.ref(`events/${dateId}`);
+        const isActivation = eventTypeForm.dataset.isActivation === 'true';
+
         if (selectedTypes.length > 0) {
-            eventRef.set({ types: selectedTypes }).then(() => {
-                showMessage('Événement enregistré !', 'success');
+            const promises = [];
+            // 1. Enregistrer l'événement
+            promises.push(eventRef.set({ types: selectedTypes }));
+
+            // 2. Si c'est une activation, figer l'équipe actuelle
+            if (isActivation && currentWorkingTeam) {
+                 const teamToFreeze = JSON.parse(JSON.stringify(currentWorkingTeam));
+                 // S'assurer de ne figer que ce qui est demandé par les types d'événements
+                 const wantsCcf = selectedTypes.some(type => type.startsWith("GIFF Nord"));
+                 const wantsMpr = selectedTypes.includes("MPR");
+                 if (!wantsCcf) teamToFreeze.ccfTeam = null;
+                 if (!wantsMpr) teamToFreeze.mprTeam = null;
+
+                 promises.push(database.ref(`assignedTeams/${dateId}`).set(teamToFreeze));
+            }
+
+            Promise.all(promises).then(() => {
+                showMessage(isActivation ? 'Journée activée et équipe figée !' : 'Événement enregistré !', 'success');
                 closeModal(eventTypeModal);
             }).catch(err => showMessage('Erreur: ' + err.message, 'error'));
+
         } else {
              showGenericConfirmModal(
                 "Supprimer cet événement désactivera également les équipes assignées pour cette date. Continuer ?",
@@ -685,85 +712,96 @@ document.addEventListener('DOMContentLoaded', () => {
     const ROLES = { CCF_DRIVER: "Conducteur Poids Lourd (CCF4MHP37)", CCF_LEADER: "Chef d'Agrès FDF (CCF4MHP37)", CCF_TEAMMATE: "Équipier FDF (CCF4MHP37)", MPR_DRIVER: "Conducteur Voiture (MPR12)", MPR_TEAMMATE: "Équipier DIV (MPR12)" };
 
     // --- **MODIFIÉ** LOGIQUE DE GÉNÉRATION ET D'AFFICHAGE DES ÉQUIPES ---
-    function generateAndDisplayTeams(dateId) {
-        const eventDetails = allEvents[dateId];
-        potentialReplacementsContainer.innerHTML = '';
-        currentWorkingTeam = null; // Réinitialiser à chaque nouvelle génération
+    function generateProvisionalTeam(dateId) {
+        const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
+        let availablePool = [...availablePersonnelIds];
+        const personnelByFunctionForDay = {};
 
-        if (!eventDetails || !eventDetails.types || eventDetails.types.length === 0) {
-            let editBtnHtml = '';
-            if (isAdmin) {
-                editBtnHtml = `<button id="edit-event-btn-nodef" class="btn-primary" style="margin-top:1rem; padding: 0.5rem 1rem;">Définir l'Événement</button>`;
+        availablePool.forEach(pId => {
+            const person = allPersonnel[pId];
+            if (person && person.fonctions) {
+                person.fonctions.map(f => fromBase64(f)).forEach(func => {
+                    if (!personnelByFunctionForDay[func]) personnelByFunctionForDay[func] = [];
+                    personnelByFunctionForDay[func].push(pId);
+                });
             }
-            generatedTeamsContainer.innerHTML = `<div class="teams-display-header"><h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3><div class="event-tags"><span class="event-tag" style="background-color: var(--text-secondary);">Aucun événement défini</span></div>${editBtnHtml}</div><div id="teams-placeholder" style="padding-top: 20px; text-align:center;"><p>Aucun événement n'est défini pour cette date.${isAdmin ? " Cliquez ci-dessus pour en définir un." : ""}</p></div>`;
-            const editBtn = document.getElementById('edit-event-btn-nodef');
-            if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId)); }
-            return;
-        }
+        });
 
-        const wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
-        const wantsMpr = eventDetails.types.includes("MPR");
+        const assignPersonnelForAuto = (role, pool, pbf) => {
+            const candidates = (pbf[role] || []).filter(id => pool.includes(id));
+            if (candidates.length > 0) {
+                const assignedId = candidates[Math.floor(Math.random() * candidates.length)];
+                const indexInPool = pool.indexOf(assignedId);
+                if (indexInPool > -1) pool.splice(indexInPool, 1);
+                return assignedId;
+            }
+            return null;
+        };
+        
+        let ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
+        ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
+        ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
+        ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
+        ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
 
-        if (allAssignedTeams[dateId]) {
+        let mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
+        mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
+        mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
+
+        return { ccfTeam, mprTeam };
+    }
+
+
+    function generateAndDisplayTeams(dateId) {
+        potentialReplacementsContainer.innerHTML = '';
+        currentWorkingTeam = null;
+
+        // 1. L'équipe est-elle déjà figée ? C'est la priorité absolue.
+        if (allAssignedTeams[dateId] && isAdmin) {
             const assigned = allAssignedTeams[dateId];
             currentWorkingTeam = JSON.parse(JSON.stringify(assigned));
-            renderTeams(dateId, wantsCcf ? assigned.ccfTeam : null, wantsMpr ? assigned.mprTeam : null, wantsCcf, wantsMpr, true);
+            const eventDetails = allEvents[dateId] || { types: [] };
+            const wantsCcf = assigned.ccfTeam || eventDetails.types.some(type => type.startsWith("GIFF Nord"));
+            const wantsMpr = assigned.mprTeam || eventDetails.types.includes("MPR");
+            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, wantsCcf, wantsMpr, true);
             return;
         }
 
-        if (isAdmin) {
-            const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
-            let availablePool = [...availablePersonnelIds];
-            const personnelByFunctionForDay = {};
-            availablePool.forEach(pId => {
-                const person = allPersonnel[pId];
-                if (person && person.fonctions) {
-                    person.fonctions.map(f => fromBase64(f)).forEach(func => {
-                        if (!personnelByFunctionForDay[func]) personnelByFunctionForDay[func] = [];
-                        personnelByFunctionForDay[func].push(pId);
-                    });
-                }
-            });
-
-            const assignPersonnelForAuto = (role, pool, pbf) => {
-                const candidates = (pbf[role] || []).filter(id => pool.includes(id));
-                if (candidates.length > 0) {
-                    const assignedId = candidates[Math.floor(Math.random() * candidates.length)];
-                    const indexInPool = pool.indexOf(assignedId);
-                    if (indexInPool > -1) pool.splice(indexInPool, 1);
-                    return assignedId;
-                }
-                return null;
-            };
-
-            let ccfTeam = null;
-            let mprTeam = null;
-
-            if (wantsCcf) {
-                ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
-                ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
-                ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
-                ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
-                ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
-            }
-
-            if (wantsMpr) {
-                mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
-                mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
-                mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
-            }
-            
-            currentWorkingTeam = { ccfTeam, mprTeam };
-            renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false);
-
-        } else {
-            renderTeams(dateId, null, null, wantsCcf, wantsMpr, false);
+        // 2. Pas d'équipe figée. Y a-t-il du personnel disponible ?
+        const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
+        if (availablePersonnelIds.length === 0) {
+            generatedTeamsContainer.innerHTML = `<div id="teams-placeholder"><ion-icon name="close-circle-outline"></ion-icon><h3>Aucun personnel disponible</h3><p>Aucun personnel n'a indiqué de disponibilité pour cette date.</p></div>`;
+            return;
         }
+
+        // 3. Du personnel est dispo. On génère une équipe PROVISOIRE.
+        const { ccfTeam, mprTeam } = generateProvisionalTeam(dateId);
+        currentWorkingTeam = { ccfTeam, mprTeam };
+
+        // Par défaut, on affiche les deux compositions possibles.
+        let wantsCcf = true;
+        let wantsMpr = true;
+        let isProvisional = true;
+
+        // Si un événement existe déjà, il dicte ce qu'il faut afficher.
+        const eventDetails = allEvents[dateId];
+        if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
+            wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
+            wantsMpr = eventDetails.types.includes("MPR");
+            isProvisional = false; // Ce n'est plus une simple proposition, mais une génération basée sur un événement
+        }
+        
+        // 4. Afficher le résultat (figé ou auto-généré)
+        renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false, isProvisional);
     }
 
     function generateEventTagsHtml(dateId) {
         const eventInfo = allEvents[dateId];
-        return eventInfo && eventInfo.types ? `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')}</div>` : `<div class="event-tags"><span class="event-tag" style="background-color: var(--text-secondary);">Aucun type défini</span></div>`;
+        if (eventInfo && eventInfo.types) {
+            return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')}</div>`;
+        }
+        // Nouveau : tag pour indiquer une proposition automatique
+        return `<div class="event-tags"><span class="event-tag" style="background-color: var(--available-green);">Proposition Automatique</span></div>`;
     }
 
     function getRoleDisplayName(roleKey) {
@@ -775,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return roleKey;
     }
 
-    function renderTeams(dateId, ccfTeam, mprTeam, displayCcf, displayMpr, isFrozen = false) {
+    function renderTeams(dateId, ccfTeam, mprTeam, displayCcf, displayMpr, isFrozen = false, isProvisional = false) {
         const getPersonnelNameAndButton = (personnelId, roleKey, teamType, teammateIndex = -1) => {
             let nameHtml;
             if (!personnelId) {
@@ -786,16 +824,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let replaceButtonHtml = '';
-            if (isAdmin && (ccfTeam || mprTeam)) {
+            // Le remplacement n'est possible que sur une équipe figée.
+            if (isAdmin && isFrozen) {
                 replaceButtonHtml = `<button class="replace-personnel-btn" 
-                                        data-dateid="${dateId}" 
-                                        data-teamtype="${teamType}" 
-                                        data-rolekey="${roleKey}" 
-                                        data-currentpersonnelid="${personnelId || 'null'}" 
-                                        ${teammateIndex !== -1 ? `data-teammateindex="${teammateIndex}"` : ''} 
-                                        title="Remplacer/Assigner">
-                                        <ion-icon name="swap-horizontal-outline"></ion-icon>
-                                     </button>`;
+                                            data-dateid="${dateId}" 
+                                            data-teamtype="${teamType}" 
+                                            data-rolekey="${roleKey}" 
+                                            data-currentpersonnelid="${personnelId || 'null'}" 
+                                            ${teammateIndex !== -1 ? `data-teammateindex="${teammateIndex}"` : ''} 
+                                            title="Remplacer/Assigner">
+                                            <ion-icon name="swap-horizontal-outline"></ion-icon>
+                                         </button>`;
             }
             return `<div class="personnel-name-wrapper">${nameHtml}${replaceButtonHtml}</div>`;
         };
@@ -803,11 +842,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let teamsHtml = '';
         let ccfHtml = '';
         let mprHtml = '';
-        const eventDetails = allEvents[dateId] || { types: [] };
-        const currentDisplayCcf = displayCcf && eventDetails.types.some(type => type.startsWith("GIFF Nord"));
-        const currentDisplayMpr = displayMpr && eventDetails.types.includes("MPR");
 
-        if (currentDisplayCcf) {
+        if (displayCcf) {
             const isCcfComplete = ccfTeam && ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2 && ccfTeam[ROLES.CCF_TEAMMATE].every(id => id !== null);
             ccfHtml = `
                 <div class="team-card ${isCcfComplete ? '' : 'incomplete'}">
@@ -819,7 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }
 
-        if (currentDisplayMpr) {
+        if (displayMpr) {
             const isMprComplete = mprTeam && mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
             mprHtml = `
                 <div class="team-card ${isMprComplete ? '' : 'incomplete'}">
@@ -830,32 +866,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         teamsHtml = ccfHtml + mprHtml;
-        const availableTodayCount = Object.keys(allAvailabilities[dateId] || {}).length;
-
-        if (!allEvents[dateId] || !allEvents[dateId].types || allEvents[dateId].types.length === 0) {
-        } else if (teamsHtml === '' && availableTodayCount === 0 && (currentDisplayCcf || currentDisplayMpr)) {
-             teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucun personnel disponible pour cette date.</p>`;
-        } else if (teamsHtml === '' && (currentDisplayCcf || currentDisplayMpr)) {
-            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Pas assez de personnel disponible et/ou qualifié pour former les équipes demandées.</p>`;
-        } else if (!isFrozen && !isAdmin && (currentDisplayCcf || currentDisplayMpr)) {
-            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée par un administrateur.</p>`;
+        if (teamsHtml === '') {
+            teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucune composition d'équipe à afficher pour les critères actuels.</p>`;
         }
-
+        
         let adminActionsHtml = '';
-        if (isAdmin && allEvents[dateId] && allEvents[dateId].types && allEvents[dateId].types.length > 0) {
-            const teamToFreeze = currentWorkingTeam || { ccfTeam, mprTeam };
-            const freezeBtnHtml = !isFrozen ? `<button id="freeze-team-btn" class="btn-primary" style="padding: 0.5rem 1rem;" data-team='${JSON.stringify(teamToFreeze)}'>Figer l'Équipe</button>` : `<button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Réinitialiser Équipe</button>`;
-            adminActionsHtml = `
-            <div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
-                <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
-                ${(currentDisplayCcf || currentDisplayMpr) ? freezeBtnHtml : ''} 
-                <button id="deactivate-date-btn" class="btn-danger" style="padding: 0.5rem 1rem;">Désactiver la date</button>
-            </div>`;
-        } else if (isAdmin) {
-             adminActionsHtml = `
-            <div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
-                <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
-            </div>`;
+        if (isAdmin) {
+             if (isFrozen) {
+                adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+                                        <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
+                                        <button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Réinitialiser Équipe</button>
+                                    </div>`;
+            } else {
+                 // Bouton pour activer la journée et figer l'équipe provisoire
+                 adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
+                                        <button id="activate-day-btn" class="btn-primary" style="padding: 0.5rem 1rem; background-color: var(--available-green);">Activer et Figer l'Équipe</button>
+                                     </div>`;
+            }
+        } else if (isFrozen) {
+            // Vue utilisateur normal, l'équipe est visible
+        } else {
+             teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée par un administrateur.</p>`;
         }
 
         generatedTeamsContainer.innerHTML = `
@@ -865,57 +896,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${adminActionsHtml}
             </div>
             <div class="teams-grid">${teamsHtml}</div>`;
+        
+        // --- GESTIONNAIRES D'ÉVÉNEMENTS POUR LES BOUTONS ---
 
         const editBtn = document.getElementById('edit-event-btn-display');
-        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId)); }
+        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); }
 
-        const deactivateBtn = document.getElementById('deactivate-date-btn');
-        if (deactivateBtn) {
-            deactivateBtn.addEventListener('click', () => {
-                const formattedDateForMessage = dateId.split('-').reverse().join('/');
-                showGenericConfirmModal(
-                    `Êtes-vous sûr de vouloir désactiver le <strong>${formattedDateForMessage}</strong> ?<br>L'événement et les équipes assignées (si figées) seront supprimés.`,
-                    () => {
-                        Promise.all([
-                            database.ref(`events/${dateId}`).remove(),
-                            database.ref(`assignedTeams/${dateId}`).remove()
-                        ]).then(() => {
-                            showMessage(`Événement du ${formattedDateForMessage} et équipes assignées supprimés.`, 'success');
-                        }).catch(err => showMessage(`Erreur: ${err.message}`, 'error'));
-                    }, null, "Désactiver la date ?", "btn-danger", "Oui, Désactiver"
-                );
-            });
-        }
+        const activateDayBtn = document.getElementById('activate-day-btn');
+        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); }
         
         const resetAssignedTeamBtn = document.getElementById('reset-assigned-team-btn');
         if (resetAssignedTeamBtn) {
             resetAssignedTeamBtn.addEventListener('click', () => {
                 showGenericConfirmModal(
-                    "Voulez-vous réinitialiser l'équipe assignée pour cette date ? La génération automatique reprendra.",
+                    "Voulez-vous réinitialiser l'équipe assignée ? La génération automatique reprendra.",
                     () => {
-                        database.ref(`assignedTeams/${dateId}`).remove()
-                            .then(() => {
-                                showMessage("Équipe réinitialisée. La génération automatique est réactivée pour cette date.", "success");
-                            })
-                            .catch(err => showMessage("Erreur lors de la réinitialisation de l'équipe: " + err.message, "error"));
+                        Promise.all([
+                            database.ref(`assignedTeams/${dateId}`).remove(),
+                            database.ref(`events/${dateId}`).remove() // On supprime aussi l'événement associé
+                        ]).then(() => {
+                            showMessage("Équipe et événement réinitialisés.", "success");
+                        }).catch(err => showMessage("Erreur: " + err.message, "error"));
                     }, null, "Réinitialiser l'équipe ?", "btn-secondary", "Oui, Réinitialiser"
                 );
             });
         }
         
-        const freezeBtn = document.getElementById('freeze-team-btn');
-        if (freezeBtn) {
-            freezeBtn.addEventListener('click', (e) => {
-                let teamDataToFreeze = JSON.parse(e.currentTarget.dataset.team);
-                if (!currentDisplayCcf) teamDataToFreeze.ccfTeam = null;
-                if (!currentDisplayMpr) teamDataToFreeze.mprTeam = null;
-
-                database.ref(`assignedTeams/${dateId}`).set(teamDataToFreeze)
-                    .then(() => showMessage("L'équipe a été figée avec succès.", "success"))
-                    .catch(err => showMessage("Erreur lors du figement de l'équipe: " + err.message, "error"));
-            });
-        }
-
         document.querySelectorAll('.replace-personnel-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const btn = e.currentTarget;
@@ -930,8 +936,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        if (isAdmin && (ccfTeam || mprTeam || isFrozen) && (currentDisplayCcf || currentDisplayMpr)) {
-             const teamForReplacements = currentWorkingTeam;
+        if (isAdmin && isFrozen) {
+            const teamForReplacements = currentWorkingTeam;
              if (teamForReplacements) {
                 renderPotentialReplacements(dateId, teamForReplacements.ccfTeam, teamForReplacements.mprTeam);
              }
@@ -939,6 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
             potentialReplacementsContainer.innerHTML = '';
         }
     }
+
 
     function renderPotentialReplacements(dateId, ccfTeam, mprTeam) {
         const availableOnDate = Object.keys(allAvailabilities[dateId] || {});
@@ -978,14 +985,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = `<h3><ion-icon name="people-circle-outline"></ion-icon> Remplaçants Potentiels</h3><div class="potential-replacements-list">`;
         for (const roleKey in potentialReplacementsByRole) {
             html += `<div class="replacement-role-group">
-                        <h4>${getRoleDisplayName(roleKey)}</h4>
-                        <ul>`;
+                         <h4>${getRoleDisplayName(roleKey)}</h4>
+                         <ul>`;
             potentialReplacementsByRole[roleKey].forEach(pId => {
                 const person = allPersonnel[pId];
                 html += `<li>${fromBase64(person.prenom)} ${fromBase64(person.nom)}</li>`;
             });
             html += `   </ul>
-                    </div>`;
+                     </div>`;
         }
         html += `</div>`;
         potentialReplacementsContainer.innerHTML = html;
@@ -1066,14 +1073,94 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // --- LOGIQUE POUR LES STATISTIQUES (Placeholder) ---
+    // --- **MODIFIÉ** LOGIQUE POUR LES STATISTIQUES ---
     function renderStatistics() {
-        if (!statsView) {
+        if (!statsView || !statsList) {
             return;
         }
-        if (statsList) {
-            statsList.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-secondary);">Section Statistiques en cours de développement.</p>';
+
+        // 1. Calcul des données
+        const stats = {};
+        for (const pId in allPersonnel) {
+            stats[pId] = {
+                nom: fromBase64(allPersonnel[pId].nom),
+                prenom: fromBase64(allPersonnel[pId].prenom),
+                fonctions: allPersonnel[pId].fonctions ? allPersonnel[pId].fonctions.map(f => fromBase64(f)) : [],
+                availabilities: 0,
+                ccfCount: 0,
+                mprCount: 0
+            };
         }
+
+        for (const date in allAvailabilities) {
+            for (const pId in allAvailabilities[date]) {
+                if (stats[pId]) {
+                    stats[pId].availabilities++;
+                }
+            }
+        }
+
+        for (const date in allAssignedTeams) {
+            const teamData = allAssignedTeams[date];
+            if (teamData.ccfTeam) {
+                const ccfAssignments = Object.values(teamData.ccfTeam).flat();
+                ccfAssignments.forEach(pId => {
+                    if (pId && stats[pId]) stats[pId].ccfCount++;
+                });
+            }
+            if (teamData.mprTeam) {
+                const mprAssignments = Object.values(teamData.mprTeam).flat();
+                mprAssignments.forEach(pId => {
+                    if (pId && stats[pId]) stats[pId].mprCount++;
+                });
+            }
+        }
+
+        // 2. Filtrage
+        const searchTerm = statsSearchInput ? statsSearchInput.value.toLowerCase() : "";
+        const filterTerm = statsFilterInput ? statsFilterInput.value : "";
+        const filteredPersonnelIds = Object.keys(stats).filter(pId => {
+            const person = stats[pId];
+            const fullName = `${person.prenom} ${person.nom}`.toLowerCase();
+            const matchesSearch = fullName.includes(searchTerm);
+            const matchesFilter = filterTerm === '' || person.fonctions.includes(filterTerm);
+            return matchesSearch && matchesFilter;
+        });
+
+        // 3. Affichage
+        statsList.innerHTML = '';
+        if (filteredPersonnelIds.length === 0) {
+            statsList.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-secondary);">Aucun personnel trouvé.</p>';
+            return;
+        }
+
+        // Tri par nom de famille
+        filteredPersonnelIds.sort((a, b) => stats[a].nom.localeCompare(stats[b].nom));
+
+        filteredPersonnelIds.forEach(pId => {
+            const p = stats[pId];
+            const card = document.createElement('div');
+            card.className = 'personnel-card';
+            card.innerHTML = `
+                <div class="personnel-avatar">${p.prenom.charAt(0)}${p.nom.charAt(0)}</div>
+                <div class="personnel-info">
+                    <h3>${p.prenom} ${p.nom}</h3>
+                    <div class="info-block" title="Nombre total de jours de disponibilité indiqués">
+                        <ion-icon name="calendar-number-outline"></ion-icon>
+                        <span><strong>${p.availabilities}</strong> Disponibilités</span>
+                    </div>
+                    <div class="info-block" title="Nombre de fois assigné à une équipe CCF">
+                        <ion-icon name="bus-outline"></ion-icon>
+                        <span><strong>${p.ccfCount}</strong> Gardes CCF</span>
+                    </div>
+                    <div class="info-block" title="Nombre de fois assigné à une équipe MPR">
+                        <ion-icon name="car-sport-outline"></ion-icon>
+                        <span><strong>${p.mprCount}</strong> Gardes MPR</span>
+                    </div>
+                </div>
+            `;
+            statsList.appendChild(card);
+        });
     }
 
     if (statsSearchInput) statsSearchInput.addEventListener('input', renderStatistics);
@@ -1123,7 +1210,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
     }
-
 
     // --- INITIALISATION ---
     updateDateTimeDisplay();
