@@ -1,4 +1,4 @@
-/* RÃ©initialisation et Variables Globales */
+/* Réinitialisation et Variables Globales */
 :root {
     --fire-red-light: #FF5252;
     --fire-red: #D32F2F;
@@ -157,7 +157,7 @@ body, html {
     color: var(--accent-text);
     cursor: pointer;
     padding: 10px;
-    z-index: 1002; /* Au-dessus de l'overlay quand le menu est fermÃ©, mais en dessous du menu ouvert */
+    z-index: 1002; /* Au-dessus de l'overlay quand le menu est fermé, mais en dessous du menu ouvert */
     height: 40px;
     width: 40px;
     display: flex;
@@ -206,7 +206,7 @@ body, html {
     top: 0;
     left: 0;
     width: var(--menu-width);
-    height: 100vh; /* Utilise toute la hauteur de la fenÃªtre */
+    height: 100vh; /* Utilise toute la hauteur de la fenêtre */
     background-color: var(--elevation-1);
     box-shadow: 5px 0px 25px var(--menu-shadow);
     transform: translateX(-100%);
@@ -238,8 +238,8 @@ body, html {
     border-bottom: 1px solid var(--divider-color);
     position: sticky; /* Pour que le header du menu reste visible en scrollant le menu */
     top: 0;
-    background-color: var(--elevation-1); /* Pour masquer le contenu du menu qui dÃ©file derriÃ¨re */
-    z-index: 1; /* Pour Ãªtre au-dessus des items de liste qui scrollent */
+    background-color: var(--elevation-1); /* Pour masquer le contenu du menu qui défile derrière */
+    z-index: 1; /* Pour être au-dessus des items de liste qui scrollent */
 }
 .nav-title {
     font-family: var(--font-secondary);
@@ -284,7 +284,8 @@ body, html {
 #main-nav.active li:nth-child(5) { animation-delay: 0.3s; }
 #main-nav.active li:nth-child(6) { animation-delay: 0.35s; }
 #main-nav.active li:nth-child(7) { animation-delay: 0.4s; }
-/* Ajoutez plus de dÃ©lais si vous avez plus d'Ã©lÃ©ments de menu principaux */
+/* Délai ajouté pour le nouvel onglet */
+#main-nav.active li:nth-child(8) { animation-delay: 0.45s; }
 
 
 @keyframes menuItemFadeIn {
@@ -313,13 +314,13 @@ body, html {
 }
 .nav-link.active-link {
     color: var(--accent-text);
-    background-color: var(--burgundy-red); /* Couleur de fond pour l'Ã©lÃ©ment actif */
-    border-left-color: var(--fire-red-light); /* Bordure pour l'Ã©lÃ©ment actif */
+    background-color: var(--burgundy-red); /* Couleur de fond pour l'élément actif */
+    border-left-color: var(--fire-red-light); /* Bordure pour l'élément actif */
     font-weight: 700;
 }
 .nav-link.active-link .menu-icon {
     opacity: 1;
-    filter: brightness(1.2); /* LÃ©gÃ¨rement plus brillant pour l'icÃ´ne active */
+    filter: brightness(1.2); /* Légèrement plus brillant pour l'icône active */
 }
 
 .menu-icon {
@@ -341,13 +342,13 @@ body, html {
     margin: 0;
     background-color: var(--elevation-2); /* Un peu plus clair pour distinguer */
     overflow: hidden;
-    max-height: 0; /* CachÃ© par dÃ©faut */
+    max-height: 0; /* Caché par défaut */
     transition: max-height 0.35s ease-out, padding 0.35s ease-out;
 }
 .has-submenu.open > .submenu {
     padding-top: 5px; /* Ajoute un peu de padding quand ouvert */
     padding-bottom: 5px;
-    /* max-height est dÃ©fini dynamiquement en JS */
+    /* max-height est défini dynamiquement en JS */
 }
 .submenu .nav-link {
     padding-left: 55px; /* Indentation pour les items de sous-menu */
@@ -360,15 +361,15 @@ body, html {
     color: var(--accent-text);
 }
 .submenu .nav-link.active-link {
-    background-color: var(--fire-red); /* Couleur active pour sous-menu, un peu diffÃ©rente */
+    background-color: var(--fire-red); /* Couleur active pour sous-menu, un peu différente */
     color: var(--accent-text);
     font-weight: 500; /* Un peu plus gras pour l'actif du sous-menu */
 }
 .has-submenu > .nav-link .arrow {
-    margin-left: auto; /* Pousse la flÃ¨che Ã  droite */
+    margin-left: auto; /* Pousse la flèche à droite */
     font-size: 0.8em;
     transition: transform 0.3s var(--transition-smooth);
-    /* La rotation de la flÃ¨che est gÃ©rÃ©e par le changement de contenu HTML en JS */
+    /* La rotation de la flèche est gérée par le changement de contenu HTML en JS */
 }
 
 
@@ -376,7 +377,7 @@ body, html {
 #app-main {
     flex-grow: 1; /* Prend l'espace restant */
     display: flex; /* Pour que l'iframe remplisse cet espace */
-    overflow: hidden; /* Pour Ã©viter les barres de dÃ©filement si l'iframe est mal dimensionnÃ© */
+    overflow: hidden; /* Pour éviter les barres de défilement si l'iframe est mal dimensionné */
     transition: transform 0.4s var(--transition-smooth), filter 0.4s var(--transition-smooth);
     will-change: transform, filter;
 }
@@ -384,9 +385,9 @@ body, html {
 /* Effects when menu is open */
 body.menu-open #app-header,
 body.menu-open #app-main {
-    /* L'effet de transformation est appliquÃ© par JS si `no-transform-for-menu` n'est pas sur body */
+    /* L'effet de transformation est appliqué par JS si `no-transform-for-menu` n'est pas sur body */
     filter: blur(4px) brightness(0.6); /* Effet de flou et d'assombrissement */
-    pointer-events: none; /* EmpÃªche les interactions avec le contenu principal lorsque le menu est ouvert */
+    pointer-events: none; /* Empêche les interactions avec le contenu principal lorsque le menu est ouvert */
 }
 
 
@@ -412,13 +413,13 @@ body.menu-open #app-main {
 @media (max-width: 768px) {
     :root {
         --menu-width: 280px;
-        --menu-width-reduced: calc(var(--menu-width) - 40px); /* ajustÃ© */
+        --menu-width-reduced: calc(var(--menu-width) - 40px); /* ajusté */
     }
     #app-header {
         padding: 0 20px;
     }
 
-    /* Comportement spÃ©cifique pour le menu ouvert sur tablettes/mobiles si `no-transform-for-menu` n'est PAS prÃ©sent */
+    /* Comportement spécifique pour le menu ouvert sur tablettes/mobiles si `no-transform-for-menu` n'est PAS présent */
     body:not(.no-transform-for-menu).menu-open #app-header,
     body:not(.no-transform-for-menu).menu-open #app-main {
         transform: translateX(var(--menu-width-reduced)) scale(0.95); /* Un peu moins de scale */
@@ -427,7 +428,7 @@ body.menu-open #app-main {
 
 @media (max-width: 480px) {
     :root {
-        --menu-width: 260px; /* Menu un peu plus Ã©troit sur petits Ã©crans */
+        --menu-width: 260px; /* Menu un peu plus étroit sur petits écrans */
         --header-height: 60px; /* Header un peu plus petit */
     }
     #app-header {
@@ -445,16 +446,16 @@ body.menu-open #app-main {
     .menu-icon { width: 20px; height: 20px; margin-right: 15px; }
     .submenu .nav-link { padding-left: 45px; font-size: 0.9em; }
 
-    /* Sur les trÃ¨s petits Ã©crans, on peut choisir de ne pas scaler mais juste de dÃ©caler */
+    /* Sur les très petits écrans, on peut choisir de ne pas scaler mais juste de décaler */
     body.menu-open #app-header,
     body.menu-open #app-main {
-        /* Par dÃ©faut, on garde le comportement de la classe `no-transform-for-menu` pour Ã©viter le scale,
-           mais on peut le surcharger ici si on veut un effet diffÃ©rent sur mobile */
+        /* Par défaut, on garde le comportement de la classe `no-transform-for-menu` pour éviter le scale,
+            mais on peut le surcharger ici si on veut un effet différent sur mobile */
         transform: translateX(var(--menu-width)) scale(1); /* Pas de scale, juste translation */
         filter: blur(3px) brightness(0.7);
     }
 
-    /* Ajout pour que le body avec `no-transform-for-menu` ne soit pas affectÃ© par le scale ci-dessus */
+    /* Ajout pour que le body avec `no-transform-for-menu` ne soit pas affecté par le scale ci-dessus */
     body.no-transform-for-menu.menu-open #app-header,
     body.no-transform-for-menu.menu-open #app-main {
         transform: none; /* Assure qu'il n'y a pas de transformation */
@@ -464,7 +465,7 @@ body.menu-open #app-main {
 /* PWA Standalone Mode Adjustments */
 @media all and (display-mode: standalone) {
     #app-header {
-        /* Ajoute un padding en haut Ã©gal Ã  la zone de sÃ©curitÃ© pour les encoches, etc. */
+        /* Ajoute un padding en haut égal à la zone de sécurité pour les encoches, etc. */
         padding-top: env(safe-area-inset-top, 0px);
         height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
     }
@@ -472,17 +473,17 @@ body.menu-open #app-main {
     #main-nav {
         /* Le menu doit aussi prendre en compte la safe area en haut */
         padding-top: env(safe-area-inset-top, 0px);
-         /* Si le header du nav est sticky, il faudra peut-Ãªtre ajuster sa hauteur ou son padding-top aussi */
+       /* Si le header du nav est sticky, il faudra peut-être ajuster sa hauteur ou son padding-top aussi */
     }
     .nav-header { /* Si le header du menu est sticky */
         height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
     }
 
     body {
-        /* Ajoute un padding en bas pour la zone de sÃ©curitÃ© (barre de navigation gestuelle, etc.) */
+        /* Ajoute un padding en bas pour la zone de sécurité (barre de navigation gestuelle, etc.) */
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    /* Le FAB d'installation n'est plus nÃ©cessaire car il est supprimÃ©,
-       mais si d'autres Ã©lÃ©ments flottants Ã©taient prÃ©sents, ils devraient aussi considÃ©rer env(safe-area-inset-bottom) */
+    /* Le FAB d'installation n'est plus nécessaire car il est supprimé,
+        mais si d'autres éléments flottants étaient présents, ils devraient aussi considérer env(safe-area-inset-bottom) */
 }
