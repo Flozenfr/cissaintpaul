@@ -17,19 +17,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SÉLECTEURS D'ÉLÉMENTS ---
     const topLoginBtn = document.getElementById('top-login-btn');
     const adminOnlyTabs = document.querySelectorAll('.admin-only');
+    const adminOnlyFlexContainers = document.querySelectorAll('.admin-only-flex');
     const headerPersonnelControls = document.getElementById('header-personnel-controls');
     const headerCalendarControls = document.getElementById('header-calendar-controls');
-    const headerStatsControls = document.getElementById('header-stats-controls'); // Assurez-vous que cet ID existe dans le HTML
+    const headerStatsControls = document.getElementById('header-stats-controls'); 
+    const headerTeamsControls = document.getElementById('header-teams-controls'); // NOUVEAU
     const personnelView = document.getElementById('personnel-view');
     const calendarView = document.getElementById('calendar-view');
-    const statsView = document.getElementById('stats-view'); // Assurez-vous que cet ID existe dans le HTML
+    const statsView = document.getElementById('stats-view'); 
     const personnelList = document.getElementById('personnel-list');
-    const statsList = document.getElementById('stats-list'); // Assurez-vous que cet ID existe dans le HTML de la vue stats
+    const statsList = document.getElementById('stats-list'); 
     const addPersonnelBtn = document.getElementById('add-personnel-btn');
     const searchInput = document.getElementById('searchInput');
     const filterInput = document.getElementById('filterInput');
-    const statsSearchInput = document.getElementById('statsSearchInput'); // Assurez-vous que cet ID existe dans le HTML
-    const statsFilterInput = document.getElementById('statsFilterInput'); // Assurez-vous que cet ID existe dans le HTML
+    const statsSearchInput = document.getElementById('statsSearchInput'); 
+    const statsFilterInput = document.getElementById('statsFilterInput'); 
+    const teamsSearchInput = document.getElementById('teamsSearchInput'); // NOUVEAU
     const personnelModal = document.getElementById('personnel-modal');
     const confirmModal = document.getElementById('confirm-modal');
     const closeButton = document.querySelector('#personnel-modal .close-button');
@@ -51,21 +54,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const customPromptOkBtn = document.getElementById('custom-prompt-ok-btn');
     const customPromptCancelBtn = document.getElementById('custom-prompt-cancel-btn');
     const resetAllDataBtn = document.getElementById('reset-all-data-btn');
-
-    // --- NOUVEAU: Sélecteurs pour la modale de matricule ---
     const matriculeConfirmModal = document.getElementById('matricule-confirm-modal');
     const matriculeInput = document.getElementById('matricule-input');
     const matriculeOkBtn = document.getElementById('matricule-ok-btn');
     const matriculeCancelBtn = document.getElementById('matricule-cancel-btn');
 
-
     // --- SÉLECTEURS CALENDRIER DISPONIBILITÉS (Spécifiques) ---
     const calendarDaysContainer = document.querySelector('#calendar-view .calendar-days');
     const calendarMonthPicker = document.querySelector('#calendar-view #month-picker');
     const calendarYearHeader = document.querySelector('#calendar-view #year');
-    const calendarMonthList = document.querySelector('#calendar-view .month-list');
     const calendarPreYearBtn = document.querySelector('#calendar-view #pre-year');
     const calendarNextYearBtn = document.querySelector('#calendar-view #next-year');
+    const prevMonthBtn = document.getElementById('prev-month-btn');
+    const nextMonthBtn = document.getElementById('next-month-btn');
     const dispoDayText = document.querySelector('#calendar-view .day-text-formate');
     const dispoTimeText = document.querySelector('#calendar-view .time-formate');
     const dispoDateText = document.querySelector('#calendar-view .date-formate');
@@ -85,6 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const eventModalTitle = document.getElementById('event-modal-title');
     const eventDateInput = document.getElementById('event-date');
     const eventCancelBtn = document.getElementById('event-cancel-btn');
+    const teamsMonthPicker = document.querySelector('#teams-month-picker');
+    const teamsPrevMonthBtn = document.getElementById('teams-prev-month-btn');
+    const teamsNextMonthBtn = document.getElementById('teams-next-month-btn');
+    const exportProposalsBtn = document.getElementById('export-proposals-btn');
+    const exportActivatedBtn = document.getElementById('export-activated-btn');
+
 
     // --- SÉLECTEURS MODALE DE REMPLACEMENT ---
     const replacePersonnelModal = document.getElementById('replace-personnel-modal');
@@ -100,14 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let allPersonnel = {};
     let allAvailabilities = {};
     let allEvents = {};
-    let allAssignedTeams = {}; // Pour stocker les équipes figées/manuelles
+    let allAssignedTeams = {}; 
     let selectedPersonnel = null;
     let isAdmin = false;
     let availabilityDeadline = null;
-    let selectedTeamDate = null; // Utilisé pour la vue Équipes
-    let currentReplacementInfo = {}; // Pour stocker les infos lors d'un remplacement
-    let currentWorkingTeam = null; // Pour stocker l'équipe en cours de modification (figée ou non)
-    let matriculeSessionAuth = {}; // NOUVEAU: Pour stocker les authentifications par matricule de la session
+    let selectedTeamDate = null; 
+    let currentReplacementInfo = {}; 
+    let currentWorkingTeam = null; 
+    let matriculeSessionAuth = {}; 
 
     // --- FONCTIONS UTILITAIRES (showMessage, showCustomPrompt, showGenericConfirmModal) ---
     function showMessage(message, type) {
@@ -199,11 +206,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentlyActiveTab = document.querySelector('.navigation .list.active');
         if (isAdmin) {
             adminOnlyTabs.forEach(tab => tab.style.display = 'list-item');
+            adminOnlyFlexContainers.forEach(container => container.style.display = 'flex');
             loginIcon.setAttribute('name', 'log-out-outline');
             topLoginBtn.setAttribute('title', 'Déconnexion');
             if (currentlyActiveTab) moveIndicator(currentlyActiveTab);
         } else {
             adminOnlyTabs.forEach(tab => tab.style.display = 'none');
+            adminOnlyFlexContainers.forEach(container => container.style.display = 'none');
             loginIcon.setAttribute('name', 'log-in-outline');
             topLoginBtn.setAttribute('title', 'Connexion');
             if (currentlyActiveTab && currentlyActiveTab.classList.contains('admin-only')) {
@@ -217,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAdmin) {
             isAdmin = false;
             sessionStorage.removeItem('isAdmin');
-            matriculeSessionAuth = {}; // Réinitialiser l'authentification matricule
+            matriculeSessionAuth = {}; 
             showMessage('Vous avez été déconnecté.', 'warning');
             updateAdminUI();
             const activeTab = document.querySelector('.navigation .list.active');
@@ -227,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (password === ADMIN_PASSWORD) {
                     isAdmin = true;
                     sessionStorage.setItem('isAdmin', 'true');
-                    matriculeSessionAuth = {}; // Réinitialiser l'authentification matricule
+                    matriculeSessionAuth = {}; 
                     showMessage('Connexion réussie !', 'success');
                     updateAdminUI();
                     const activeTab = document.querySelector('.navigation .list.active');
@@ -352,10 +361,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (personnelView.classList.contains('visible')) {
             renderPersonnel(allPersonnel);
         }
-        if (teamsView.classList.contains('visible') && selectedTeamDate) {
-            generateAndDisplayTeams(selectedTeamDate);
+        if (teamsView.classList.contains('visible')) {
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+            if (selectedTeamDate) {
+                generateAndDisplayTeams(selectedTeamDate);
+            }
         }
         if (statsView && statsView.classList.contains('visible')) {
+            renderGlobalStatistics(); 
             renderStatistics();
         }
     });
@@ -395,10 +408,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.textContent = fullName;
                 item.dataset.id = p.id;
                 item.addEventListener('click', () => {
-                    matriculeSessionAuth = {}; // MODIFIÉ: Réinitialiser l'auth à chaque changement de personne
+                    matriculeSessionAuth = {}; 
                     selectedPersonnel = { id: p.id, nom: p.nom, prenom: p.prenom };
                     selectedPersonnelName.textContent = `${p.prenom} ${p.nom}`;
-                    calendarPersonnelSelector.classList.add('person-selected');
+                    calendarPersonnelSelector.parentElement.classList.add('person-selected'); // MODIFIÉ
                     calendarSearchInput.value = '';
                     calendarSearchResults.innerHTML = '';
                     generateCalendar(currentMonth.value, currentYear.value);
@@ -409,9 +422,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     deselectPersonnelBtn.addEventListener('click', () => {
         selectedPersonnel = null;
-        matriculeSessionAuth = {}; // MODIFIÉ: Réinitialiser l'auth lors de la déselection
+        matriculeSessionAuth = {}; 
         selectedPersonnelName.textContent = 'Aucun';
-        calendarPersonnelSelector.classList.remove('person-selected');
+        calendarPersonnelSelector.parentElement.classList.remove('person-selected'); // MODIFIÉ
         generateCalendar(currentMonth.value, currentYear.value);
     });
 
@@ -436,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsView.classList.add('visible');
         } else if (activeTabText === 'Équipes') {
             teamsView.classList.add('visible');
+            headerTeamsControls.style.display = 'flex'; // MODIFIÉ
             generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
             if (selectedTeamDate) {
                 generateAndDisplayTeams(selectedTeamDate);
@@ -447,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (statsView) {
                 statsView.classList.add('visible');
                 if (headerStatsControls) headerStatsControls.style.display = 'flex';
+                renderGlobalStatistics();
                 renderStatistics();
             } else {
                  calendarView.classList.add('visible');
@@ -481,12 +496,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setInitialState() {
         updateAdminUI();
-        const activeItem = document.querySelector(".navigation .list.active") || navItems[0];
+        let activeItem = document.querySelector(".navigation .list.active") || navItems[0];
         if (activeItem.classList.contains('admin-only') && !isAdmin) {
-            setActiveTab(navItems[0]);
-        } else {
-            setActiveTab(activeItem);
+            activeItem.classList.remove('active');
+            activeItem = navItems[0];
+            activeItem.classList.add('active');
         }
+        updateActiveView(activeItem);
+        moveIndicator(activeItem);
     }
 
     // --- LOGIQUE DU CALENDRIER DE DISPONIBILITÉS ---
@@ -502,8 +519,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!calendarDaysContainer || !calendarMonthPicker || !calendarYearHeader) return;
         calendarDaysContainer.innerHTML = '';
         let days_of_month = [31, getFebDays(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        calendarMonthPicker.innerHTML = month_names[month];
-        calendarYearHeader.innerHTML = year;
+        if(calendarMonthPicker) calendarMonthPicker.innerHTML = month_names[month];
+        if(calendarYearHeader) calendarYearHeader.innerHTML = year;
         let first_day = new Date(year, month, 1);
         let day_offset = (first_day.getDay() + 6) % 7;
         for (let i = 0; i < days_of_month[month] + day_offset; i++) {
@@ -511,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (i >= day_offset) {
                 const dayNumber = i - day_offset + 1;
                 const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
-                day.innerHTML = dayNumber;
+                day.innerHTML = `<span class="day-number">${dayNumber}</span>`;
                 day.dataset.date = dateId;
                 if (dayNumber === new Date().getDate() && year === new Date().getFullYear() && month === new Date().getMonth()) day.classList.add('current-date');
                 if (allAvailabilities[dateId]) {
@@ -531,34 +548,27 @@ document.addEventListener('DOMContentLoaded', () => {
         dispoDateText.textContent = `${String(now.getDate()).padStart(2, '0')} - ${month_names_locale[now.getMonth()]} - ${now.getFullYear()}`;
     }
 
-
-    if (calendarMonthPicker) {
-        calendarMonthPicker.onclick = () => {
-            if (calendarMonthList) {
-                calendarMonthList.classList.remove('hideonce', 'hide');
-                calendarMonthList.classList.add('show');
-                if (dispoDayText) { dispoDayText.classList.remove('showtime'); dispoDayText.classList.add('hidetime'); }
-                if (dispoTimeText) { dispoTimeText.classList.remove('showtime'); dispoTimeText.classList.add('hideTime'); }
-                if (dispoDateText) { dispoDateText.classList.remove('showtime'); dispoDateText.classList.add('hideTime'); }
+    if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth.value--;
+            if (currentMonth.value < 0) {
+                currentMonth.value = 11;
+                currentYear.value--;
             }
-        };
-    }
-    if (calendarMonthList) {
-        month_names.forEach((e, index) => {
-            let monthEl = document.createElement('div');
-            monthEl.innerHTML = `<div>${e}</div>`;
-            calendarMonthList.append(monthEl);
-            monthEl.onclick = () => {
-                currentMonth.value = index;
-                generateCalendar(currentMonth.value, currentYear.value);
-                calendarMonthList.classList.replace('show', 'hide');
-                if (dispoDayText) { dispoDayText.classList.remove('hideTime'); dispoDayText.classList.add('showtime'); }
-                if (dispoTimeText) { dispoTimeText.classList.remove('hideTime'); dispoTimeText.classList.add('showtime'); }
-                if (dispoDateText) { dispoDateText.classList.remove('hideTime'); dispoDateText.classList.add('showtime'); }
-            };
+            generateCalendar(currentMonth.value, currentYear.value);
         });
-        if (!calendarMonthList.classList.contains('show')) { calendarMonthList.classList.add('hideonce'); }
     }
+    if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth.value++;
+            if (currentMonth.value > 11) {
+                currentMonth.value = 0;
+                currentYear.value++;
+            }
+            generateCalendar(currentMonth.value, currentYear.value);
+        });
+    }
+    
     if (calendarPreYearBtn) calendarPreYearBtn.onclick = () => { --currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
     if (calendarNextYearBtn) calendarNextYearBtn.onclick = () => { ++currentYear.value; generateCalendar(currentMonth.value, currentYear.value); };
 
@@ -596,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (enteredMatricule === correctMatricule) {
-                matriculeSessionAuth[selectedPersonnel.id] = true; // MODIFIÉ: Enregistrer l'authentification réussie
+                matriculeSessionAuth[selectedPersonnel.id] = true; 
                 showMessage(`Bonjour ${selectedPersonnel.prenom}, vous êtes authentifié.`, "success");
                 closeModal(matriculeConfirmModal);
                 setAvailability(dateId);
@@ -625,14 +635,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateId = dayDiv.dataset.date;
 
             if (isAdmin) {
-                // L'admin peut modifier sans confirmation
                 setAvailability(dateId);
             } else {
-                // MODIFIÉ: L'utilisateur doit confirmer avec son matricule une seule fois
                 if (matriculeSessionAuth[selectedPersonnel.id]) {
-                    setAvailability(dateId); // Déjà authentifié
+                    setAvailability(dateId);
                 } else {
-                    promptForMatricule(dateId); // Demander le matricule
+                    promptForMatricule(dateId); 
                 }
             }
         });
@@ -643,10 +651,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (calendarView.classList.contains('visible')) {
             generateCalendar(currentMonth.value, currentYear.value);
         }
-        if (teamsView.classList.contains('visible') && selectedTeamDate) {
-            generateAndDisplayTeams(selectedTeamDate);
+        if (teamsView.classList.contains('visible')) { 
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+            if (selectedTeamDate) {
+                generateAndDisplayTeams(selectedTeamDate);
+            }
         }
         if (statsView && statsView.classList.contains('visible')) {
+            renderGlobalStatistics();
             renderStatistics();
         }
     });
@@ -654,37 +666,126 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LOGIQUE POUR LE CALENDRIER DES ÉQUIPES ---
     let teamsCurrentMonth = { value: currentDate.getMonth() };
     let teamsCurrentYear = { value: currentDate.getFullYear() };
+
+    function getTeamStatusForDate(dateId) {
+        let status = { ccfStatus: 'not-applicable', mprStatus: 'not-applicable' };
+        const eventDetails = allEvents[dateId];
+        const hasAvailabilities = allAvailabilities[dateId] && Object.keys(allAvailabilities[dateId]).length > 0;
+
+        if (!eventDetails && !hasAvailabilities) {
+            return status;
+        }
+
+        let wantsCcf = false;
+        let wantsMpr = false;
+
+        if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
+            wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
+            wantsMpr = eventDetails.types.includes("MPR");
+        } else if (hasAvailabilities) {
+            wantsCcf = true;
+            wantsMpr = true;
+        }
+
+        let teamToCheck;
+        if (allAssignedTeams[dateId]) {
+            teamToCheck = allAssignedTeams[dateId];
+        } else if (hasAvailabilities) {
+            teamToCheck = generateProvisionalTeam(dateId, wantsCcf, wantsMpr);
+        }
+
+        if (!teamToCheck) {
+            if (wantsCcf) status.ccfStatus = 'incomplete';
+            if (wantsMpr) status.mprStatus = 'incomplete';
+            return status;
+        }
+
+        if (wantsCcf) {
+            const ccf = teamToCheck.ccfTeam;
+            const isCcfComplete = ccf && ccf[ROLES.CCF_DRIVER] && ccf[ROLES.CCF_LEADER] && ccf[ROLES.CCF_TEAMMATE] && ccf[ROLES.CCF_TEAMMATE].length === 2 && ccf[ROLES.CCF_TEAMMATE].every(id => id !== null);
+            status.ccfStatus = isCcfComplete ? 'complete' : 'incomplete';
+        }
+
+        if (wantsMpr) {
+            const mpr = teamToCheck.mprTeam;
+            const isMprComplete = mpr && mpr[ROLES.MPR_DRIVER] && mpr[ROLES.MPR_TEAMMATE];
+            status.mprStatus = isMprComplete ? 'complete' : 'incomplete';
+        }
+
+        return status;
+    }
+
+
     const generateTeamsCalendar = (month, year) => {
         if (!teamsCalendarDaysContainer) return;
         teamsCalendarDaysContainer.innerHTML = '';
-        let monthPicker = document.querySelector('#teams-month-picker');
         let yearPicker = document.querySelector('#teams-year');
-        if (!monthPicker || !yearPicker) return;
+        if (!teamsMonthPicker || !yearPicker) return;
         let days_of_month = [31, getFebDays(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        monthPicker.innerHTML = month_names[month];
+        teamsMonthPicker.innerHTML = month_names[month];
         yearPicker.innerHTML = year;
         let first_day = new Date(year, month, 1);
         let day_offset = (first_day.getDay() + 6) % 7;
+
+        const searchTerm = teamsSearchInput.value.toLowerCase().trim();
+        let searchedPersonnelId = null;
+        if (searchTerm) {
+            for (const id in allPersonnel) {
+                const p = allPersonnel[id];
+                const fullName = `${fromBase64(p.prenom)} ${fromBase64(p.nom)}`.toLowerCase();
+                if (fullName.includes(searchTerm)) {
+                    searchedPersonnelId = id;
+                    break;
+                }
+            }
+        }
+
         for (let i = 0; i < days_of_month[month] + day_offset; i++) {
             let day = document.createElement('div');
             if (i >= day_offset) {
                 const dayNumber = i - day_offset + 1;
                 const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
-                day.innerHTML = dayNumber;
+                
+                day.innerHTML = `<span class="day-number">${dayNumber}</span>`;
                 day.dataset.date = dateId;
+
                 if (dateId === selectedTeamDate) { day.classList.add('selected-day'); }
-                // Marqueur visuel si des disponibilités existent pour ce jour
-                if (allAvailabilities[dateId] && Object.keys(allAvailabilities[dateId]).length > 0) {
-                     day.classList.add('has-availability');
+                
+                const teamStatus = getTeamStatusForDate(dateId);
+                if (teamStatus.ccfStatus === 'complete') day.classList.add('ccf-complete');
+                else if (teamStatus.ccfStatus === 'incomplete') day.classList.add('ccf-incomplete');
+
+                if (teamStatus.mprStatus === 'complete') day.classList.add('mpr-complete');
+                else if (teamStatus.mprStatus === 'incomplete') day.classList.add('mpr-incomplete');
+                
+                if (searchedPersonnelId) {
+                    let isPresent = false;
+                    if (allAssignedTeams[dateId]) {
+                        const teams = allAssignedTeams[dateId];
+                        if (teams.ccfTeam && Object.values(teams.ccfTeam).flat().includes(searchedPersonnelId)) isPresent = true;
+                        if (!isPresent && teams.mprTeam && Object.values(teams.mprTeam).flat().includes(searchedPersonnelId)) isPresent = true;
+                    } else if (allAvailabilities[dateId] && allAvailabilities[dateId][searchedPersonnelId]) {
+                        isPresent = true;
+                    }
+                    if (isPresent) day.classList.add('day-highlighted-for-search');
                 }
-                if (allEvents[dateId]) { day.classList.add('has-event'); }
-                // NOUVEAU: Marqueur pour équipe provisoire (si une équipe est assignée/figée pour ce jour)
-                if (allAssignedTeams[dateId]) { day.classList.add('has-provisional-team'); } // Note: CSS class name might need adjustment if it implies "not yet frozen"
+
+                if (allAssignedTeams[dateId]) {
+                    day.classList.add('is-activated');
+                    day.innerHTML += '<span class="activated-text">Activé</span>';
+                }
+                 if (dayNumber === new Date().getDate() && year === new Date().getFullYear() && month === new Date().getMonth()) day.classList.add('current-date');
 
             } else { day.classList.add('empty'); }
             teamsCalendarDaysContainer.appendChild(day);
         }
     };
+
+    if (teamsSearchInput) {
+        teamsSearchInput.addEventListener('input', () => {
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+        });
+    }
 
     teamsCalendarDaysContainer.addEventListener('click', (e) => {
         const dayDiv = e.target.closest('div:not(.empty)');
@@ -695,12 +796,33 @@ document.addEventListener('DOMContentLoaded', () => {
         generateAndDisplayTeams(dateId);
     });
 
+    if (teamsPrevMonthBtn) {
+        teamsPrevMonthBtn.addEventListener('click', () => {
+            teamsCurrentMonth.value--;
+            if (teamsCurrentMonth.value < 0) {
+                teamsCurrentMonth.value = 11;
+                teamsCurrentYear.value--;
+            }
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+        });
+    }
+    if (teamsNextMonthBtn) {
+        teamsNextMonthBtn.addEventListener('click', () => {
+            teamsCurrentMonth.value++;
+            if (teamsCurrentMonth.value > 11) {
+                teamsCurrentMonth.value = 0;
+                teamsCurrentYear.value++;
+            }
+            generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
+        });
+    }
+
+
     function openEventModal(dateId, isActivation = false) {
         if (!eventTypeModal || !eventTypeForm || !eventDateInput || !eventModalTitle) return;
         eventTypeForm.reset();
         eventDateInput.value = dateId;
 
-        // Stocker l'information si c'est une activation
         eventTypeForm.dataset.isActivation = isActivation;
 
         const [year, month, day] = dateId.split('-');
@@ -720,23 +842,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (selectedTypes.length > 0) {
             const promises = [];
-            // 1. Enregistrer l'événement
             promises.push(eventRef.set({ types: selectedTypes }));
 
-            // 2. Si c'est une activation, figer l'équipe actuelle
             if (isActivation && currentWorkingTeam) {
                 const teamToFreeze = JSON.parse(JSON.stringify(currentWorkingTeam));
-                // S'assurer de ne figer que ce qui est demandé par les types d'événements
                 const wantsCcf = selectedTypes.some(type => type.startsWith("GIFF Nord"));
                 const wantsMpr = selectedTypes.includes("MPR");
 
-                // Only include parts of the team that correspond to selected event types
                 const finalTeamToFreeze = {};
                 if (wantsCcf && teamToFreeze.ccfTeam) {
                     finalTeamToFreeze.ccfTeam = teamToFreeze.ccfTeam;
                 } else {
-                    // If CCF not wanted by event, but was in currentWorkingTeam, don't freeze it.
-                    // Or ensure it's explicitly nulled if the structure requires ccfTeam/mprTeam keys
                      finalTeamToFreeze.ccfTeam = null;
                 }
                 if (wantsMpr && teamToFreeze.mprTeam) {
@@ -744,11 +860,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                      finalTeamToFreeze.mprTeam = null;
                 }
-                // Only save if there's something to save for assignedTeams
                 if (finalTeamToFreeze.ccfTeam || finalTeamToFreeze.mprTeam) {
                     promises.push(database.ref(`assignedTeams/${dateId}`).set(finalTeamToFreeze));
                 } else {
-                    // If nothing matches event types, maybe remove existing assigned team
                     promises.push(database.ref(`assignedTeams/${dateId}`).remove());
                 }
 
@@ -788,36 +902,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (statsView && statsView.classList.contains('visible')) {
+            renderGlobalStatistics();
             renderStatistics();
         }
     });
 
     database.ref('assignedTeams').on('value', (snapshot) => {
         allAssignedTeams = snapshot.val() || {};
-         if (teamsView.classList.contains('visible')) { // Added to refresh teams calendar markers
+         if (teamsView.classList.contains('visible')) { 
             generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value);
             if (selectedTeamDate) {
                 generateAndDisplayTeams(selectedTeamDate);
             }
         }
          if (statsView && statsView.classList.contains('visible')) {
+            renderGlobalStatistics();
             renderStatistics();
         }
     });
 
-
-    const teamsMonthList = document.querySelector('#teams-month-list');
-    if (teamsMonthList) {
-        month_names.forEach((e, index) => {
-            let month = document.createElement('div');
-            month.innerHTML = `<div>${e}</div>`;
-            teamsMonthList.append(month);
-            month.onclick = () => { teamsCurrentMonth.value = index; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); teamsMonthList.classList.replace('show', 'hide'); if (!teamsMonthList.classList.contains('show')) { teamsMonthList.classList.add('hideonce'); } };
-        });
-        if (!teamsMonthList.classList.contains('show')) { teamsMonthList.classList.add('hideonce'); }
-    }
-    const teamsMonthPicker = document.querySelector('#teams-month-picker');
-    if (teamsMonthPicker) teamsMonthPicker.onclick = () => { teamsMonthList.classList.remove('hideonce', 'hide'); teamsMonthList.classList.add('show'); };
     const teamsPreYear = document.querySelector('#teams-pre-year');
     if (teamsPreYear) teamsPreYear.onclick = () => { --teamsCurrentYear.value; generateTeamsCalendar(teamsCurrentMonth.value, teamsCurrentYear.value); };
     const teamsNextYear = document.querySelector('#teams-next-year');
@@ -825,10 +928,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ROLES = { CCF_DRIVER: "Conducteur Poids Lourd (CCF4MHP37)", CCF_LEADER: "Chef d'Agrès FDF (CCF4MHP37)", CCF_TEAMMATE: "Équipier FDF (CCF4MHP37)", MPR_DRIVER: "Conducteur Voiture (MPR12)", MPR_TEAMMATE: "Équipier DIV (MPR12)" };
 
-    // --- **MODIFIED** LOGIQUE DE GÉNÉRATION ET D'AFFICHAGE DES ÉQUIPES ---
+    function createSeedFromDate(dateId) {
+        let hash = 0;
+        for (let i = 0; i < dateId.length; i++) {
+            const char = dateId.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0;
+        }
+        return hash;
+    }
+    function mulberry32(a) {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+    
     function generateProvisionalTeam(dateId, wantsCcf, wantsMpr) {
+        let seed = createSeedFromDate(dateId);
         const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
-        let availablePool = [...availablePersonnelIds]; // Use a fresh pool for each call context
+        let availablePool = [...availablePersonnelIds]; 
         const personnelByFunctionForDay = {};
 
         availablePool.forEach(pId => {
@@ -844,7 +963,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const assignPersonnelForAuto = (role, currentPool, pbfd) => {
             const candidates = (pbfd[role] || []).filter(id => currentPool.includes(id));
             if (candidates.length > 0) {
-                const assignedId = candidates[Math.floor(Math.random() * candidates.length)];
+                seed++;
+                const randomIndex = Math.floor(mulberry32(seed) * candidates.length);
+                const assignedId = candidates[randomIndex];
                 const indexInPool = currentPool.indexOf(assignedId);
                 if (indexInPool > -1) currentPool.splice(indexInPool, 1);
                 return assignedId;
@@ -855,16 +976,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
         let mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
 
-        if (wantsCcf && !wantsMpr) { // CCF Only
+        if (wantsCcf && !wantsMpr) {
             ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
             ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
             ccfTeam[ROLES.CCF_TEAMMATE][0] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
             ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
-        } else if (!wantsCcf && wantsMpr) { // MPR Only
+        } else if (!wantsCcf && wantsMpr) {
             mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
             mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
-        } else if (wantsCcf && wantsMpr) { // Both Active - distribute
-            // Prioritize critical roles, then others, from the shared pool
+        } else if (wantsCcf && wantsMpr) {
             ccfTeam[ROLES.CCF_DRIVER] = assignPersonnelForAuto(ROLES.CCF_DRIVER, availablePool, personnelByFunctionForDay);
             mprTeam[ROLES.MPR_DRIVER] = assignPersonnelForAuto(ROLES.MPR_DRIVER, availablePool, personnelByFunctionForDay);
             ccfTeam[ROLES.CCF_LEADER] = assignPersonnelForAuto(ROLES.CCF_LEADER, availablePool, personnelByFunctionForDay);
@@ -872,52 +992,46 @@ document.addEventListener('DOMContentLoaded', () => {
             mprTeam[ROLES.MPR_TEAMMATE] = assignPersonnelForAuto(ROLES.MPR_TEAMMATE, availablePool, personnelByFunctionForDay);
             ccfTeam[ROLES.CCF_TEAMMATE][1] = assignPersonnelForAuto(ROLES.CCF_TEAMMATE, availablePool, personnelByFunctionForDay);
         }
-        // If neither wantsCcf nor wantsMpr (e.g. no event and no available personnel for default), both teams remain with nulls.
         return { ccfTeam, mprTeam };
     }
 
 
     function generateAndDisplayTeams(dateId) {
         potentialReplacementsContainer.innerHTML = '';
-        currentWorkingTeam = null; // Reset before generation
+        currentWorkingTeam = null; 
 
         let wantsCcf = false;
         let wantsMpr = false;
-        let isProvisionalDisplayState = true; // Is the displayed team a mere suggestion or based on a firm event/frozen state?
+        let isProvisionalDisplayState = true; 
 
         const eventDetails = allEvents[dateId];
         if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
             wantsCcf = eventDetails.types.some(type => type.startsWith("GIFF Nord"));
             wantsMpr = eventDetails.types.includes("MPR");
-            isProvisionalDisplayState = false; // Team generation is guided by a specific event
+            isProvisionalDisplayState = false; 
         } else {
-            // No event: default to wanting both if people are available (for provisional display)
             const availablePersonnelIdsForCheck = Object.keys(allAvailabilities[dateId] || {});
             if (availablePersonnelIdsForCheck.length > 0) {
                 wantsCcf = true;
                 wantsMpr = true;
             }
-            // If no personnel, wantsCcf/Mpr remain false, leading to empty provisional teams
         }
 
-        // 1. Check for a Frozens team first for display.
         if (allAssignedTeams[dateId]) {
             const assigned = allAssignedTeams[dateId];
-            currentWorkingTeam = JSON.parse(JSON.stringify(assigned)); // This is the active team for potential modifications
+            currentWorkingTeam = JSON.parse(JSON.stringify(assigned)); 
 
-            // Determine what to display from the frozen team
-            const displayCcfFromFrozen = !!assigned.ccfTeam; // Display if ccfTeam key exists and is not null/empty
-            const displayMprFromFrozen = !!assigned.mprTeam; // Display if mprTeam key exists and is not null/empty
+            const displayCcfFromFrozen = !!assigned.ccfTeam; 
+            const displayMprFromFrozen = !!assigned.mprTeam; 
 
-            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, displayCcfFromFrozen, displayMprFromFrozen, true, false); // isFrozen = true, isProvisional = false
+            renderTeams(dateId, assigned.ccfTeam, assigned.mprTeam, displayCcfFromFrozen, displayMprFromFrozen, true, false); 
             return;
         }
 
-        // 2. No frozen team. Check for available personnel.
         const availablePersonnelIds = Object.keys(allAvailabilities[dateId] || {});
         if (availablePersonnelIds.length === 0) {
             let noPersonnelHtml = `<div id="teams-placeholder"><ion-icon name="close-circle-outline"></ion-icon><h3>Aucun personnel disponible</h3><p>Aucun personnel n'a indiqué de disponibilité pour cette date.</p></div>`;
-            if (eventDetails && eventDetails.types && eventDetails.types.length > 0) { // Event was set but no one available
+            if (eventDetails && eventDetails.types && eventDetails.types.length > 0) { 
                 noPersonnelHtml = `
                     <div class="teams-display-header">
                         <h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>
@@ -926,17 +1040,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
             }
             generatedTeamsContainer.innerHTML = noPersonnelHtml;
-            potentialReplacementsContainer.innerHTML = ''; // Clear replacements if no team can be formed
+            potentialReplacementsContainer.innerHTML = ''; 
             return;
         }
 
-        // 3. Personnel available, no frozen team. Generate a team based on `wantsCcf` and `wantsMpr`.
         const { ccfTeam, mprTeam } = generateProvisionalTeam(dateId, wantsCcf, wantsMpr);
-        currentWorkingTeam = { ccfTeam, mprTeam }; // This generated team is now the working team
+        currentWorkingTeam = { ccfTeam, mprTeam }; 
 
-        // 4. Render the generated team.
-        // `wantsCcf` & `wantsMpr` here reflect the *intended* structure for the generation.
-        // `isProvisionalDisplayState` indicates if it was a pure suggestion or based on an event.
         renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false, isProvisionalDisplayState);
     }
 
@@ -944,17 +1054,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventInfo = allEvents[dateId];
         const assignedTeamInfo = allAssignedTeams[dateId];
 
-        if (assignedTeamInfo) { // If team is frozen, that's the primary status
+        if (assignedTeamInfo) { 
             if (eventInfo && eventInfo.types && eventInfo.types.length > 0) {
                 return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')} <span class="event-tag provisional" style="background-color: var(--available-green);">Équipe Figée</span></div>`;
             } else {
-                 // Team is frozen, but no specific event types recorded (e.g. manually frozen provisional)
                 return `<div class="event-tags"><span class="event-tag provisional" style="background-color: var(--available-green);">Équipe Figée</span></div>`;
             }
-        } else if (eventInfo && eventInfo.types && eventInfo.types.length > 0) { // Event defined, team not yet frozen
+        } else if (eventInfo && eventInfo.types && eventInfo.types.length > 0) { 
             return `<div class="event-tags">${eventInfo.types.map(t => `<span class="event-tag">${t}</span>`).join('')} <span class="event-tag" style="background-color: var(--provisional-blue);">Prévu (Non Figé)</span></div>`;
         }
-        // No event, no frozen team => pure provisional
         return `<div class="event-tags"><span class="event-tag" style="background-color: var(--ember-orange);">Proposition Automatique</span></div>`;
     }
 
@@ -989,8 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             title="Remplacer/Assigner">
                                             <ion-icon name="swap-horizontal-outline"></ion-icon>
                                          </button>`;
-            } else if (isAdmin && !isFrozen && personnelId) { // Option to "remove" from provisional before freezing
-                 // This could be an advanced feature, for now, replacement is on frozen.
+            } else if (isAdmin && !isFrozen && personnelId) { 
             }
             return `<div class="personnel-name-wrapper">${nameHtml}${replaceButtonHtml}</div>`;
         };
@@ -999,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let ccfHtml = '';
         let mprHtml = '';
 
-        if (displayCcf && ccfTeam) { // ccfTeam might exist but be empty if displayCcf was true but no one could be assigned
+        if (displayCcf && ccfTeam) { 
             const isCcfComplete = ccfTeam[ROLES.CCF_DRIVER] && ccfTeam[ROLES.CCF_LEADER] && ccfTeam[ROLES.CCF_TEAMMATE] && ccfTeam[ROLES.CCF_TEAMMATE].length === 2 && ccfTeam[ROLES.CCF_TEAMMATE].every(id => id !== null);
             ccfHtml = `
                 <div class="team-card ${isCcfComplete ? '' : 'incomplete'}">
@@ -1011,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }
 
-        if (displayMpr && mprTeam) { // mprTeam might exist but be empty
+        if (displayMpr && mprTeam) { 
             const isMprComplete = mprTeam[ROLES.MPR_DRIVER] && mprTeam[ROLES.MPR_TEAMMATE];
             mprHtml = `
                 <div class="team-card ${isMprComplete ? '' : 'incomplete'}">
@@ -1023,9 +1130,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         teamsHtml = ccfHtml + mprHtml;
         if (teamsHtml === '') {
-            if (Object.keys(allAvailabilities[dateId] || {}).length > 0) { // People available but no team displayed per logic
+            if (Object.keys(allAvailabilities[dateId] || {}).length > 0) { 
                  teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucune composition d'équipe à afficher pour les types d'événements sélectionnés ou les disponibilités.</p>`;
-            } else { // No one available in the first place
+            } else { 
                  teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">Aucun personnel disponible pour cette date.</p>`;
             }
         }
@@ -1038,26 +1145,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <button id="reset-assigned-team-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Défiger l'Équipe</button>
                                     </div>`;
             } else if (Object.keys(allAvailabilities[dateId] || {}).length > 0 && (ccfTeam || mprTeam)) {
-                // Only show activate button if there's a team (even partial) generated from available personnel
                 adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
                                         <button id="activate-day-btn" class="btn-primary" style="padding: 0.5rem 1rem; background-color: var(--available-green);">Activer Journée et Figer Équipe(s)</button>
                                     </div>`;
-                 // If no event is defined yet, "Activer Journée" will prompt for event types.
-                 // If event types are defined, it will use those.
             } else if (allEvents[dateId] && allEvents[dateId].types && allEvents[dateId].types.length > 0) {
-                // Event is defined, but no personnel to form team. Still allow event management.
                  adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
                                         <button id="edit-event-btn-display" class="btn-primary" style="padding: 0.5rem 1rem;">Gérer l'Événement</button>
                                      </div>`;
             } else {
-                // No event, no personnel, no team. Maybe a button to define event types.
                 adminActionsHtml = `<div class="header-actions" style="margin-top:1rem; display:flex; justify-content:center; gap:1rem;">
                                         <button id="define-event-type-btn" class="btn-secondary" style="padding: 0.5rem 1rem;">Définir Type d'Événement</button>
                                      </div>`;
             }
-        } else if (isFrozen) { // Non-admin view of a frozen team
-            // No actions, just view. The event tags already show status.
-        } else { // Non-admin view, team not frozen
+        } else if (isFrozen) { 
+        } else { 
             teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--text-secondary);">L'équipe pour cette date n'est pas encore finalisée.</p>`;
         }
 
@@ -1069,13 +1170,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="teams-grid">${teamsHtml}</div>`;
 
-        // --- GESTIONNAIRES D'ÉVÉNEMENTS POUR LES BOUTONS ---
-
         const editBtn = document.getElementById('edit-event-btn-display');
-        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); } // false: not an activation, just editing event type
+        if (editBtn) { editBtn.addEventListener('click', () => openEventModal(dateId, false)); } 
 
         const activateDayBtn = document.getElementById('activate-day-btn');
-        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); } // true: this is an activation
+        if (activateDayBtn) { activateDayBtn.addEventListener('click', () => openEventModal(dateId, true)); } 
 
         const defineEventTypeBtn = document.getElementById('define-event-type-btn');
         if (defineEventTypeBtn) { defineEventTypeBtn.addEventListener('click', () => openEventModal(dateId, false));}
@@ -1090,7 +1189,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         database.ref(`assignedTeams/${dateId}`).remove()
                         .then(() => {
                             showMessage("Équipe défigée. L'événement est conservé.", "success");
-                            // generateAndDisplayTeams(dateId); // Already handled by listener on assignedTeams
                         }).catch(err => showMessage("Erreur: " + err.message, "error"));
                     }, null, "Défiger l'équipe ?", "btn-secondary", "Oui, Défiger"
                 );
@@ -1111,8 +1209,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        if (isAdmin && isFrozen && (ccfTeam || mprTeam)) { // Only show replacements if team is frozen AND has members
-            const teamForReplacements = currentWorkingTeam; // currentWorkingTeam should be the frozen team
+        if (isAdmin && isFrozen && (ccfTeam || mprTeam)) { 
+            const teamForReplacements = currentWorkingTeam; 
              if (teamForReplacements) {
                 renderPotentialReplacements(dateId, teamForReplacements.ccfTeam, teamForReplacements.mprTeam);
              }
@@ -1131,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         teamsToConsider.forEach(team => {
             if (!team) return;
-            Object.values(team).flat().forEach(id => { // .flat() handles single IDs and arrays of IDs (like CCF_TEAMMATE)
+            Object.values(team).flat().forEach(id => {
                 if (id) currentTeamAssignmentsOnDate.add(id);
             });
         });
@@ -1174,7 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openReplacePersonnelModal() {
-        if (!isAdmin || !currentWorkingTeam) { // currentWorkingTeam should be set if we are replacing
+        if (!isAdmin || !currentWorkingTeam) { 
             showMessage("Impossible d'ouvrir le remplacement : aucune équipe de travail active ou sélectionnée.", "error");
             return;
         }
@@ -1184,32 +1282,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (replacementOptionsContainer) replacementOptionsContainer.innerHTML = '';
 
         const availableOnDate = Object.keys(allAvailabilities[dateId] || {});
-        const currentAssignmentsInWorkingTeam = new Set(); // Consider only assignments in the *current working* (frozen) team
+        const currentAssignmentsInWorkingTeam = new Set(); 
 
-        const { ccfTeam, mprTeam } = currentWorkingTeam; // This is the team we are modifying
+        const { ccfTeam, mprTeam } = currentWorkingTeam; 
         if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
         if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
 
-        // A person is a potential replacement if:
-        // 1. They are available on the date.
-        // 2. They have the required function (roleKey).
-        // 3. They are NOT the person currently in the slot (if a person is already there).
-        // 4. They are NOT already assigned elsewhere IN THE CURRENTLY FROZEN TEAM.
         const potentialReplacementsList = Object.keys(allPersonnel).filter(pId => {
             const person = allPersonnel[pId];
             return person &&
                 availableOnDate.includes(pId) &&
                 person.fonctions && person.fonctions.map(f => fromBase64(f)).includes(roleKey) &&
-                pId !== currentPersonnelId && // Not the person being replaced
-                !currentAssignmentsInWorkingTeam.has(pId); // Not already in another slot of this frozen team
+                pId !== currentPersonnelId && 
+                !currentAssignmentsInWorkingTeam.has(pId); 
         });
 
-        // Option to unassign the current person
-        if (currentPersonnelId) { // Only show if someone is currently assigned
+        if (currentPersonnelId) { 
             const unassignOptionDiv = document.createElement('div');
             unassignOptionDiv.className = 'replacement-option';
             unassignOptionDiv.textContent = `Laisser "${getRoleDisplayName(roleKey)}" Non Assigné`;
-            unassignOptionDiv.addEventListener('click', () => performReplacement(null)); // Pass null to unassign
+            unassignOptionDiv.addEventListener('click', () => performReplacement(null)); 
             replacementOptionsContainer.appendChild(unassignOptionDiv);
         }
 
@@ -1224,9 +1316,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 replacementOptionsContainer.appendChild(optionDiv);
             });
         } else {
-            if (!currentPersonnelId) { // No one assigned and no one to assign
+            if (!currentPersonnelId) { 
                  replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun personnel disponible pour ce rôle.</div>');
-            } else { // Someone assigned, but no one else to replace them with
+            } else { 
                  replacementOptionsContainer.insertAdjacentHTML('beforeend', '<div class="replacement-option no-options">Aucun autre remplaçant disponible pour ce rôle.</div>');
             }
         }
@@ -1241,8 +1333,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const { dateId, teamType, roleKey, teammateIndex, currentPersonnelId } = currentReplacementInfo;
 
-        // Ensure currentWorkingTeam is the source of truth for modification
-        // It should be a deep copy of the frozen team if one exists, or the generated one.
         const teamToUpdate = currentWorkingTeam[teamType + 'Team'];
 
         if (!teamToUpdate) {
@@ -1250,35 +1340,64 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // If replacing with someone already in another role in currentWorkingTeam, this needs careful handling.
-        // For now, assume replacementPersonnelId is either null or not currently in another slot of currentWorkingTeam.
-        // The filtering in openReplacePersonnelModal should handle this.
-
         if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) {
             teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId;
         } else {
             teamToUpdate[roleKey] = replacementPersonnelId;
         }
 
-        // Now, save the modified currentWorkingTeam back to Firebase as the new frozen team.
         database.ref(`assignedTeams/${dateId}`).set(currentWorkingTeam)
             .then(() => {
                 showMessage("Remplacement effectué et équipe mise à jour !", "success");
                 closeModal(replacePersonnelModal);
-                // The Firebase listener on 'assignedTeams' will trigger generateAndDisplayTeams to refresh the view.
             })
             .catch(err => {
                 showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error");
             });
     }
 
-    // --- **MODIFIÉ** LOGIQUE POUR LES STATISTIQUES ---
+    // --- NOUVEAU : Fonction pour rendre les statistiques globales ---
+    function renderGlobalStatistics() {
+        const totalPersonnel = Object.keys(allPersonnel).length;
+        let totalAvailabilitiesLogged = 0;
+        for (const date in allAvailabilities) {
+            totalAvailabilitiesLogged += Object.keys(allAvailabilities[date]).length;
+        }
+        const totalEventDays = Object.keys(allEvents).length;
+        const totalFrozenTeamDays = Object.keys(allAssignedTeams).length;
+        let totalCcfAssignments = 0;
+        let totalMprAssignments = 0;
+
+        for (const date in allAssignedTeams) {
+            const teamData = allAssignedTeams[date];
+            if (teamData.ccfTeam) {
+                totalCcfAssignments += Object.values(teamData.ccfTeam).flat().filter(id => id).length;
+            }
+            if (teamData.mprTeam) {
+                totalMprAssignments += Object.values(teamData.mprTeam).flat().filter(id => id).length;
+            }
+        }
+        
+        const globalTotalPersonnelEl = document.getElementById('global-total-personnel');
+        const globalTotalAvailabilitiesEl = document.getElementById('global-total-availabilities');
+        const globalTotalEventDaysEl = document.getElementById('global-total-event-days');
+        const globalTotalFrozenTeamDaysEl = document.getElementById('global-total-frozen-team-days');
+        const globalTotalCcfAssignmentsEl = document.getElementById('global-total-ccf-assignments');
+        const globalTotalMprAssignmentsEl = document.getElementById('global-total-mpr-assignments');
+
+        if(globalTotalPersonnelEl) globalTotalPersonnelEl.textContent = totalPersonnel;
+        if(globalTotalAvailabilitiesEl) globalTotalAvailabilitiesEl.textContent = totalAvailabilitiesLogged;
+        if(globalTotalEventDaysEl) globalTotalEventDaysEl.textContent = totalEventDays;
+        if(globalTotalFrozenTeamDaysEl) globalTotalFrozenTeamDaysEl.textContent = totalFrozenTeamDays;
+        if(globalTotalCcfAssignmentsEl) globalTotalCcfAssignmentsEl.textContent = totalCcfAssignments;
+        if(globalTotalMprAssignmentsEl) globalTotalMprAssignmentsEl.textContent = totalMprAssignments;
+    }
+
     function renderStatistics() {
         if (!statsView || !statsList) {
             return;
         }
 
-        // 1. Calcul des données
         const stats = {};
         for (const pId in allPersonnel) {
             stats[pId] = {
@@ -1287,7 +1406,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fonctions: allPersonnel[pId].fonctions ? allPersonnel[pId].fonctions.map(f => fromBase64(f)) : [],
                 availabilities: 0,
                 ccfCount: 0,
-                mprCount: 0
+                mprCount: 0,
+                mprPercentage: 0,
+                ccfPercentage: 0
             };
         }
 
@@ -1302,20 +1423,27 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const date in allAssignedTeams) {
             const teamData = allAssignedTeams[date];
             if (teamData.ccfTeam) {
-                const ccfAssignments = Object.values(teamData.ccfTeam).flat().filter(id => id); // Filter out nulls
+                const ccfAssignments = Object.values(teamData.ccfTeam).flat().filter(id => id); 
                 ccfAssignments.forEach(pId => {
                     if (stats[pId]) stats[pId].ccfCount++;
                 });
             }
             if (teamData.mprTeam) {
-                const mprAssignments = Object.values(teamData.mprTeam).flat().filter(id => id); // Filter out nulls
+                const mprAssignments = Object.values(teamData.mprTeam).flat().filter(id => id); 
                 mprAssignments.forEach(pId => {
                     if (stats[pId]) stats[pId].mprCount++;
                 });
             }
         }
+        
+        for (const pId in stats) {
+            if (stats[pId].availabilities > 0) {
+                stats[pId].mprPercentage = (stats[pId].mprCount / stats[pId].availabilities) * 100;
+                stats[pId].ccfPercentage = (stats[pId].ccfCount / stats[pId].availabilities) * 100;
+            }
+        }
 
-        // 2. Filtrage
+
         const searchTerm = statsSearchInput ? statsSearchInput.value.toLowerCase() : "";
         const filterTerm = statsFilterInput ? statsFilterInput.value : "";
         const filteredPersonnelIds = Object.keys(stats).filter(pId => {
@@ -1326,27 +1454,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return matchesSearch && matchesFilter;
         });
 
-        // 3. Affichage
         statsList.innerHTML = '';
         if (filteredPersonnelIds.length === 0) {
             statsList.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-secondary);">Aucun personnel trouvé.</p>';
             return;
         }
 
-        // Tri par nom de famille
         filteredPersonnelIds.sort((a, b) => stats[a].nom.localeCompare(stats[b].nom));
 
         filteredPersonnelIds.forEach(pId => {
             const p = stats[pId];
             const card = document.createElement('div');
-            card.className = 'personnel-card'; // Using existing class for similar styling
+            card.className = 'personnel-card'; 
             card.innerHTML = `
                 <div class="personnel-avatar">${p.prenom.charAt(0)}${p.nom.charAt(0)}</div>
                 <div class="personnel-info">
                     <h3>${p.prenom} ${p.nom}</h3>
                     <div class="info-block" title="Nombre total de jours de disponibilité indiqués">
                         <ion-icon name="calendar-number-outline"></ion-icon>
-                        <span><strong>${p.availabilities}</strong> Disponibilités</span>
+                        <span><strong>${p.availabilities}</strong> Dispos</span>
                     </div>
                     <div class="info-block" title="Nombre de fois assigné à une équipe CCF (rôle quelconque)">
                         <ion-icon name="bus-outline"></ion-icon>
@@ -1355,6 +1481,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="info-block" title="Nombre de fois assigné à une équipe MPR (rôle quelconque)">
                         <ion-icon name="car-sport-outline"></ion-icon>
                         <span><strong>${p.mprCount}</strong> Gardes MPR</span>
+                    </div>
+                    <div class="info-block" title="Pourcentage de gardes CCF sur disponibilités">
+                        <ion-icon name="flame-outline"></ion-icon> <span><strong>${p.ccfPercentage.toFixed(1)}%</strong> GIFF/Dispos</span>
+                    </div>
+                    <div class="info-block" title="Pourcentage de gardes MPR sur disponibilités">
+                        <ion-icon name="car-outline"></ion-icon> <span><strong>${p.mprPercentage.toFixed(1)}%</strong> MPR/Dispos</span>
                     </div>
                 </div>
             `;
@@ -1365,7 +1497,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statsSearchInput) statsSearchInput.addEventListener('input', renderStatistics);
     if (statsFilterInput) statsFilterInput.addEventListener('change', renderStatistics);
 
-    // --- LOGIQUE DE RÉINITIALISATION DES DONNÉES ---
     if (resetAllDataBtn) {
         resetAllDataBtn.addEventListener('click', () => {
             if (!isAdmin) {
@@ -1410,8 +1541,239 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- NOUVEAU: LOGIQUE D'EXPORTATION PDF (AMÉLIORÉE) ---
+    const PDF_COLORS = {
+        fireRed: '#e5383b',
+        emberOrange: '#ff9100',
+        availableGreen: '#2a9d8f',
+        textSecondary: '#6c757d', // A bit darker for roles
+        black: '#000000', // Black for names
+        cardBg: '#f8f9fa', // Light grey for card background
+        lineColor: '#dee2e6' // Light color for separators
+    };
+
+    function drawTeamInPdf(doc, dateId, teamData, currentY) {
+        const PADDING = 14;
+        const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+        const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+        const CONTENT_WIDTH = PAGE_WIDTH - 2 * PADDING;
+        const CARD_SPACING = 8;
+        const CARD_WIDTH = (CONTENT_WIDTH - CARD_SPACING) / 2;
+        const LINE_HEIGHT = 5; // Compact line height
+        const CARD_PADDING = 5;
+
+        const { ccfTeam, mprTeam } = teamData;
+        let ccfRoles = [], mprRoles = [];
+        let ccfCardHeight = 0, mprCardHeight = 0;
+
+        // Pre-calculate heights
+        if (ccfTeam) {
+            ccfRoles = [
+                { label: "Conducteur PL:", id: ccfTeam[ROLES.CCF_DRIVER] },
+                { label: "Chef d'Agrès FDF:", id: ccfTeam[ROLES.CCF_LEADER] },
+                { label: "Équipier FDF 1:", id: ccfTeam[ROLES.CCF_TEAMMATE]?.[0] },
+                { label: "Équipier FDF 2:", id: ccfTeam[ROLES.CCF_TEAMMATE]?.[1] },
+            ];
+            ccfCardHeight = (ccfRoles.length * LINE_HEIGHT) + (2 * CARD_PADDING) + 7; // Content + padding + title
+        }
+        if (mprTeam) {
+            mprRoles = [
+                { label: "Conducteur VL:", id: mprTeam[ROLES.MPR_DRIVER] },
+                { label: "Équipier DIV:", id: mprTeam[ROLES.MPR_TEAMMATE] },
+            ];
+            mprCardHeight = (mprRoles.length * LINE_HEIGHT) + (2 * CARD_PADDING) + 7;
+        }
+
+        const maxCardHeight = Math.max(ccfCardHeight, mprCardHeight, 15);
+        const neededHeight = maxCardHeight + 15; // Total height for the day's entry
+
+        if (currentY + neededHeight > PAGE_HEIGHT - 20) { // Check for page break
+            doc.addPage();
+            currentY = 25; // Reset Y position on new page (allowing for header)
+        }
+        
+        // --- Separator Line ---
+        if (currentY > 30) {
+            doc.setDrawColor(PDF_COLORS.lineColor);
+            doc.setLineWidth(0.2);
+            doc.line(PADDING, currentY - 5, PAGE_WIDTH - PADDING, currentY - 5);
+        }
+
+        // --- Date Header ---
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(PDF_COLORS.emberOrange);
+        doc.text(`Jour du ${dateId.split('-').reverse().join('/')}`, PADDING, currentY);
+        currentY += 7;
+
+        let cardStartY = currentY;
+        let startX = PADDING;
+        
+        // --- Draw CCF Card ---
+        if (ccfTeam) {
+            const isComplete = ccfRoles.every(r => r.id);
+            const statusColor = isComplete ? PDF_COLORS.availableGreen : PDF_COLORS.fireRed;
+
+            doc.setFillColor(PDF_COLORS.cardBg);
+            doc.setDrawColor(statusColor);
+            doc.setLineWidth(0.5);
+            doc.rect(startX, cardStartY, CARD_WIDTH, ccfCardHeight, 'FD');
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(PDF_COLORS.black);
+            doc.text("Équipe CCF4MHP37", startX + CARD_PADDING, cardStartY + 6);
+            
+            let roleY = cardStartY + 13;
+            doc.setFontSize(8);
+            ccfRoles.forEach(role => {
+                const name = role.id && allPersonnel[role.id] ? `${fromBase64(allPersonnel[role.id].prenom)} ${fromBase64(allPersonnel[role.id].nom)}` : "Non assigné";
+                const nameColor = role.id ? PDF_COLORS.black : PDF_COLORS.fireRed;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(PDF_COLORS.textSecondary);
+                doc.text(role.label, startX + CARD_PADDING, roleY);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(nameColor);
+                doc.text(name, startX + CARD_PADDING + 28, roleY);
+                roleY += LINE_HEIGHT;
+            });
+            startX += CARD_WIDTH + CARD_SPACING;
+        }
+
+        // --- Draw MPR Card ---
+        if (mprTeam) {
+            const isComplete = mprRoles.every(r => r.id);
+            const statusColor = isComplete ? PDF_COLORS.availableGreen : PDF_COLORS.fireRed;
+
+            doc.setFillColor(PDF_COLORS.cardBg);
+            doc.setDrawColor(statusColor);
+            doc.setLineWidth(0.5);
+            doc.rect(startX, cardStartY, CARD_WIDTH, mprCardHeight, 'FD');
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(PDF_COLORS.black);
+            doc.text("Équipe MPR12", startX + CARD_PADDING, cardStartY + 6);
+
+            let roleY = cardStartY + 13;
+            doc.setFontSize(8);
+            mprRoles.forEach(role => {
+                const name = role.id && allPersonnel[role.id] ? `${fromBase64(allPersonnel[role.id].prenom)} ${fromBase64(allPersonnel[role.id].nom)}` : "Non assigné";
+                const nameColor = role.id ? PDF_COLORS.black : PDF_COLORS.fireRed;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(PDF_COLORS.textSecondary);
+                doc.text(role.label, startX + CARD_PADDING, roleY);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(nameColor);
+                doc.text(name, startX + CARD_PADDING + 28, roleY);
+                roleY += LINE_HEIGHT;
+            });
+        }
+        
+        if (!ccfTeam && !mprTeam) {
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(PDF_COLORS.textSecondary);
+            doc.text("Aucune équipe générée ou applicable pour cette journée.", PADDING, currentY + 5);
+        }
+
+        return cardStartY + maxCardHeight + 8; // Return new Y position with a small margin
+    }
+    
+    function addPdfHeaderFooter(doc, title) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const generationDate = new Date().toLocaleDateString('fr-FR');
+        const PADDING = 14;
+
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+
+            // Header
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(PDF_COLORS.black);
+            doc.text(title, PADDING, 15);
+
+            // Footer
+            doc.setFontSize(8);
+            doc.setTextColor(PDF_COLORS.textSecondary);
+            const pageText = `Page ${i} / ${pageCount}`;
+            doc.text(pageText, PADDING, doc.internal.pageSize.getHeight() - 10);
+            doc.text(`Généré le: ${generationDate}`, doc.internal.pageSize.getWidth() - PADDING, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+        }
+    }
+
+    function exportProposalsToPDF() {
+        if (!isAdmin) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const month = teamsCurrentMonth.value;
+        const year = teamsCurrentYear.value;
+        const monthName = month_names[month];
+        const title = `Propositions Automatiques - ${monthName} ${year}`;
+        
+        let currentY = 25; // Start after header
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let teamsFound = false;
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            if (allAvailabilities[dateId] && Object.keys(allAvailabilities[dateId]).length > 0) {
+                teamsFound = true;
+                const provisionalTeam = generateProvisionalTeam(dateId, true, true);
+                currentY = drawTeamInPdf(doc, dateId, provisionalTeam, currentY);
+            }
+        }
+        
+        if (!teamsFound) {
+            doc.setFontSize(12);
+            doc.setTextColor(PDF_COLORS.textSecondary);
+            doc.text(`Aucune proposition à générer pour ${monthName} ${year} (pas de disponibilités).`, 14, 30);
+        }
+
+        addPdfHeaderFooter(doc, title);
+        doc.save(`propositions-${monthName}-${year}.pdf`);
+    }
+
+    function exportActivatedToPDF() {
+        if (!isAdmin) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        const month = teamsCurrentMonth.value;
+        const year = teamsCurrentYear.value;
+        const monthName = month_names[month];
+        const title = `Équipes Figées (Activées) - ${monthName} ${year}`;
+
+        let currentY = 25; // Start after header
+        const monthStr = String(month + 1).padStart(2, '0');
+        
+        const activatedDatesInMonth = Object.keys(allAssignedTeams)
+            .filter(dateId => dateId.startsWith(`${year}-${monthStr}`))
+            .sort();
+        
+        if (activatedDatesInMonth.length === 0) {
+            doc.setFontSize(12);
+            doc.setTextColor(PDF_COLORS.textSecondary);
+            doc.text(`Aucune équipe figée trouvée pour ${monthName} ${year}.`, 14, 30);
+        } else {
+            activatedDatesInMonth.forEach(dateId => {
+                const teamData = allAssignedTeams[dateId];
+                currentY = drawTeamInPdf(doc, dateId, teamData, currentY);
+            });
+        }
+        
+        addPdfHeaderFooter(doc, title);
+        doc.save(`equipes-figees-${monthName}-${year}.pdf`);
+    }
+
+
     // --- INITIALISATION ---
     updateDateTimeDisplay();
     setInterval(updateDateTimeDisplay, 1000);
     setInitialState();
+
+    if (exportProposalsBtn) exportProposalsBtn.addEventListener('click', exportProposalsToPDF);
+    if (exportActivatedBtn) exportActivatedBtn.addEventListener('click', exportActivatedToPDF);
 });
