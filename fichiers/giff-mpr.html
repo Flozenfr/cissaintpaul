@@ -145,6 +145,7 @@
                 <input type="hidden" id="personnel-id">
                 <input type="text" id="nom" placeholder="Nom" required>
                 <input type="text" id="prenom" placeholder="Prénom" required>
+                <input type="password" id="matricule" placeholder="Matricule (3-6 chiffres)" required minlength="3" maxlength="6" pattern="\d{3,6}" title="Le matricule doit contenir entre 3 et 6 chiffres.">
                 <div class="functions-container">
                     <h3>Fonctions</h3>
                     <label><input type="checkbox" name="fonctions" value="Conducteur Poids Lourd (CCF4MHP37)"> Conducteur Poids Lourd</label>
@@ -176,6 +177,17 @@
             <div class="modal-actions">
                 <button id="custom-prompt-cancel-btn" class="btn-secondary">Annuler</button>
                 <button id="custom-prompt-ok-btn" class="btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+    <div id="matricule-confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="matricule-confirm-title">Confirmer Identité</h3>
+            <p>Pour modifier vos disponibilités, veuillez entrer votre matricule.</p>
+            <input type="password" id="matricule-input" placeholder="Matricule">
+            <div class="modal-actions">
+                <button id="matricule-cancel-btn" class="btn-secondary">Annuler</button>
+                <button id="matricule-ok-btn" class="btn-primary">Confirmer</button>
             </div>
         </div>
     </div>
