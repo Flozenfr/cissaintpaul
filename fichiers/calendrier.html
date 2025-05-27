@@ -77,21 +77,22 @@
             <h3 id="modalTitle">Ajouter un Événement</h3>
             <form id="eventForm">
                 <input type="hidden" id="eventId">
-                <label for="eventTitle">Titre de l'événement :</label>
+
+                <label for="eventTitle"><ion-icon name="document-text-outline"></ion-icon> Titre de l'événement :</label>
                 <input type="text" id="eventTitle" required>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="eventDate">Date :</label>
+                        <label for="eventDate"><ion-icon name="calendar-outline"></ion-icon> Date :</label>
                         <input type="date" id="eventDate" required>
                     </div>
                     <div class="form-group">
-                        <label for="eventTime">Heure :</label>
+                        <label for="eventTime"><ion-icon name="time-outline"></ion-icon> Heure :</label>
                         <input type="time" id="eventTime">
                     </div>
                 </div>
 
-                <label for="eventType">Type :</label>
+                <label for="eventType"><ion-icon name="pricetag-outline"></ion-icon> Type :</label>
                 <select id="eventType" required>
                     <option value="urgent">Urgent</option>
                     <option value="important">Important</option>
@@ -103,10 +104,10 @@
                     <option value="autre" selected>Autre</option>
                 </select>
 
-                <label for="eventLocation">Lieu :</label>
+                <label for="eventLocation"><ion-icon name="location-outline"></ion-icon> Lieu :</label>
                 <input type="text" id="eventLocation" placeholder="Ex : Caserne, Stade, Centre-ville...">
 
-                <label for="eventDuration">Durée :</label>
+                <label for="eventDuration"><ion-icon name="hourglass-outline"></ion-icon> Durée :</label>
                 <select id="eventDuration" required>
                     <option value="indeterminee">Durée indéterminée</option>
                     <option value="1-heure">1 heure</option>
@@ -115,19 +116,18 @@
                     <option value="journee-entiere">Journée entière</option>
                 </select>
 
-                <label for="eventDescription">Description (optionnel) :</label>
+                <label for="eventDescription"><ion-icon name="create-outline"></ion-icon> Description (optionnel) :</label>
                 <textarea id="eventDescription"></textarea>
 
-                <label for="newParticipantNameInput">Ajouter un participant :</label>
+                <label for="newParticipantNameInput"><ion-icon name="person-add-outline"></ion-icon> Ajouter un participant :</label>
                 <div class="participant-input-group">
                     <input type="text" id="newParticipantNameInput" placeholder="Nom du participant">
                     <button type="button" id="addParticipantToFormBtn" class="small-action-btn">
                         <ion-icon name="add-circle-outline"></ion-icon> Ajouter
                     </button>
                 </div>
-                <label>Participants pour cet événement :</label>
-                <ul id="formParticipantsList" class="form-participants-display">
-                </ul>
+                <label><ion-icon name="people-outline"></ion-icon> Participants :</label>
+                <ul id="formParticipantsList" class="form-participants-display"></ul>
 
                 <button type="submit" id="saveEventBtn">Enregistrer</button>
             </form>
@@ -135,18 +135,55 @@
     </div>
     
     <div id="eventDetailsModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content details-modal-content">
             <span class="close-details-btn">&times;</span>
-            <h3 id="detailsTitle"></h3>
-            <p><strong>Date :</strong> <span id="detailsDate"></span></p>
-            <p><strong>Heure :</strong> <span id="detailsTime"></span></p>
-            <p><strong>Lieu :</strong> <span id="detailsLocation"></span></p>
-            <p><strong>Durée :</strong> <span id="detailsDuration"></span></p>
-            <p><strong>Type :</strong> <span id="detailsType"></span></p>
-            <p id="detailsDescription"></p>
-            <h4>Participants :</h4>
-            <ul id="participantsList">
-            </ul>
+            
+            <div class="details-header">
+                 <h3 id="detailsTitle"></h3>
+                 <span id="detailsType" class="details-type-badge"></span>
+            </div>
+
+            <div class="details-section">
+                <div class="detail-item">
+                    <ion-icon name="calendar-outline"></ion-icon>
+                    <div>
+                        <span class="detail-label">Date</span>
+                        <span id="detailsDate" class="detail-value"></span>
+                    </div>
+                </div>
+                 <div class="detail-item">
+                    <ion-icon name="time-outline"></ion-icon>
+                    <div>
+                        <span class="detail-label">Heure</span>
+                        <span id="detailsTime" class="detail-value"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <ion-icon name="hourglass-outline"></ion-icon>
+                    <div>
+                        <span class="detail-label">Durée</span>
+                        <span id="detailsDuration" class="detail-value"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <ion-icon name="location-outline"></ion-icon>
+                    <div>
+                        <span class="detail-label">Lieu</span>
+                        <span id="detailsLocation" class="detail-value"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h4><ion-icon name="create-outline"></ion-icon> Description</h4>
+                <p id="detailsDescription"></p>
+            </div>
+            
+            <div class="details-section">
+                <h4><ion-icon name="people-outline"></ion-icon> Participants</h4>
+                <ul id="participantsList"></ul>
+            </div>
+
             <div class="modal-actions">
                 <button id="joinEventBtn" class="join-btn">Rejoindre</button>
                 <button id="editEventBtn" class="edit-btn">Modifier</button>
@@ -160,8 +197,7 @@
             <span class="close-day-action-btn">&times;</span>
             <h3 id="dayActionTitle">Actions du jour</h3>
             <p id="dayActionSubtitle">Que souhaitez-vous faire ?</p>
-            <div id="dayActionEventsList" class="day-action-events-list">
-                </div>
+            <div id="dayActionEventsList" class="day-action-events-list"></div>
             <div class="modal-actions">
                 <button id="dayActionAddBtn" class="join-btn">
                     <ion-icon name="add-circle-outline"></ion-icon>
@@ -176,8 +212,7 @@
             <h3 id="customAlertTitle"></h3>
             <p id="customAlertMessage"></p>
             <input type="text" id="customAlertInput" class="custom-alert-input" placeholder="Saisir ici...">
-            <div class="custom-alert-actions">
-            </div>
+            <div class="custom-alert-actions"></div>
         </div>
     </div>
 
