@@ -33,6 +33,41 @@ body {
     min-height: 100vh;
 }
 
+/* --- ANIMATION DE FOND (BRAISES) --- */
+.background-embers { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: -1; 
+    overflow: hidden; 
+    pointer-events: none; 
+}
+
+.ember { 
+    position: absolute; 
+    bottom: -20px; 
+    background-color: var(--ember-orange); 
+    border-radius: 50%; 
+    opacity: 0; 
+    box-shadow: 0 0 10px 2px var(--ember-orange), 0 0 20px 4px #ff4500; 
+    animation: rise-ember infinite ease-in; 
+}
+
+@keyframes rise-ember { 
+    from { 
+        transform: translateY(0) scale(1); 
+        opacity: 0.8; 
+    } 
+    to { 
+        transform: translateY(-110vh) scale(0.3); 
+        opacity: 0; 
+    } 
+}
+/* --- FIN ANIMATION DE FOND --- */
+
+
 /* --- BARRE SUPÉRIEURE GLOBALE --- */
 #global-header {
     position: fixed;
@@ -225,12 +260,7 @@ body {
     margin: 0;
 }
 
-
-/* --- NAVIGATION INFÉRIEURE ET EFFETS VISUELS --- */
-.background-embers { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
-.ember { position: absolute; bottom: -20px; background-color: var(--ember-orange); border-radius: 50%; opacity: 0; box-shadow: 0 0 10px 2px var(--ember-orange), 0 0 20px 4px #ff4500; animation: rise-ember infinite ease-in; }
-@keyframes rise-ember { from { transform: translateY(0) scale(1); opacity: 0.8; } to { transform: translateY(-110vh) scale(0.3); opacity: 0; } }
-
+/* --- NAVIGATION INFÉRIEURE ET EFFETS VISUELS (Suite) --- */
 .navigation { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--smoke-white); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: center; border-top: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 -8px 32px 0 rgba(0, 0, 0, 0.37); z-index: 100; }
 .navigation ul { position: relative; display: flex; width: 100%; max-width: 600px; height: 100%; padding: 0; margin: 0; --indicator-x-pos: 0px; }
 .navigation ul li { position: relative; list-style: none; flex: 1; }
@@ -434,7 +464,7 @@ select#filterInput option, select#statsFilterInput option { background-color: va
     background-color: var(--background-card); 
     border-radius: 25px; 
     overflow: hidden; 
-    padding: 20px 30px; /* MODIFIÉ: Ajout padding bas (20px) */
+    padding: 20px 30px; 
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px; 
     display: flex; 
     flex-direction: column; 
@@ -459,7 +489,7 @@ select#filterInput option, select#statsFilterInput option { background-color: va
 .year-picker { display: flex; align-items: center; }
 .year-change { height: 30px; width: 30px; border-radius: 50%; display: grid; place-items: center; margin: 0px 10px; cursor: pointer; }
 .year-change:hover { background-color: var(--ember-orange); transition: all .2s ease-in-out; transform: scale(1.12); }
-.calendar-footer { padding: 10px; display: flex; justify-content: flex-end; align-items: center; }
+.calendar-footer { padding: 10px; display: flex; justify-content: flex-end; align-items: center; } 
 #year:hover { cursor: pointer; transform: scale(1.2); transition: all 0.2 ease-in-out; }
 
 #calendar-view .calendar-days div:hover:not(.empty) { background-color: var(--ember-orange); }
@@ -494,37 +524,35 @@ select#filterInput option, select#statsFilterInput option { background-color: va
     font-weight: bold;
 }
 
-/* MODIFIÉ: Styles pour la date/heure en bas du calendrier */
 .date-time-formate { 
-    height: auto; /* Hauteur auto pour s'adapter au contenu */
+    height: auto; 
     width: 100%; 
     font-family: 'Poppins', sans-serif; 
     position: relative; 
     display: flex; 
-    margin-top: 15px; /* Remplacement de 'top' pour un meilleur flux */
+    margin-top: 15px; 
+    top: 0; 
     justify-content: center; 
     align-items: center; 
-    gap: 20px; /* Espace fixe entre les éléments */
+    gap: 15px; 
 }
 .day-text-formate { 
     font-family: 'Poppins', sans-serif; 
     font-size: 1.4rem; 
-    padding-right: 20px; /* Padding fixe */
+    padding-right: 15px; 
     border-right: 3px solid var(--ember-orange); 
 }
 .date-time-value { 
     display: block; 
     position: relative; 
     text-align: center; 
-    padding-left: 0; /* Géré par le 'gap' du parent */
+    padding-left: 0; 
     font-family: 'Poppins', sans-serif; 
 }
 .time-formate { 
     font-size: 1.5rem; 
     font-family: 'Poppins', sans-serif; 
 }
-
-/* Animations (inchangées) */
 @keyframes to-left { from { transform: translatex(230%); opacity: 1; } to { transform: translatex(0); opacity: 1; } }
 @keyframes to-right { 10% { transform: translatex(0); opacity: 1; } 100% { transform: translatex(-150%); opacity: 1; } }
 @keyframes showtime { from { transform: translatex(250%); opacity: 1; } to { transform: translatex(0%); opacity: 1; } }
@@ -677,12 +705,12 @@ select#filterInput option, select#statsFilterInput option { background-color: va
 }
 .global-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* MODIFIÉ: minmax réduit pour plus de compacité */
-    gap: 1rem; /* MODIFIÉ: gap réduit */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+    gap: 1rem; 
 }
 .global-stat-item {
     background-color: var(--charcoal);
-    padding: 1rem; /* MODIFIÉ: padding réduit */
+    padding: 1rem; 
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -692,12 +720,12 @@ select#filterInput option, select#statsFilterInput option { background-color: va
     text-align: center;
 }
 .global-stat-item .stat-label {
-    font-size: 0.8em; /* MODIFIÉ: taille réduite */
+    font-size: 0.8em; 
     color: var(--smoke-white); 
     order: 2;
 }
 .global-stat-item .stat-value {
-    font-size: 1.8em; /* MODIFIÉ: taille réduite */
+    font-size: 1.8em; 
     font-weight: bold;
     color: var(--ember-orange);
     order: 1;
@@ -734,22 +762,21 @@ select#filterInput option, select#statsFilterInput option { background-color: va
 .settings-container .danger-zone > button { margin-top: 1rem; }
 
 /* --- RESPONSIVITÉ FINALE --- */
-/* MODIFIÉ: Média query ajoutée pour corriger l'affichage date/heure sur petits écrans */
-@media (max-width: 500px) {
+@media (max-width: 500px) { 
     .date-time-formate {
-        flex-direction: column; /* Empile verticalement */
-        gap: 5px; /* Espace réduit */
+        flex-direction: column; 
+        gap: 5px; 
     }
     .day-text-formate {
-        border-right: none; /* Supprime la bordure droite */
+        border-right: none; 
         padding-right: 0;
-        border-bottom: 2px solid var(--ember-orange); /* Ajoute une bordure en bas */
-        padding-bottom: 5px; /* Espace sous la bordure */
-        margin-bottom: 5px; /* Espace entre les deux blocs */
+        border-bottom: 2px solid var(--ember-orange); 
+        padding-bottom: 5px; 
+        margin-bottom: 5px; 
     }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 420px) { 
     .navigation { height: 70px; }
     .indicator { width: 60px; height: 60px; }
     .indicator ion-icon { font-size: 2em; }
@@ -773,7 +800,7 @@ select#filterInput option, select#statsFilterInput option { background-color: va
         border-top: 1px solid var(--charcoal); 
         margin-top: 0.5rem; 
     }
-    .calendar { padding: 15px; } /* Padding uniforme sur mobile */
+    .calendar { padding: 15px; } 
     .calendar-days div { height: 45px; font-size: 1rem; }
     .legend-grid { grid-template-columns: 1fr; } 
     .global-stats-grid { grid-template-columns: 1fr; } 
