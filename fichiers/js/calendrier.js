@@ -29,14 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const newParticipantNameInput = document.getElementById('newParticipantNameInput');
     const addParticipantToFormBtn = document.getElementById('addParticipantToFormBtn');
     const formParticipantsListUI = document.getElementById('formParticipantsList');
-    
+
     // --- VARIABLES D'ÉTAT ---
     let allEvents = {};
     let currentDate = new Date();
     let currentSearchTerm = '';
     let currentFilterType = 'all';
     let currentDetailEventId = null;
-    let currentFormParticipants = []; 
+    let currentFormParticipants = [];
 
     // --- DIALOGUES PERSONNALISÉS ---
     function showCustomConfirm({ title, message, okText = 'Confirmer', cancelText = 'Annuler' }) {
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Promise(resolve => {
             document.getElementById('customAlertTitle').textContent = title;
             document.getElementById('customAlertMessage').textContent = message;
-            
+
             const input = document.getElementById('customAlertInput');
             input.value = '';
             input.style.display = 'block';
@@ -94,10 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FILTRAGE ET AFFICHAGE ---
     function eventMatchesFilters(event) {
         const search = currentSearchTerm.toLowerCase();
-        const matchesSearch = !search || 
+        const matchesSearch = !search ||
             event.title.toLowerCase().includes(search) ||
             (event.description && event.description.toLowerCase().includes(search));
-        
+
         const matchesType = currentFilterType === 'all' || event.type === currentFilterType;
 
         return matchesSearch && matchesType;
@@ -125,7 +125,13 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 1; i <= daysInMonth; i++) {
             const cell = document.createElement('div');
             cell.classList.add('day-cell');
-            const dateStr = new Date(year, month, i).toISOString().split('T')[0];
+
+            const correctMonth = month + 1;
+            const yearStr = year.toString();
+            const monthStr = correctMonth.toString().padStart(2, '0');
+            const dayStr = i.toString().padStart(2, '0');
+            const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
+
             cell.dataset.date = dateStr;
             const dayNumber = document.createElement('span');
             dayNumber.classList.add('day-number');
@@ -141,16 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayEvents.forEach(([id, event]) => {
                     const eventItem = document.createElement('div');
                     eventItem.className = `day-event-item ${event.type}`;
-                    
+
                     const titleSpan = document.createElement('span');
                     titleSpan.className = 'event-title-on-calendar';
                     titleSpan.textContent = event.title;
-                    
+
                     const countSpan = document.createElement('span');
                     countSpan.className = 'event-participant-count-on-calendar';
                     const participantCount = event.participants ? Object.keys(event.participants).length : 0;
                     countSpan.textContent = `(${participantCount})`;
-                    
+
                     eventItem.appendChild(titleSpan);
                     eventItem.appendChild(countSpan);
 
@@ -165,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             calendarGrid.appendChild(cell);
         }
     }
-    
+
     function openDayEvents(dateStr) {
         const dayEvents = Object.entries(allEvents).filter(([, e]) => e.date === dateStr && eventMatchesFilters(e));
         if (dayEvents.length > 0) {
@@ -180,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const upcomingList = document.getElementById('upcomingEventsList');
         const pastList = document.getElementById('pastEventsList');
         const archivedList = document.getElementById('archivedEventsList');
-        
+
         upcomingList.innerHTML = '';
         pastList.innerHTML = '';
         archivedList.innerHTML = '';
@@ -189,35 +195,32 @@ document.addEventListener('DOMContentLoaded', () => {
         now.setHours(0, 0, 0, 0);
 
         const filteredEvents = Object.entries(allEvents).filter(([, event]) => eventMatchesFilters(event));
-        // Tri pour passés/archivés : plus récent en haut. À venir : plus proche en haut.
-        const sortedForPastArchived = [...filteredEvents].sort(([,a], [,b]) => new Date(b.date) - new Date(a.date));
-        const sortedForUpcoming = [...filteredEvents].sort(([,a], [,b]) => new Date(a.date) - new Date(b.date));
+        
+        // MODIFIÉ : Amélioration du tri pour prendre en compte l'heure
+        const sortedEvents = [...filteredEvents].sort(([,a], [,b]) => {
+            const dateA = new Date(`${a.date}T${a.time || '00:00'}`);
+            const dateB = new Date(`${b.date}T${b.time || '00:00'}`);
+            return dateA - dateB;
+        });
 
         let upcomingCount = 0, pastCount = 0, archivedCount = 0;
 
-        // Pour 'À venir', on veut le plus proche en premier, donc on itère sur la liste triée normalement et on ajoute à la fin (prepend)
-        sortedForUpcoming.reverse().forEach(([id, event]) => {
-            const eventDate = new Date(event.date);
-            if (!event.isArchived && eventDate >= now) {
-                const item = createEventListItem(id, event, false);
-                upcomingList.appendChild(item); // append pour ordre chronologique correct
-                upcomingCount++;
-            }
-        });
+        sortedEvents.forEach(([id, event]) => {
+            const eventDate = new Date(`${event.date}T${event.time || '23:59:59'}`);
+            const isEventPast = eventDate < new Date();
+            const item = createEventListItem(id, event, isEventPast);
 
-        // Pour 'Passés' et 'Archives', on veut le plus récent en premier
-        sortedForPastArchived.forEach(([id, event]) => {
-            const eventDate = new Date(event.date);
-            const item = createEventListItem(id, event, eventDate < now);
             if (event.isArchived) {
                 archivedList.appendChild(item);
                 archivedCount++;
-            } else if (eventDate < now) {
-                pastList.appendChild(item);
+            } else if (isEventPast) {
+                pastList.insertBefore(item, pastList.firstChild); // Insérer en premier pour avoir les plus récents en haut
                 pastCount++;
+            } else {
+                upcomingList.appendChild(item);
+                upcomingCount++;
             }
         });
-
 
         if (upcomingCount === 0) upcomingList.innerHTML = '<p class="no-events">Aucun événement à venir.</p>';
         if (pastCount === 0) pastList.innerHTML = '<p class="no-events">Aucun événement passé.</p>';
@@ -231,14 +234,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const content = document.createElement('div');
         content.className = 'event-list-item-content';
+
+        const displayDate = new Date(event.date + 'T00:00:00');
+        let dateString = displayDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+        // MODIFIÉ : Ajout de l'heure à la chaîne de caractères si elle existe
+        if (event.time) {
+            dateString += ` à ${event.time}`;
+        }
+
         content.innerHTML = `
             <div class="event-list-item-type ${event.type}"></div>
             <div class="event-list-item-details">
                 <div class="title">${event.title}</div>
-                <div class="date">${new Date(event.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                <div class="date">${dateString}</div>
             </div>`;
         content.addEventListener('click', () => showEventDetails(id));
-        
+
         const actions = document.createElement('div');
         actions.className = 'event-item-actions';
 
@@ -284,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (actions.hasChildNodes()) {
             item.appendChild(actions);
         }
-        
+
         return item;
     }
 
@@ -306,10 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
             removeBtn.className = 'remove-participant-btn';
             removeBtn.innerHTML = `<ion-icon name="trash-outline"></ion-icon>`;
             removeBtn.title = "Supprimer ce participant";
-            removeBtn.type = 'button'; 
+            removeBtn.type = 'button';
             removeBtn.addEventListener('click', () => {
-                currentFormParticipants.splice(index, 1); 
-                renderFormParticipantsList(); 
+                currentFormParticipants.splice(index, 1);
+                renderFormParticipantsList();
             });
             li.appendChild(removeBtn);
             formParticipantsListUI.appendChild(li);
@@ -323,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentFormParticipants.push(newName);
                 renderFormParticipantsList();
             }
-            newParticipantNameInput.value = ''; 
+            newParticipantNameInput.value = '';
         }
         newParticipantNameInput.focus();
     });
@@ -335,10 +347,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalTitle').textContent = "Ajouter un Événement";
         document.getElementById('saveEventBtn').textContent = "Enregistrer";
         document.getElementById('eventDate').value = date || new Date().toISOString().split('T')[0];
-        
-        currentFormParticipants = []; 
-        renderFormParticipantsList(); 
-        
+        document.getElementById('eventTime').value = ''; // MODIFIÉ : S'assurer que le champ heure est vide
+
+        currentFormParticipants = [];
+        renderFormParticipantsList();
+
         eventModal.style.display = 'flex';
     }
 
@@ -346,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const event = allEvents[eventId];
         if (!event) return;
         closeDetailsModal();
-        
+
         document.getElementById('eventId').value = eventId;
         document.getElementById('modalTitle').textContent = "Modifier l'Événement";
         document.getElementById('eventTitle').value = event.title;
@@ -356,12 +369,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('eventDuration').value = event.duration || 'indeterminee';
         document.getElementById('eventDescription').value = event.description || '';
         
-        currentFormParticipants = []; 
+        // MODIFIÉ : Pré-remplir le champ de l'heure s'il existe
+        document.getElementById('eventTime').value = event.time || '';
+
+        currentFormParticipants = [];
         if (event.participants) {
             currentFormParticipants = Object.values(event.participants).map(p => p.name);
         }
         renderFormParticipantsList();
-        
+
         document.getElementById('saveEventBtn').textContent = "Mettre à jour";
         eventModal.style.display = 'flex';
     }
@@ -369,21 +385,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function showEventDetails(eventId) {
         const event = allEvents[eventId];
         if (!event) {
-            closeDetailsModal(); // Si l'événement n'existe plus (ex: supprimé par un autre utilisateur)
+            closeDetailsModal();
             return;
         }
         currentDetailEventId = eventId;
 
+        const displayDate = new Date(event.date + 'T00:00:00');
+
         document.getElementById('detailsTitle').textContent = event.title;
-        document.getElementById('detailsDate').textContent = new Date(event.date).toLocaleDateString('fr-FR');
+        document.getElementById('detailsDate').textContent = displayDate.toLocaleDateString('fr-FR');
         document.getElementById('detailsLocation').textContent = event.location || 'Non spécifié';
+        
+        // MODIFIÉ : Logique pour afficher ou cacher l'heure
+        const detailsTimeWrapper = document.getElementById('detailsTimeWrapper');
+        if (event.time) {
+            detailsTimeWrapper.style.display = 'block';
+            document.getElementById('detailsTime').textContent = event.time;
+        } else {
+            detailsTimeWrapper.style.display = 'none';
+        }
+
         const durationValue = event.duration || 'indeterminee';
         let friendlyDuration = durationValue.replace(/-/g, ' ');
         friendlyDuration = friendlyDuration.charAt(0).toUpperCase() + friendlyDuration.slice(1);
         document.getElementById('detailsDuration').textContent = friendlyDuration;
         document.getElementById('detailsType').textContent = event.type.charAt(0).toUpperCase() + event.type.slice(1);
         document.getElementById('detailsDescription').textContent = event.description || "Aucune description.";
-        
+
         refreshParticipantsListInDetailsModal(event.participants, eventId);
         eventDetailsModal.style.display = 'flex';
     }
@@ -394,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (participantsData && Object.keys(participantsData).length > 0) {
             Object.entries(participantsData).forEach(([participantKey, participant]) => {
                 const li = document.createElement('li');
-                
+
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = participant.name;
                 li.appendChild(nameSpan);
@@ -404,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteParticipantBtn.innerHTML = '<ion-icon name="trash-outline" role="img" class="hydrated" aria-label="trash outline"></ion-icon>';
                 deleteParticipantBtn.title = 'Supprimer ce participant';
                 deleteParticipantBtn.type = 'button';
-                
+
                 deleteParticipantBtn.addEventListener('click', async () => {
                     const isConfirmed = await showCustomConfirm({
                         title: 'Supprimer le Participant',
@@ -423,21 +451,21 @@ document.addEventListener('DOMContentLoaded', () => {
             pList.innerHTML = "<li>Aucun participant.</li>";
         }
     }
-    
+
     const closeEventModal = () => {
         eventModal.style.display = 'none';
-        currentFormParticipants = []; 
+        currentFormParticipants = [];
     };
-    const closeDetailsModal = () => { 
-        eventDetailsModal.style.display = 'none'; 
-        currentDetailEventId = null; 
+    const closeDetailsModal = () => {
+        eventDetailsModal.style.display = 'none';
+        currentDetailEventId = null;
     };
 
     // --- GESTION DES ÉVÉNEMENTS (FIREBASE) ---
     eventForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const eventId = document.getElementById('eventId').value;
-        
+
         const participantsObject = {};
         if (currentFormParticipants.length > 0) {
             currentFormParticipants.forEach(name => {
@@ -446,17 +474,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const eventData = { 
-            title: document.getElementById('eventTitle').value, 
-            date: document.getElementById('eventDate').value, 
-            type: document.getElementById('eventType').value, 
+        const eventData = {
+            title: document.getElementById('eventTitle').value,
+            date: document.getElementById('eventDate').value,
+            time: document.getElementById('eventTime').value, // MODIFIÉ : Ajout de l'heure à l'objet sauvegardé
+            type: document.getElementById('eventType').value,
             location: document.getElementById('eventLocation').value,
             duration: document.getElementById('eventDuration').value,
             description: document.getElementById('eventDescription').value,
             participants: participantsObject,
             isArchived: (eventId && allEvents[eventId]) ? allEvents[eventId].isArchived || false : false
         };
-        
+
         if (eventId) {
             eventsRef.child(eventId).update(eventData);
         } else {
@@ -473,19 +502,16 @@ document.addEventListener('DOMContentLoaded', () => {
     nextMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
     document.querySelector('#eventModal .close-btn').addEventListener('click', closeEventModal);
     document.querySelector('#eventDetailsModal .close-details-btn').addEventListener('click', closeDetailsModal);
-    
+
     window.addEventListener('click', e => {
         if (e.target == eventModal) closeEventModal();
         if (e.target == eventDetailsModal) closeDetailsModal();
         if (e.target == customAlertModal && customAlertModal.style.display === 'flex') {
-            // Gérer la fermeture de la modale custom si on clique à l'extérieur
-            // Cela dépend de comment vous voulez que `resolve` soit appelé (null, false ?)
-            // Pour l'instant, on ne fait rien pour éviter de résoudre la promesse incorrectement
         }
     });
 
     document.getElementById('editEventBtn').addEventListener('click', () => { if (currentDetailEventId) openEventModalForEdit(currentDetailEventId); });
-    
+
     document.getElementById('deleteEventBtn').addEventListener('click', async () => {
         if (!currentDetailEventId) return;
         const eventToDelete = allEvents[currentDetailEventId];
@@ -502,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeDetailsModal();
         }
     });
-    
+
     document.getElementById('joinEventBtn').addEventListener('click', async () => {
         if (!currentDetailEventId) return;
         const userName = await showCustomPrompt({
@@ -517,17 +543,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Listener Firebase pour la mise à jour en temps réel
-    eventsRef.on('value', snapshot => { 
+    eventsRef.on('value', snapshot => {
         const data = snapshot.val() || {};
-        allEvents = data; 
+        allEvents = data;
 
         applyFiltersAndRender();
-        
+
         if (eventDetailsModal.style.display === 'flex' && currentDetailEventId && allEvents[currentDetailEventId]) {
             const currentEventData = allEvents[currentDetailEventId];
+            const displayDate = new Date(currentEventData.date + 'T00:00:00');
+
             document.getElementById('detailsTitle').textContent = currentEventData.title;
-            document.getElementById('detailsDate').textContent = new Date(currentEventData.date).toLocaleDateString('fr-FR');
+            document.getElementById('detailsDate').textContent = displayDate.toLocaleDateString('fr-FR');
             document.getElementById('detailsLocation').textContent = currentEventData.location || 'Non spécifié';
+            
+            // MODIFIÉ : Logique d'affichage de l'heure pour les màj en temps réel
+            const detailsTimeWrapper = document.getElementById('detailsTimeWrapper');
+            if (currentEventData.time) {
+                detailsTimeWrapper.style.display = 'block';
+                document.getElementById('detailsTime').textContent = currentEventData.time;
+            } else {
+                detailsTimeWrapper.style.display = 'none';
+            }
+            
             const durationValue = currentEventData.duration || 'indeterminee';
             let friendlyDuration = durationValue.replace(/-/g, ' ');
             friendlyDuration = friendlyDuration.charAt(0).toUpperCase() + friendlyDuration.slice(1);
@@ -541,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- NAVIGATION ET ANIMATIONS ---
+    // (Le reste du code est inchangé)
     const navList = document.querySelectorAll(".navigation .list");
     const ul = document.querySelector(".navigation ul");
     const indicator = document.querySelector(".indicator");
@@ -576,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => moveIndicator(clickedItem), 50);
     }
     navList.forEach(item => item.addEventListener("click", () => setActiveLink(item)));
-    
+
     function setInitialState() {
         const activeItem = document.querySelector('.list.active');
         if (activeItem) setTimeout(() => moveIndicator(activeItem), 50);
