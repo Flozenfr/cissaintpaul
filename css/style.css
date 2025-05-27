@@ -394,8 +394,6 @@ body.menu-open #app-main {
     height: 100%;
     border: none;
     background-color: var(--dark-bg);
-    /* MODIFIÉ : Bloque TOUS les défilements et le zoom tactile */
-    touch-action: none;
 }
 
 /* Nav Footer */
