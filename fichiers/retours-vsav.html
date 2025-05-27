@@ -8,19 +8,84 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/retours-vsav.css">
+    <link rel="stylesheet" href="retours-vsav.css">
 </head>
 <body>
 
     <div class="background-embers"></div>
 
+    <div id="loader-modal" class="modal">
+        <div class="modal-content loader-content">
+            <div class="loader"></div>
+            <p>Enregistrement en cours...</p>
+        </div>
+    </div>
+
+    <div id="image-preview-modal" class="modal">
+        <span class="close-button image-close">&times;</span>
+        <img class="modal-content-image" id="full-image-preview">
+    </div>
+
     <div id="global-header">
         <div id="main-header-content">
             <h1 class="app-title">
                 <i class="bi bi-clipboard2-pulse-fill"></i>
-                <span>Gestion Interventions VSAV</span>
-            </h1>
+                </h1>
         </div>
+
+        <div id="header-controls">
+            <div id="header-controls-current" class="header-control-group">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="currentSearch" placeholder="Rechercher...">
+                </div>
+                <div class="actions-group">
+                    <div class="dropdown filter-dropdown">
+                        <button class="btn-header dropdown-toggle" type="button" id="filterDropdownBtn" title="Filtres">
+                            <i class="bi bi-funnel"></i> <span class="btn-header-text">Filtres</span>
+                        </button>
+                        <ul class="dropdown-menu" id="filterDropdownMenu">
+                           <li><a class="dropdown-item active" href="#" data-filter="all"><i class="bi bi-collection"></i> Toutes</a></li>
+                           <li><hr class="dropdown-divider"></li>
+                           <li><a class="dropdown-item" href="#" data-filter="En cours"><i class="bi bi-hourglass-split"></i> En cours</a></li>
+                           <li><a class="dropdown-item" href="#" data-filter="Terminé"><i class="bi bi-check-circle"></i> Terminées</a></li>
+                           <li><a class="dropdown-item" href="#" data-filter="En attente"><i class="bi bi-pause-circle"></i> En attente</a></li>
+                           <li><hr class="dropdown-divider"></li>
+                           <li><a class="dropdown-item" href="#" data-filter="Urgent"><i class="bi bi-exclamation-triangle"></i> Urgentes</a></li>
+                           <li><a class="dropdown-item" href="#" data-filter="Critique"><i class="bi bi-exclamation-octagon"></i> Critiques</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown export-dropdown">
+                        <button class="btn-header dropdown-toggle" type="button" id="exportDropdownBtn" title="Exporter">
+                            <i class="bi bi-download"></i> <span class="btn-header-text">Exporter</span>
+                        </button>
+                        <ul class="dropdown-menu" id="exportDropdownMenu">
+                            <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i> Excel</a></li>
+                            <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> PDF</a></li>
+                            <li><a class="dropdown-item" href="#" id="exportCsvBtn"><i class="bi bi-file-earmark-text"></i> CSV</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div id="header-controls-archive" class="header-control-group">
+                 <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="archiveSearch" placeholder="Rechercher dans les archives...">
+                </div>
+            </div>
+             <div id="header-controls-pharmacy" class="header-control-group">
+                 <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="pharmacySearch" placeholder="Rechercher matériel/N° Inter...">
+                </div>
+                 <div class="actions-group">
+                    <button id="exportPharmacyBtn" class="btn-header" title="Exporter Pharmacie">
+                        <i class="bi bi-file-earmark-arrow-down-fill"></i> <span class="btn-header-text">Exporter</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <button id="top-login-btn" class="top-login-btn" title="Accès Pharmacie">
             <ion-icon name="medkit-outline"></ion-icon>
         </button>
@@ -33,7 +98,6 @@
                     <label for="numero"><i class="bi bi-123"></i> N° Intervention</label>
                     <input type="text" id="numero" required>
                 </div>
-
                 <div class="form-group">
                     <label for="date"><i class="bi bi-calendar-date"></i> Date</label>
                     <input type="date" id="date" required>
@@ -42,12 +106,10 @@
                     <label for="heure"><i class="bi bi-clock"></i> Heure</label>
                     <input type="time" id="heure" required>
                 </div>
-
                 <div class="form-group full-width">
                     <label for="nom"><i class="bi bi-person-badge"></i> Responsable</label>
                     <input type="text" id="nom" required>
                 </div>
-
                 <div class="form-group full-width">
                     <label for="lieu"><i class="bi bi-geo-alt"></i> Adresse</label>
                     <div class="input-group">
@@ -55,12 +117,10 @@
                         <button class="btn-icon" type="button" id="geolocateBtn"><i class="bi bi-geo"></i></button>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="commune"><i class="bi bi-building"></i> Commune</label>
                     <input type="text" id="commune">
                 </div>
-
                 <div class="form-group">
                     <label for="statut"><i class="bi bi-info-circle"></i> Statut</label>
                     <select id="statut">
@@ -69,7 +129,6 @@
                         <option value="Terminé">Terminé</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="urgence"><i class="bi bi-exclamation-triangle"></i> Urgence</label>
                     <select id="urgence">
@@ -78,7 +137,6 @@
                         <option value="Critique">Critique</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="categorie"><i class="bi bi-tags"></i> Catégorie</label>
                     <select id="categorie">
@@ -89,7 +147,6 @@
                         <option value="Autre">Autre</option>
                     </select>
                 </div>
-
                 <div class="form-group full-width">
                     <label for="materielInput"><i class="bi bi-tools"></i> Matériels utilisés</label>
                     <div class="input-group">
@@ -98,19 +155,17 @@
                     </div>
                     <div id="materielsList" class="tags-list"></div>
                 </div>
-
                 <div class="form-group full-width">
                     <label for="commentaire"><i class="bi bi-chat-left-text"></i> Commentaire</label>
                     <textarea id="commentaire" rows="4"></textarea>
                 </div>
-
                 <div class="form-group full-width">
                     <label for="photo"><i class="bi bi-camera"></i> Photos (Max 15MB)</label>
                     <input type="file" id="photo" accept="image/*" multiple>
                     <div id="photoPreview" class="photo-preview-grid"></div>
                 </div>
             </div>
-             <div class="form-actions">
+            <div class="form-actions">
                 <button type="submit" class="btn-primary"><i class="bi bi-save"></i> Enregistrer</button>
                 <button type="button" class="btn-secondary" id="resetForm"><i class="bi bi-arrow-counterclockwise"></i> Réinitialiser</button>
             </div>
@@ -119,108 +174,36 @@
     </div>
 
     <div class="view-container" id="current-view">
-        <div class="current-view-header">
-            <div class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" id="currentSearch" placeholder="Rechercher une intervention...">
-            </div>
-            <div class="actions-group">
-                <div class="dropdown filter-dropdown">
-                    <button class="btn-secondary dropdown-toggle" type="button" id="filterDropdownBtn">
-                        <i class="bi bi-funnel"></i> Filtres
-                    </button>
-                    <ul class="dropdown-menu" id="filterDropdownMenu">
-                        <li><a class="dropdown-item active" href="#" data-filter="all"><i class="bi bi-collection"></i> Toutes</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" data-filter="En cours"><i class="bi bi-hourglass-split"></i> En cours</a></li>
-                        <li><a class="dropdown-item" href="#" data-filter="Terminé"><i class="bi bi-check-circle"></i> Terminées (avant archivage)</a></li>
-                        <li><a class="dropdown-item" href="#" data-filter="En attente"><i class="bi bi-pause-circle"></i> En attente</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" data-filter="Urgent"><i class="bi bi-exclamation-triangle"></i> Urgentes</a></li>
-                        <li><a class="dropdown-item" href="#" data-filter="Critique"><i class="bi bi-exclamation-octagon"></i> Critiques</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown export-dropdown">
-                    <button class="btn-primary dropdown-toggle" type="button" id="exportDropdownBtn">
-                        <i class="bi bi-download"></i> Exporter
-                    </button>
-                    <ul class="dropdown-menu" id="exportDropdownMenu">
-                        <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i> Excel</a></li>
-                        <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> PDF</a></li>
-                        <li><a class="dropdown-item" href="#" id="exportCsvBtn"><i class="bi bi-file-earmark-text"></i> CSV</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div id="currentInterventionsCards" class="cards-view">
-            </div>
+        <div id="currentInterventionsCards" class="cards-view"></div>
         <div class="pagination-container">
-            <ul class="pagination" id="currentCardsPagination">
-                </ul>
+            <ul class="pagination" id="currentCardsPagination"></ul>
         </div>
     </div>
 
     <div class="view-container" id="archive-view">
-        <div class="current-view-header">
-            <div class="search-box">
-                <i class="bi bi-search"></i>
-                <input type="text" id="archiveSearch" placeholder="Rechercher dans les archives...">
-            </div>
-        </div>
-        <div id="archivedInterventionsCards" class="cards-view">
-            </div>
-         <div class="pagination-container">
-            <ul class="pagination" id="archivePagination">
-                </ul>
+        <div id="archivedInterventionsCards" class="cards-view"></div>
+        <div class="pagination-container">
+            <ul class="pagination" id="archivePagination"></ul>
         </div>
     </div>
 
     <div class="view-container" id="pharmacy-view">
-         <div class="current-view-header">
-            <div class="search-box">
-                 <i class="bi bi-search"></i>
-                <input type="text" id="pharmacySearch" placeholder="Rechercher un matériel/N° Inter...">
-            </div>
-            <div class="actions-group">
-                <button id="exportPharmacyBtn" class="btn-primary"><i class="bi bi-download"></i> Exporter Pharmacie</button>
-            </div>
-        </div>
-        <div id="pharmacyInterventionsCards" class="cards-view">
-            </div>
-         <div class="pagination-container">
-            <ul class="pagination" id="pharmacyPagination">
-                </ul>
+         <div id="pharmacyInterventionsCards" class="cards-view"></div>
+        <div class="pagination-container">
+            <ul class="pagination" id="pharmacyPagination"></ul>
         </div>
     </div>
 
     <div class="view-container" id="stats-view">
         <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-value" id="stats-en-cours">0</span>
-                <span class="stat-label">En cours</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-value" id="stats-termine">0</span>
-                <span class="stat-label">Terminées</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-value" id="stats-en-attente">0</span>
-                <span class="stat-label">En attente</span>
-            </div>
-             <div class="stat-card">
-                <span class="stat-value" id="stats-archive">0</span>
-                <span class="stat-label">Archivées</span>
-            </div>
+            <div class="stat-card"> <span class="stat-value" id="stats-en-cours">0</span> <span class="stat-label">En cours</span> </div>
+            <div class="stat-card"> <span class="stat-value" id="stats-termine">0</span> <span class="stat-label">Terminées</span> </div>
+            <div class="stat-card"> <span class="stat-value" id="stats-en-attente">0</span> <span class="stat-label">En attente</span> </div>
+            <div class="stat-card"> <span class="stat-value" id="stats-archive">0</span> <span class="stat-label">Archivées</span> </div>
         </div>
         <div class="charts-container">
-            <div class="chart-wrapper">
-                <h3>Interventions par mois</h3>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-            <div class="chart-wrapper">
-                <h3>Répartition par statut</h3>
-                <canvas id="statusChart"></canvas>
-            </div>
+            <div class="chart-wrapper"> <h3>Interventions par mois</h3> <canvas id="monthlyChart"></canvas> </div>
+            <div class="chart-wrapper"> <h3>Répartition par statut</h3> <canvas id="statusChart"></canvas> </div>
         </div>
     </div>
 
@@ -229,14 +212,14 @@
             <span class="close-button">&times;</span>
             <div id="modalBody"></div>
             <div class="modal-actions">
-                 <button type="button" class="btn-primary" id="printIntervention"><i class="bi bi-printer"></i> Imprimer</button>
+                <button type="button" class="btn-primary" id="printIntervention"><i class="bi bi-printer"></i> Imprimer</button>
             </div>
         </div>
     </div>
 
     <div id="pharmacyPasswordModal" class="modal">
         <div class="modal-content">
-             <h3 class="modal-title-confirm">Accès Sécurisé</h3>
+            <h3 class="modal-title-confirm">Accès Sécurisé</h3>
             <p>Veuillez entrer le mot de passe pour accéder à la section pharmacie.</p>
             <input type="password" id="pharmacyPasswordInput" placeholder="Mot de passe">
             <div class="modal-actions">
@@ -252,46 +235,20 @@
             <h3 class="modal-title-confirm">Gérer le statut du matériel</h3>
             <p>Intervention <strong id="material-modal-inter-num"></strong></p>
             <div id="material-management-list"></div>
-             <div class="modal-actions">
+            <div class="modal-actions">
                 <button id="material-status-close-btn" class="btn-secondary">Fermer</button>
             </div>
         </div>
     </div>
 
-
     <div class="navigation">
         <ul>
             <div class="indicator"><div class="shockwave"></div></div>
-            <li class="list active" data-view="form-view">
-                <a href="#">
-                    <span class="icon"><ion-icon name="add-circle-outline"></ion-icon></span>
-                    <span class="text"><b>Nouvelle</b></span>
-                </a>
-            </li>
-            <li class="list" data-view="current-view">
-                <a href="#">
-                    <span class="icon"><ion-icon name="play-circle-outline"></ion-icon></span>
-                    <span class="text"><b>Actives</b></span>
-                </a>
-            </li>
-            <li class="list" data-view="archive-view">
-                <a href="#">
-                    <span class="icon"><ion-icon name="archive-outline"></ion-icon></span>
-                    <span class="text"><b>Archives</b></span>
-                </a>
-            </li>
-            <li class="list" data-view="pharmacy-view">
-                <a href="#">
-                    <span class="icon"><ion-icon name="medkit-outline"></ion-icon></span>
-                    <span class="text"><b>Pharmacie</b></span>
-                </a>
-            </li>
-            <li class="list" data-view="stats-view">
-                <a href="#">
-                    <span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span>
-                    <span class="text"><b>Stats</b></span>
-                </a>
-            </li>
+            <li class="list active" data-view="form-view"> <a href="#"> <span class="icon"><ion-icon name="add-circle-outline"></ion-icon></span> <span class="text"><b>Nouvelle</b></span> </a> </li>
+            <li class="list" data-view="current-view"> <a href="#"> <span class="icon"><ion-icon name="play-circle-outline"></ion-icon></span> <span class="text"><b>Actives</b></span> </a> </li>
+            <li class="list" data-view="archive-view"> <a href="#"> <span class="icon"><ion-icon name="archive-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
+            <li class="list" data-view="pharmacy-view"> <a href="#"> <span class="icon"><ion-icon name="medkit-outline"></ion-icon></span> <span class="text"><b>Pharmacie</b></span> </a> </li>
+            <li class="list" data-view="stats-view"> <a href="#"> <span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span> <span class="text"><b>Stats</b></span> </a> </li>
         </ul>
     </div>
 
@@ -303,6 +260,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="js/retours-vsav.js"></script>
+    <script src="retours-vsav.js"></script>
 </body>
 </html>
