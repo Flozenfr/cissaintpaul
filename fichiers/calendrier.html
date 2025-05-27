@@ -88,6 +88,9 @@
                 <label for="eventDate">Date :</label>
                 <input type="date" id="eventDate" required>
 
+                <label for="eventTime">Heure (optionnel) :</label>
+                <input type="time" id="eventTime">
+
                 <label for="eventType">Type :</label>
                 <select id="eventType" required>
                     <option value="urgent">Urgent</option>
@@ -136,6 +139,7 @@
             <span class="close-details-btn">&times;</span>
             <h3 id="detailsTitle"></h3>
             <p><strong>Date :</strong> <span id="detailsDate"></span></p>
+            <p id="detailsTimeWrapper" style="display: none;"><strong>Heure :</strong> <span id="detailsTime"></span></p>
             <p><strong>Lieu :</strong> <span id="detailsLocation"></span></p>
             <p><strong>Durée :</strong> <span id="detailsDuration"></span></p>
             <p><strong>Type :</strong> <span id="detailsType"></span></p>
