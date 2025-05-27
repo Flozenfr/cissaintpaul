@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const eventModalTitle = document.getElementById('event-modal-title');
     const eventDateInput = document.getElementById('event-date');
     const eventCancelBtn = document.getElementById('event-cancel-btn');
-    const teamsMonthPicker = document.querySelector('#teams-view #teams-month-picker'); // Plus spécifique
+    const teamsMonthPicker = document.querySelector('#teams-view #teams-month-picker');
     const teamsPrevMonthBtn = document.getElementById('teams-prev-month-btn');
     const teamsNextMonthBtn = document.getElementById('teams-next-month-btn');
     const exportProposalsBtn = document.getElementById('export-proposals-btn');
@@ -91,11 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const replaceModalTitle = document.getElementById('replace-modal-title');
     const roleToReplaceEl = document.getElementById('role-to-replace');
     const replacementOptionsContainer = document.getElementById('replacement-options-container');
-    const replaceCancelBtn = document.getElementById('replace-cancel-btn');
-    const manualReplacementBtn = document.getElementById('manual-replacement-btn'); // AJOUTÉ
-    const manualReplacementNameInput = document.getElementById('manual-replacement-name'); // AJOUTÉ
-    if (replacePersonnelModal) replacePersonnelModal.querySelector('.close-button').addEventListener('click', () => closeModal(replacePersonnelModal));
-    if (replaceCancelBtn) replaceCancelBtn.addEventListener('click', () => closeModal(replacePersonnelModal));
+    const manualReplacementNameInput = document.getElementById('manual-replacement-name');
 
     // --- ÉTAT GLOBAL ---
     let allPersonnel = {};
@@ -110,6 +106,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentWorkingTeam = null;
     let matriculeSessionAuth = {};
 
+    // --- GESTION CENTRALISÉE DES CLICS SUR LA MODALE DE REMPLACEMENT ---
+    if (replacePersonnelModal) {
+        replacePersonnelModal.addEventListener('click', (e) => {
+            // Clic sur le bouton d'ajout manuel
+            if (e.target.id === 'manual-replacement-btn') {
+                e.preventDefault();
+                const manualName = manualReplacementNameInput.value.trim();
+                if (manualName) {
+                    performReplacement(`MANUAL:${manualName}`);
+                } else {
+                    showMessage("Veuillez entrer un nom pour l'ajout manuel.", "warning");
+                }
+            }
+            // Clic sur le bouton Annuler
+            if (e.target.id === 'replace-cancel-btn') {
+                closeModal(replacePersonnelModal);
+            }
+            // Clic sur le bouton de fermeture (X)
+            if (e.target.classList.contains('close-button')) {
+                closeModal(replacePersonnelModal);
+            }
+        });
+    }
 
     // --- FONCTIONS UTILITAIRES ---
     function showMessage(message, type) {
@@ -219,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         personnelArray.sort((a, b) => a.nom.localeCompare(b.nom));
 
         personnelArray.forEach(p => {
-            const fullName = `${p.nom} ${p.prenom}`; // MODIFIÉ
+            const fullName = `${p.nom} ${p.prenom}`;
             const item = document.createElement('div');
             item.className = 'search-result-item';
             item.textContent = fullName;
@@ -416,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 commentaire: fromBase64(pData.commentaire || ""),
                 fonctions: pData.fonctions ? pData.fonctions.map(f => fromBase64(f)) : []
             };
-            const fullName = `${p.nom} ${p.prenom}`; // MODIFIÉ
+            const fullName = `${p.nom} ${p.prenom}`;
             const initials = `${p.prenom.charAt(0)}${p.nom.charAt(0)}`.toUpperCase();
 
             const matriculeBlock = p.matricule ? `<div class="info-block"><ion-icon name="keypad-outline"></ion-icon><span>Matricule: ******</span></div>` : '<div class="info-block"><ion-icon name="alert-circle-outline"></ion-icon><span>Pas de matricule</span></div>';
@@ -435,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.dropdown-arrow').forEach(setupSearchDropdown);
 
         const activeTabEl = document.querySelector('.navigation .list.active');
-        if (activeTabEl) updateActiveView(activeTabEl); // Rafraîchit la vue active avec les nouvelles données
+        if (activeTabEl) updateActiveView(activeTabEl);
     });
 
     if(personnelList) personnelList.addEventListener('click', (e) => {
@@ -480,13 +499,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (arrow) arrow.classList.add('open');
 
         const filteredPersonnel = Object.entries(allPersonnel).filter(([id, p]) => {
-            const fullName = `${fromBase64(p.nom)} ${fromBase64(p.prenom)}`; // MODIFIÉ
+            const fullName = `${fromBase64(p.nom)} ${fromBase64(p.prenom)}`;
             return fullName.toLowerCase().includes(searchTermText);
         });
 
         filteredPersonnel.forEach(([id, pData]) => {
             const p = { id, nom: fromBase64(pData.nom), prenom: fromBase64(pData.prenom) };
-            const fullName = `${p.nom} ${p.prenom}`; // MODIFIÉ
+            const fullName = `${p.nom} ${p.prenom}`;
             const item = document.createElement('div');
             item.className = 'search-result-item';
             item.textContent = fullName;
@@ -739,20 +758,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wantsMpr) status.mprStatus = 'incomplete';
             return status;
         }
-        if (wantsCcf && teamToCheck.ccfTeam) { // Vérifier que ccfTeam existe
+        if (wantsCcf && teamToCheck.ccfTeam) {
             const ccf = teamToCheck.ccfTeam;
             const isCcfComplete = ccf[ROLES.CCF_DRIVER] && ccf[ROLES.CCF_LEADER] && ccf[ROLES.CCF_TEAMMATE] && ccf[ROLES.CCF_TEAMMATE].length === 2 && ccf[ROLES.CCF_TEAMMATE].every(id => id !== null);
             status.ccfStatus = isCcfComplete ? 'complete' : 'incomplete';
         } else if (wantsCcf) {
-            status.ccfStatus = 'incomplete'; // Si on veut un CCF mais pas d'équipe CCF
+            status.ccfStatus = 'incomplete';
         }
 
-        if (wantsMpr && teamToCheck.mprTeam) { // Vérifier que mprTeam existe
+        if (wantsMpr && teamToCheck.mprTeam) {
             const mpr = teamToCheck.mprTeam;
             const isMprComplete = mpr[ROLES.MPR_DRIVER] && mpr[ROLES.MPR_TEAMMATE];
             status.mprStatus = isMprComplete ? 'complete' : 'incomplete';
         } else if (wantsMpr) {
-            status.mprStatus = 'incomplete'; // Si on veut un MPR mais pas d'équipe MPR
+            status.mprStatus = 'incomplete';
         }
         return status;
     }
@@ -772,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchTerm) {
             for (const id in allPersonnel) {
                 const p = allPersonnel[id];
-                if (`${fromBase64(p.nom)} ${fromBase64(p.prenom)}`.toLowerCase().includes(searchTerm)) {  // MODIFIÉ
+                if (`${fromBase64(p.nom)} ${fromBase64(p.prenom)}`.toLowerCase().includes(searchTerm)) {
                     searchedPersonnelId = id; 
                     break; 
                 }
@@ -801,7 +820,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (teams.ccfTeam && Object.values(teams.ccfTeam).flat().includes(searchedPersonnelId)) isPresent = true;
                         if (!isPresent && teams.mprTeam && Object.values(teams.mprTeam).flat().includes(searchedPersonnelId)) isPresent = true;
                     } else if (allAvailabilities[dateId] && allAvailabilities[dateId][searchedPersonnelId]) {
-                        // On vérifie aussi les dispo si la recherche est faite avant la génération des équipes
                         isPresent = true;
                     }
                     if (isPresent) day.classList.add('day-highlighted-for-search');
@@ -886,13 +904,13 @@ document.addEventListener('DOMContentLoaded', () => {
     database.ref('events').on('value', (snapshot) => {
         allEvents = snapshot.val() || {};
         const activeTabEl = document.querySelector('.navigation .list.active');
-        if (activeTabEl) updateActiveView(activeTabEl); // Refresh current view with new data
+        if (activeTabEl) updateActiveView(activeTabEl);
     });
 
     database.ref('assignedTeams').on('value', (snapshot) => {
         allAssignedTeams = snapshot.val() || {};
         const activeTabEl = document.querySelector('.navigation .list.active');
-        if (activeTabEl) updateActiveView(activeTabEl); // Refresh current view
+        if (activeTabEl) updateActiveView(activeTabEl);
     });
 
     function createSeedFromDate(dateId) { let hash = 0; for (let i = 0; i < dateId.length; i++) { const char = dateId.charCodeAt(i); hash = ((hash << 5) - hash) + char; hash |= 0; } return hash; }
@@ -1012,12 +1030,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let nameHtml; 
             if (!personnelId) { 
                 nameHtml = '<span class="personnel-name unassigned">Non assigné</span>'; 
-            } else if (String(personnelId).startsWith('MANUAL:')) { // AJOUTÉ : Gère l'affichage d'une entrée manuelle
+            } else if (String(personnelId).startsWith('MANUAL:')) {
                 const manualName = personnelId.substring(7);
                 nameHtml = `<span class="personnel-name manual-entry"><ion-icon name="person-add-outline" style="vertical-align: middle; margin-right: 4px; color: var(--ember-orange);"></ion-icon>${manualName}</span>`;
             } else { 
                 const p = allPersonnel[personnelId]; 
-                nameHtml = p ? `<span class="personnel-name">${fromBase64(p.nom)} ${fromBase64(p.prenom)}</span>` : '<span class="personnel-name unassigned">Personnel Inconnu</span>'; // MODIFIÉ : Ordre Nom Prénom
+                nameHtml = p ? `<span class="personnel-name">${fromBase64(p.nom)} ${fromBase64(p.prenom)}</span>` : '<span class="personnel-name unassigned">Personnel Inconnu</span>';
             } 
             let replaceButtonHtml = ''; 
             if (isAdmin && isFrozen) { 
@@ -1094,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const teamsToConsider = []; 
         if(ccfTeam) teamsToConsider.push(ccfTeam); 
         if(mprTeam) teamsToConsider.push(mprTeam); 
-        teamsToConsider.forEach(team => { if (!team) return; Object.values(team).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentTeamAssignmentsOnDate.add(id); }); }); // MODIFIÉ : ignore les entrées manuelles
+        teamsToConsider.forEach(team => { if (!team) return; Object.values(team).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentTeamAssignmentsOnDate.add(id); }); });
         const potentialReplacementsByRole = {}; 
         Object.values(ROLES).forEach(roleKey => { 
             const qualifiedPersonnel = Object.keys(allPersonnel).filter(pId => { 
@@ -1117,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `<div class="replacement-role-group"><h4>${getRoleDisplayName(roleKey)}</h4><ul>`; 
             potentialReplacementsByRole[roleKey].forEach(pId => { 
                 const person = allPersonnel[pId]; 
-                html += `<li>${fromBase64(person.nom)} ${fromBase64(person.prenom)}</li>`; // MODIFIÉ
+                html += `<li>${fromBase64(person.nom)} ${fromBase64(person.prenom)}</li>`;
             }); 
             html += `</ul></div>`; 
         } 
@@ -1133,14 +1151,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const { dateId, roleKey, currentPersonnelId } = currentReplacementInfo;
         if (roleToReplaceEl) roleToReplaceEl.textContent = getRoleDisplayName(roleKey); 
         if (replacementOptionsContainer) replacementOptionsContainer.innerHTML = ''; 
-        if (manualReplacementNameInput) manualReplacementNameInput.value = ''; // AJOUTÉ : Vider le champ manuel
+        if (manualReplacementNameInput) manualReplacementNameInput.value = '';
 
         const availableOnDate = Object.keys(allAvailabilities[dateId] || {}); 
         const currentAssignmentsInWorkingTeam = new Set(); 
         const { ccfTeam, mprTeam } = currentWorkingTeam; 
-        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentAssignmentsInWorkingTeam.add(id); }); } // MODIFIÉ
-        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentAssignmentsInWorkingTeam.add(id); }); } // MODIFIÉ
-
+        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentAssignmentsInWorkingTeam.add(id); }); } 
+        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentAssignmentsInWorkingTeam.add(id); }); }
         const potentialReplacementsList = Object.keys(allPersonnel).filter(pId => { 
             const person = allPersonnel[pId]; 
             return person && 
@@ -1162,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const person = allPersonnel[pId]; 
                     const optionDiv = document.createElement('div'); 
                     optionDiv.className = 'replacement-option'; 
-                    optionDiv.textContent = `${fromBase64(person.nom)} ${fromBase64(person.prenom)}`; // MODIFIÉ
+                    optionDiv.textContent = `${fromBase64(person.nom)} ${fromBase64(person.prenom)}`;
                     optionDiv.addEventListener('click', () => performReplacement(pId)); 
                     replacementOptionsContainer.appendChild(optionDiv); 
                 }); 
@@ -1176,44 +1193,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if(replacePersonnelModal) openModal(replacePersonnelModal);
     }
-
-    // AJOUTÉ : Gestionnaire pour le bouton d'ajout manuel
-    if (manualReplacementBtn) {
-        manualReplacementBtn.addEventListener('click', () => {
-            const manualName = manualReplacementNameInput.value.trim();
-            if (manualName) {
-                performReplacement(`MANUAL:${manualName}`);
-            } else {
-                showMessage("Veuillez entrer un nom pour l'ajout manuel.", "warning");
-            }
-        });
-    }
-
+    
+    // --- CORRIGÉ : Logique de remplacement fiabilisée ---
     function performReplacement(replacementPersonnelId) {
-        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) { 
-            showMessage("Erreur: Remplacement impossible.", "error"); 
-            return; 
-        } 
+        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) {
+            showMessage("Erreur: Données de remplacement manquantes.", "error");
+            return;
+        }
+
         const { dateId, teamType, roleKey, teammateIndex } = currentReplacementInfo;
-        const teamToUpdate = currentWorkingTeam[teamType + 'Team']; 
-        if (!teamToUpdate) { 
-            showMessage("Erreur: Équipe à mettre à jour non trouvée.", "error"); 
-            return; 
+
+        // Sélection explicite et sécurisée de l'objet équipe à mettre à jour
+        let teamToUpdate = null;
+        if (teamType === 'ccf') {
+            teamToUpdate = currentWorkingTeam.ccfTeam;
+        } else if (teamType === 'mpr') {
+            teamToUpdate = currentWorkingTeam.mprTeam;
         }
-        if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) { 
-            teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId; 
-        } else { 
-            teamToUpdate[roleKey] = replacementPersonnelId; 
+
+        if (!teamToUpdate) {
+            showMessage(`Erreur: L'équipe de type '${teamType}' est introuvable pour cette journée.`, "error");
+            console.error("Échec de la recherche de l'équipe :", teamType, currentWorkingTeam);
+            return;
         }
+
+        // Gestion du cas spécial des équipiers CCF (qui sont dans un tableau)
+        if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) {
+            // Vérification que la cible est bien un tableau
+            if (Array.isArray(teamToUpdate[roleKey])) {
+                teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId;
+            } else {
+                showMessage("Erreur de structure de données pour les équipiers CCF.", "error");
+                console.error("La propriété pour les équipiers CCF n'est pas un tableau:", teamToUpdate);
+                return;
+            }
+        } else {
+            // Cas général pour tous les autres rôles
+            teamToUpdate[roleKey] = replacementPersonnelId;
+        }
+
+        // Sauvegarde de l'objet équipe complet mis à jour dans Firebase
         database.ref(`assignedTeams/${dateId}`).set(currentWorkingTeam)
-            .then(() => { 
-                showMessage("Remplacement effectué et équipe mise à jour !", "success"); 
-                if(replacePersonnelModal) closeModal(replacePersonnelModal); 
+            .then(() => {
+                showMessage("Remplacement effectué et équipe mise à jour !", "success");
+                closeModal(replacePersonnelModal);
             })
-            .catch(err => { 
-                showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error"); 
+            .catch(err => {
+                showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error");
             });
     }
+
 
     // --- Fonctions pour les statistiques ---
     function renderGlobalStatistics() {
@@ -1225,8 +1254,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalCcfAssignments = 0, totalMprAssignments = 0; 
         for (const date in allAssignedTeams) { 
             const teamData = allAssignedTeams[date]; 
-            if (teamData.ccfTeam) totalCcfAssignments += Object.values(teamData.ccfTeam).flat().filter(id => id).length; 
-            if (teamData.mprTeam) totalMprAssignments += Object.values(teamData.mprTeam).flat().filter(id => id).length; 
+            if (teamData.ccfTeam) totalCcfAssignments += Object.values(teamData.ccfTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).length; 
+            if (teamData.mprTeam) totalMprAssignments += Object.values(teamData.mprTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).length; 
         }
         const elIds = ['global-total-personnel', 'global-total-availabilities', 'global-total-event-days', 'global-total-frozen-team-days', 'global-total-ccf-assignments', 'global-total-mpr-assignments'];
         const values = [totalPersonnel, totalAvailabilitiesLogged, totalEventDays, totalFrozenTeamDays, totalCcfAssignments, totalMprAssignments];
@@ -1251,8 +1280,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const date in allAvailabilities) { for (const pId in allAvailabilities[date]) { if (stats[pId]) stats[pId].availabilities++; } }
         for (const date in allAssignedTeams) { 
             const teamData = allAssignedTeams[date]; 
-            if (teamData.ccfTeam) Object.values(teamData.ccfTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).forEach(pId => { if (stats[pId]) stats[pId].ccfCount++; }); // MODIFIÉ
-            if (teamData.mprTeam) Object.values(teamData.mprTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).forEach(pId => { if (stats[pId]) stats[pId].mprCount++; }); // MODIFIÉ
+            if (teamData.ccfTeam) Object.values(teamData.ccfTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).forEach(pId => { if (stats[pId]) stats[pId].ccfCount++; });
+            if (teamData.mprTeam) Object.values(teamData.mprTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).forEach(pId => { if (stats[pId]) stats[pId].mprCount++; });
         }
         for (const pId in stats) { 
             if (stats[pId].availabilities > 0) { 
@@ -1264,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterTerm = statsFilterInput ? statsFilterInput.value : "";
         const filteredPersonnelIds = Object.keys(stats).filter(pId => { 
             const person = stats[pId]; 
-            const fullName = `${person.nom} ${person.prenom}`.toLowerCase(); // MODIFIÉ
+            const fullName = `${person.nom} ${person.prenom}`.toLowerCase();
             return fullName.includes(searchTerm) && (filterTerm === '' || person.fonctions.includes(filterTerm)); 
         });
         statsList.innerHTML = ''; 
@@ -1336,38 +1365,36 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ccfTeam) { ccfRoles = [{ label: "Conducteur PL:", id: ccfTeam[ROLES.CCF_DRIVER] }, { label: "Chef d'Agrès FDF:", id: ccfTeam[ROLES.CCF_LEADER] }, { label: "Équipier FDF 1:", id: ccfTeam[ROLES.CCF_TEAMMATE]?.[0] }, { label: "Équipier FDF 2:", id: ccfTeam[ROLES.CCF_TEAMMATE]?.[1] }]; ccfCardHeight = (ccfRoles.length * LINE_HEIGHT) + (2 * CARD_PADDING) + 7; } 
         if (mprTeam) { mprRoles = [{ label: "Conducteur VL:", id: mprTeam[ROLES.MPR_DRIVER] }, { label: "Équipier DIV:", id: mprTeam[ROLES.MPR_TEAMMATE] }]; mprCardHeight = (mprRoles.length * LINE_HEIGHT) + (2 * CARD_PADDING) + 7; } 
         
-        // AJOUTÉ: Calcul de la hauteur supplémentaire pour les événements
         const eventDetails = allEvents[dateId];
         let eventTextHeight = 0;
         if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
             eventTextHeight = 7;
         }
 
-        const maxCardHeight = Math.max(ccfCardHeight, mprCardHeight, 15); const neededHeight = maxCardHeight + 15 + eventTextHeight; // MODIFIÉ
+        const maxCardHeight = Math.max(ccfCardHeight, mprCardHeight, 15); const neededHeight = maxCardHeight + 15 + eventTextHeight;
         if (currentY + neededHeight > PAGE_HEIGHT - 20) { doc.addPage(); currentY = 25; } 
         if (currentY > 30) { doc.setDrawColor(PDF_COLORS.lineColor); doc.setLineWidth(0.2); doc.line(PADDING, currentY - 5, PAGE_WIDTH - PADDING, currentY - 5); } 
         doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.emberOrange); doc.text(`Jour du ${dateId.split('-').reverse().join('/')}`, PADDING, currentY); currentY += 5; 
         
-        // AJOUTÉ: Affichage des types d'événements dans le PDF
         if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'italic');
             doc.setTextColor(PDF_COLORS.textSecondary);
             const eventText = `Événement(s): ${eventDetails.types.join(', ')}`;
             doc.text(eventText, PADDING, currentY);
-            currentY += eventTextHeight - 2; // Ajustement de la position Y
+            currentY += eventTextHeight - 2;
         } else {
              currentY += 2;
         }
         
         let cardStartY = currentY; let startX = PADDING; 
         
-        const drawRole = (role) => { // Helper pour dessiner un rôle
+        const drawRole = (role) => {
             let name;
             let nameColor = PDF_COLORS.black;
-            if (role.id && String(role.id).startsWith('MANUAL:')) { // MODIFIÉ: Gère l'entrée manuelle
+            if (role.id && String(role.id).startsWith('MANUAL:')) {
                 name = `(M) ${role.id.substring(7)}`; 
-            } else if (role.id && allPersonnel[role.id]) { // MODIFIÉ: ordre Nom Prénom
+            } else if (role.id && allPersonnel[role.id]) {
                 name = `${fromBase64(allPersonnel[role.id].nom)} ${fromBase64(allPersonnel[role.id].prenom)}`;
             } else {
                 name = "Non assigné";
@@ -1465,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTimeDisplay();
     setInterval(updateDateTimeDisplay, 1000);
     setInitialState();
-    createBackgroundEmbers(); // Appel de la fonction pour créer les braises
+    createBackgroundEmbers();
 
     if (exportProposalsBtn) exportProposalsBtn.addEventListener('click', exportProposalsToPDF);
     if (exportActivatedBtn) exportActivatedBtn.addEventListener('click', exportActivatedToPDF);
