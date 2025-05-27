@@ -45,7 +45,7 @@ body, html {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    /* AJOUT : Empêche les effets de défilement aux bords (ex: pull-to-refresh) */
+    /* Empêche les effets de défilement aux bords (ex: pull-to-refresh) */
     overscroll-behavior: none;
 }
 
@@ -159,7 +159,7 @@ body, html {
     color: var(--accent-text);
     cursor: pointer;
     padding: 10px;
-    z-index: 1002; /* Au-dessus de l'overlay quand le menu est fermé, mais en dessous du menu ouvert */
+    z-index: 1002;
     height: 40px;
     width: 40px;
     display: flex;
@@ -208,16 +208,16 @@ body, html {
     top: 0;
     left: 0;
     width: var(--menu-width);
-    height: 100vh; /* Utilise toute la hauteur de la fenêtre */
+    height: 100vh;
     background-color: var(--elevation-1);
     box-shadow: 5px 0px 25px var(--menu-shadow);
     transform: translateX(-100%);
     transition: transform 0.4s var(--transition-smooth);
-    z-index: 1001; /* Juste au-dessus de l'overlay, en dessous du bouton toggle s'il devait rester visible */
+    z-index: 1001;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    padding-bottom: 20px; /* Espace en bas pour ne pas coller le footer */
+    padding-bottom: 20px;
     will-change: transform;
 }
 #main-nav.active {
@@ -238,10 +238,10 @@ body, html {
     padding: 0 25px;
     height: var(--header-height);
     border-bottom: 1px solid var(--divider-color);
-    position: sticky; /* Pour que le header du menu reste visible en scrollant le menu */
+    position: sticky;
     top: 0;
-    background-color: var(--elevation-1); /* Pour masquer le contenu du menu qui défile derrière */
-    z-index: 1; /* Pour être au-dessus des items de liste qui scrollent */
+    background-color: var(--elevation-1);
+    z-index: 1;
 }
 .nav-title {
     font-family: var(--font-secondary);
@@ -268,7 +268,7 @@ body, html {
     margin: 0;
     padding: 0;
     padding-top: 15px;
-    flex-grow: 1; /* Permet au footer de se positionner en bas */
+    flex-grow: 1;
 }
 
 #main-nav li {
@@ -286,7 +286,6 @@ body, html {
 #main-nav.active li:nth-child(5) { animation-delay: 0.3s; }
 #main-nav.active li:nth-child(6) { animation-delay: 0.35s; }
 #main-nav.active li:nth-child(7) { animation-delay: 0.4s; }
-/* Délai ajouté pour le nouvel onglet */
 #main-nav.active li:nth-child(8) { animation-delay: 0.45s; }
 
 
@@ -316,13 +315,13 @@ body, html {
 }
 .nav-link.active-link {
     color: var(--accent-text);
-    background-color: var(--burgundy-red); /* Couleur de fond pour l'élément actif */
-    border-left-color: var(--fire-red-light); /* Bordure pour l'élément actif */
+    background-color: var(--burgundy-red);
+    border-left-color: var(--fire-red-light);
     font-weight: 700;
 }
 .nav-link.active-link .menu-icon {
     opacity: 1;
-    filter: brightness(1.2); /* Légèrement plus brillant pour l'icône active */
+    filter: brightness(1.2);
 }
 
 .menu-icon {
@@ -342,44 +341,42 @@ body, html {
     list-style: none;
     padding: 0;
     margin: 0;
-    background-color: var(--elevation-2); /* Un peu plus clair pour distinguer */
+    background-color: var(--elevation-2);
     overflow: hidden;
-    max-height: 0; /* Caché par défaut */
+    max-height: 0;
     transition: max-height 0.35s ease-out, padding 0.35s ease-out;
 }
 .has-submenu.open > .submenu {
-    padding-top: 5px; /* Ajoute un peu de padding quand ouvert */
+    padding-top: 5px;
     padding-bottom: 5px;
-    /* max-height est défini dynamiquement en JS */
 }
 .submenu .nav-link {
-    padding-left: 55px; /* Indentation pour les items de sous-menu */
+    padding-left: 55px;
     font-size: 0.95em;
     font-weight: 400;
-    border-left: none; /* Pas de bordure gauche pour les enfants */
+    border-left: none;
 }
 .submenu .nav-link:hover {
-    background-color: var(--burgundy-red); /* Couleur de survol pour sous-menu */
+    background-color: var(--burgundy-red);
     color: var(--accent-text);
 }
 .submenu .nav-link.active-link {
-    background-color: var(--fire-red); /* Couleur active pour sous-menu, un peu différente */
+    background-color: var(--fire-red);
     color: var(--accent-text);
-    font-weight: 500; /* Un peu plus gras pour l'actif du sous-menu */
+    font-weight: 500;
 }
 .has-submenu > .nav-link .arrow {
-    margin-left: auto; /* Pousse la flèche à droite */
+    margin-left: auto;
     font-size: 0.8em;
     transition: transform 0.3s var(--transition-smooth);
-    /* La rotation de la flèche est gérée par le changement de contenu HTML en JS */
 }
 
 
 /* Main Content Area */
 #app-main {
-    flex-grow: 1; /* Prend l'espace restant */
-    display: flex; /* Pour que l'iframe remplisse cet espace */
-    overflow: hidden; /* Pour éviter les barres de défilement si l'iframe est mal dimensionné */
+    flex-grow: 1;
+    display: flex;
+    overflow: hidden;
     transition: transform 0.4s var(--transition-smooth), filter 0.4s var(--transition-smooth);
     will-change: transform, filter;
 }
@@ -387,9 +384,8 @@ body, html {
 /* Effects when menu is open */
 body.menu-open #app-header,
 body.menu-open #app-main {
-    /* L'effet de transformation est appliqué par JS si `no-transform-for-menu` n'est pas sur body */
-    filter: blur(4px) brightness(0.6); /* Effet de flou et d'assombrissement */
-    pointer-events: none; /* Empêche les interactions avec le contenu principal lorsque le menu est ouvert */
+    filter: blur(4px) brightness(0.6);
+    pointer-events: none;
 }
 
 
@@ -397,9 +393,9 @@ body.menu-open #app-main {
     width: 100%;
     height: 100%;
     border: none;
-    background-color: var(--dark-bg); /* Couleur de fond pendant le chargement de l'iframe */
-    /* AJOUT : Autorise le scroll vertical mais bloque le scroll horizontal et le pinch-to-zoom */
-    touch-action: pan-y;
+    background-color: var(--dark-bg);
+    /* MODIFIÉ : Bloque TOUS les défilements et le zoom tactile */
+    touch-action: none;
 }
 
 /* Nav Footer */
@@ -409,7 +405,7 @@ body.menu-open #app-main {
     font-size: 0.85em;
     color: var(--secondary-text);
     border-top: 1px solid var(--divider-color);
-    margin-top: auto; /* Pousse le footer en bas du menu */
+    margin-top: auto;
 }
 
 
@@ -417,29 +413,28 @@ body.menu-open #app-main {
 @media (max-width: 768px) {
     :root {
         --menu-width: 280px;
-        --menu-width-reduced: calc(var(--menu-width) - 40px); /* ajusté */
+        --menu-width-reduced: calc(var(--menu-width) - 40px);
     }
     #app-header {
         padding: 0 20px;
     }
 
-    /* Comportement spécifique pour le menu ouvert sur tablettes/mobiles si `no-transform-for-menu` n'est PAS présent */
     body:not(.no-transform-for-menu).menu-open #app-header,
     body:not(.no-transform-for-menu).menu-open #app-main {
-        transform: translateX(var(--menu-width-reduced)) scale(0.95); /* Un peu moins de scale */
+        transform: translateX(var(--menu-width-reduced)) scale(0.95);
     }
 }
 
 @media (max-width: 480px) {
     :root {
-        --menu-width: 260px; /* Menu un peu plus étroit sur petits écrans */
-        --header-height: 60px; /* Header un peu plus petit */
+        --menu-width: 260px;
+        --header-height: 60px;
     }
     #app-header {
         height: var(--header-height);
     }
     .nav-header {
-        height: var(--header-height); /* S'assurer que le header du menu correspond */
+        height: var(--header-height);
     }
 
     #logo-text { font-size: 1.3em; }
@@ -450,49 +445,38 @@ body.menu-open #app-main {
     .menu-icon { width: 20px; height: 20px; margin-right: 15px; }
     .submenu .nav-link { padding-left: 45px; font-size: 0.9em; }
 
-    /* Sur les très petits écrans, on peut choisir de ne pas scaler mais juste de décaler */
     body.menu-open #app-header,
     body.menu-open #app-main {
-        /* Par défaut, on garde le comportement de la classe `no-transform-for-menu` pour éviter le scale,
-            mais on peut le surcharger ici si on veut un effet différent sur mobile */
-        transform: translateX(var(--menu-width)) scale(1); /* Pas de scale, juste translation */
+        transform: translateX(var(--menu-width)) scale(1);
         filter: blur(3px) brightness(0.7);
     }
 
-    /* Ajout pour que le body avec `no-transform-for-menu` ne soit pas affecté par le scale ci-dessus */
     body.no-transform-for-menu.menu-open #app-header,
     body.no-transform-for-menu.menu-open #app-main {
-        transform: none; /* Assure qu'il n'y a pas de transformation */
+        transform: none;
     }
 }
 
 /* PWA Standalone Mode Adjustments */
 @media all and (display-mode: standalone) {
     #app-header {
-        /* Ajoute un padding en haut égal à la zone de sécurité pour les encoches, etc. */
         padding-top: env(safe-area-inset-top, 0px);
         height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
     }
 
     #main-nav {
-        /* Le menu doit aussi prendre en compte la safe area en haut */
         padding-top: env(safe-area-inset-top, 0px);
-       /* Si le header du nav est sticky, il faudra peut-être ajuster sa hauteur ou son padding-top aussi */
     }
-    .nav-header { /* Si le header du menu est sticky */
+    .nav-header {
         height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
     }
 
     body {
-        /* Ajoute un padding en bas pour la zone de sécurité (barre de navigation gestuelle, etc.) */
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
-
-    /* Le FAB d'installation n'est plus nécessaire car il est supprimé,
-        mais si d'autres éléments flottants étaient présents, ils devraient aussi considérer env(safe-area-inset-bottom) */
 }
 
-/* install-prompt.css */
+/* Styles pour la fenêtre d'installation (install-prompt.css) */
 #installPrompt {
   position: fixed;
   bottom: 20px;
