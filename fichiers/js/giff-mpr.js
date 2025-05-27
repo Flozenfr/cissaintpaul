@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const eventModalTitle = document.getElementById('event-modal-title');
     const eventDateInput = document.getElementById('event-date');
     const eventCancelBtn = document.getElementById('event-cancel-btn');
-    const teamsMonthPicker = document.querySelector('#teams-view #teams-month-picker'); // Plus spécifique
+    const teamsMonthPicker = document.querySelector('#teams-view #teams-month-picker');
     const teamsPrevMonthBtn = document.getElementById('teams-prev-month-btn');
     const teamsNextMonthBtn = document.getElementById('teams-next-month-btn');
     const exportProposalsBtn = document.getElementById('export-proposals-btn');
@@ -91,9 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const replaceModalTitle = document.getElementById('replace-modal-title');
     const roleToReplaceEl = document.getElementById('role-to-replace');
     const replacementOptionsContainer = document.getElementById('replacement-options-container');
-    const replaceCancelBtn = document.getElementById('replace-cancel-btn');
-    if (replacePersonnelModal) replacePersonnelModal.querySelector('.close-button').addEventListener('click', () => closeModal(replacePersonnelModal));
-    if (replaceCancelBtn) replaceCancelBtn.addEventListener('click', () => closeModal(replacePersonnelModal));
+    const manualReplacementNameInput = document.getElementById('manual-replacement-name');
 
     // --- ÉTAT GLOBAL ---
     let allPersonnel = {};
@@ -108,6 +106,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentWorkingTeam = null;
     let matriculeSessionAuth = {};
 
+    // --- CORRECTION : GESTION CENTRALISÉE DES CLICS SUR LA MODALE DE REMPLACEMENT ---
+    if (replacePersonnelModal) {
+        replacePersonnelModal.addEventListener('click', (e) => {
+            // Clic sur le bouton d'ajout manuel
+            if (e.target.id === 'manual-replacement-btn') {
+                e.preventDefault(); // Empêche tout comportement par défaut du bouton
+                const manualName = manualReplacementNameInput.value.trim();
+                if (manualName) {
+                    performReplacement(`MANUAL:${manualName}`);
+                } else {
+                    showMessage("Veuillez entrer un nom pour l'ajout manuel.", "warning");
+                }
+            }
+            // Clic sur le bouton Annuler
+            if (e.target.id === 'replace-cancel-btn') {
+                closeModal(replacePersonnelModal);
+            }
+            // Clic sur le bouton de fermeture (X)
+            if (e.target.classList.contains('close-button')) {
+                closeModal(replacePersonnelModal);
+            }
+        });
+    }
 
     // --- FONCTIONS UTILITAIRES ---
     function showMessage(message, type) {
@@ -217,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         personnelArray.sort((a, b) => a.nom.localeCompare(b.nom));
 
         personnelArray.forEach(p => {
-            const fullName = `${p.prenom} ${p.nom}`;
+            const fullName = `${p.nom} ${p.prenom}`;
             const item = document.createElement('div');
             item.className = 'search-result-item';
             item.textContent = fullName;
@@ -414,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 commentaire: fromBase64(pData.commentaire || ""),
                 fonctions: pData.fonctions ? pData.fonctions.map(f => fromBase64(f)) : []
             };
-            const fullName = `${p.prenom} ${p.nom}`;
+            const fullName = `${p.nom} ${p.prenom}`;
             const initials = `${p.prenom.charAt(0)}${p.nom.charAt(0)}`.toUpperCase();
 
             const matriculeBlock = p.matricule ? `<div class="info-block"><ion-icon name="keypad-outline"></ion-icon><span>Matricule: ******</span></div>` : '<div class="info-block"><ion-icon name="alert-circle-outline"></ion-icon><span>Pas de matricule</span></div>';
@@ -433,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.dropdown-arrow').forEach(setupSearchDropdown);
 
         const activeTabEl = document.querySelector('.navigation .list.active');
-        if (activeTabEl) updateActiveView(activeTabEl); // Rafraîchit la vue active avec les nouvelles données
+        if (activeTabEl) updateActiveView(activeTabEl);
     });
 
     if(personnelList) personnelList.addEventListener('click', (e) => {
@@ -478,13 +499,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (arrow) arrow.classList.add('open');
 
         const filteredPersonnel = Object.entries(allPersonnel).filter(([id, p]) => {
-            const fullName = `${fromBase64(p.prenom)} ${fromBase64(p.nom)}`;
+            const fullName = `${fromBase64(p.nom)} ${fromBase64(p.prenom)}`;
             return fullName.toLowerCase().includes(searchTermText);
         });
 
         filteredPersonnel.forEach(([id, pData]) => {
             const p = { id, nom: fromBase64(pData.nom), prenom: fromBase64(pData.prenom) };
-            const fullName = `${p.prenom} ${p.nom}`;
+            const fullName = `${p.nom} ${p.prenom}`;
             const item = document.createElement('div');
             item.className = 'search-result-item';
             item.textContent = fullName;
@@ -737,20 +758,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wantsMpr) status.mprStatus = 'incomplete';
             return status;
         }
-        if (wantsCcf && teamToCheck.ccfTeam) { // Vérifier que ccfTeam existe
+        if (wantsCcf && teamToCheck.ccfTeam) {
             const ccf = teamToCheck.ccfTeam;
             const isCcfComplete = ccf[ROLES.CCF_DRIVER] && ccf[ROLES.CCF_LEADER] && ccf[ROLES.CCF_TEAMMATE] && ccf[ROLES.CCF_TEAMMATE].length === 2 && ccf[ROLES.CCF_TEAMMATE].every(id => id !== null);
             status.ccfStatus = isCcfComplete ? 'complete' : 'incomplete';
         } else if (wantsCcf) {
-            status.ccfStatus = 'incomplete'; // Si on veut un CCF mais pas d'équipe CCF
+            status.ccfStatus = 'incomplete';
         }
 
-        if (wantsMpr && teamToCheck.mprTeam) { // Vérifier que mprTeam existe
+        if (wantsMpr && teamToCheck.mprTeam) {
             const mpr = teamToCheck.mprTeam;
             const isMprComplete = mpr[ROLES.MPR_DRIVER] && mpr[ROLES.MPR_TEAMMATE];
             status.mprStatus = isMprComplete ? 'complete' : 'incomplete';
         } else if (wantsMpr) {
-            status.mprStatus = 'incomplete'; // Si on veut un MPR mais pas d'équipe MPR
+            status.mprStatus = 'incomplete';
         }
         return status;
     }
@@ -770,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchTerm) {
             for (const id in allPersonnel) {
                 const p = allPersonnel[id];
-                if (`${fromBase64(p.prenom)} ${fromBase64(p.nom)}`.toLowerCase().includes(searchTerm)) { 
+                if (`${fromBase64(p.nom)} ${fromBase64(p.prenom)}`.toLowerCase().includes(searchTerm)) {
                     searchedPersonnelId = id; 
                     break; 
                 }
@@ -799,7 +820,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (teams.ccfTeam && Object.values(teams.ccfTeam).flat().includes(searchedPersonnelId)) isPresent = true;
                         if (!isPresent && teams.mprTeam && Object.values(teams.mprTeam).flat().includes(searchedPersonnelId)) isPresent = true;
                     } else if (allAvailabilities[dateId] && allAvailabilities[dateId][searchedPersonnelId]) {
-                        // On vérifie aussi les dispo si la recherche est faite avant la génération des équipes
                         isPresent = true;
                     }
                     if (isPresent) day.classList.add('day-highlighted-for-search');
@@ -884,13 +904,13 @@ document.addEventListener('DOMContentLoaded', () => {
     database.ref('events').on('value', (snapshot) => {
         allEvents = snapshot.val() || {};
         const activeTabEl = document.querySelector('.navigation .list.active');
-        if (activeTabEl) updateActiveView(activeTabEl); // Refresh current view with new data
+        if (activeTabEl) updateActiveView(activeTabEl);
     });
 
     database.ref('assignedTeams').on('value', (snapshot) => {
         allAssignedTeams = snapshot.val() || {};
         const activeTabEl = document.querySelector('.navigation .list.active');
-        if (activeTabEl) updateActiveView(activeTabEl); // Refresh current view
+        if (activeTabEl) updateActiveView(activeTabEl);
     });
 
     function createSeedFromDate(dateId) { let hash = 0; for (let i = 0; i < dateId.length; i++) { const char = dateId.charCodeAt(i); hash = ((hash << 5) - hash) + char; hash |= 0; } return hash; }
@@ -1010,9 +1030,12 @@ document.addEventListener('DOMContentLoaded', () => {
             let nameHtml; 
             if (!personnelId) { 
                 nameHtml = '<span class="personnel-name unassigned">Non assigné</span>'; 
+            } else if (String(personnelId).startsWith('MANUAL:')) {
+                const manualName = personnelId.substring(7);
+                nameHtml = `<span class="personnel-name manual-entry"><ion-icon name="person-add-outline" style="vertical-align: middle; margin-right: 4px; color: var(--ember-orange);"></ion-icon>${manualName}</span>`;
             } else { 
                 const p = allPersonnel[personnelId]; 
-                nameHtml = p ? `<span class="personnel-name">${fromBase64(p.prenom)} ${fromBase64(p.nom)}</span>` : '<span class="personnel-name unassigned">Personnel Inconnu</span>'; 
+                nameHtml = p ? `<span class="personnel-name">${fromBase64(p.nom)} ${fromBase64(p.prenom)}</span>` : '<span class="personnel-name unassigned">Personnel Inconnu</span>';
             } 
             let replaceButtonHtml = ''; 
             if (isAdmin && isFrozen) { 
@@ -1089,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const teamsToConsider = []; 
         if(ccfTeam) teamsToConsider.push(ccfTeam); 
         if(mprTeam) teamsToConsider.push(mprTeam); 
-        teamsToConsider.forEach(team => { if (!team) return; Object.values(team).flat().forEach(id => { if (id) currentTeamAssignmentsOnDate.add(id); }); }); 
+        teamsToConsider.forEach(team => { if (!team) return; Object.values(team).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentTeamAssignmentsOnDate.add(id); }); });
         const potentialReplacementsByRole = {}; 
         Object.values(ROLES).forEach(roleKey => { 
             const qualifiedPersonnel = Object.keys(allPersonnel).filter(pId => { 
@@ -1112,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `<div class="replacement-role-group"><h4>${getRoleDisplayName(roleKey)}</h4><ul>`; 
             potentialReplacementsByRole[roleKey].forEach(pId => { 
                 const person = allPersonnel[pId]; 
-                html += `<li>${fromBase64(person.prenom)} ${fromBase64(person.nom)}</li>`; 
+                html += `<li>${fromBase64(person.nom)} ${fromBase64(person.prenom)}</li>`;
             }); 
             html += `</ul></div>`; 
         } 
@@ -1128,11 +1151,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const { dateId, roleKey, currentPersonnelId } = currentReplacementInfo;
         if (roleToReplaceEl) roleToReplaceEl.textContent = getRoleDisplayName(roleKey); 
         if (replacementOptionsContainer) replacementOptionsContainer.innerHTML = ''; 
+        if (manualReplacementNameInput) manualReplacementNameInput.value = '';
+
         const availableOnDate = Object.keys(allAvailabilities[dateId] || {}); 
         const currentAssignmentsInWorkingTeam = new Set(); 
         const { ccfTeam, mprTeam } = currentWorkingTeam; 
-        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); } 
-        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id) currentAssignmentsInWorkingTeam.add(id); }); }
+        if (ccfTeam) { Object.values(ccfTeam).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentAssignmentsInWorkingTeam.add(id); }); } 
+        if (mprTeam) { Object.values(mprTeam).flat().forEach(id => { if (id && !String(id).startsWith('MANUAL:')) currentAssignmentsInWorkingTeam.add(id); }); }
         const potentialReplacementsList = Object.keys(allPersonnel).filter(pId => { 
             const person = allPersonnel[pId]; 
             return person && 
@@ -1154,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const person = allPersonnel[pId]; 
                     const optionDiv = document.createElement('div'); 
                     optionDiv.className = 'replacement-option'; 
-                    optionDiv.textContent = `${fromBase64(person.prenom)} ${fromBase64(person.nom)}`; 
+                    optionDiv.textContent = `${fromBase64(person.nom)} ${fromBase64(person.prenom)}`;
                     optionDiv.addEventListener('click', () => performReplacement(pId)); 
                     replacementOptionsContainer.appendChild(optionDiv); 
                 }); 
@@ -1205,8 +1230,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalCcfAssignments = 0, totalMprAssignments = 0; 
         for (const date in allAssignedTeams) { 
             const teamData = allAssignedTeams[date]; 
-            if (teamData.ccfTeam) totalCcfAssignments += Object.values(teamData.ccfTeam).flat().filter(id => id).length; 
-            if (teamData.mprTeam) totalMprAssignments += Object.values(teamData.mprTeam).flat().filter(id => id).length; 
+            if (teamData.ccfTeam) totalCcfAssignments += Object.values(teamData.ccfTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).length; 
+            if (teamData.mprTeam) totalMprAssignments += Object.values(teamData.mprTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).length; 
         }
         const elIds = ['global-total-personnel', 'global-total-availabilities', 'global-total-event-days', 'global-total-frozen-team-days', 'global-total-ccf-assignments', 'global-total-mpr-assignments'];
         const values = [totalPersonnel, totalAvailabilitiesLogged, totalEventDays, totalFrozenTeamDays, totalCcfAssignments, totalMprAssignments];
@@ -1231,8 +1256,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const date in allAvailabilities) { for (const pId in allAvailabilities[date]) { if (stats[pId]) stats[pId].availabilities++; } }
         for (const date in allAssignedTeams) { 
             const teamData = allAssignedTeams[date]; 
-            if (teamData.ccfTeam) Object.values(teamData.ccfTeam).flat().filter(id => id).forEach(pId => { if (stats[pId]) stats[pId].ccfCount++; }); 
-            if (teamData.mprTeam) Object.values(teamData.mprTeam).flat().filter(id => id).forEach(pId => { if (stats[pId]) stats[pId].mprCount++; }); 
+            if (teamData.ccfTeam) Object.values(teamData.ccfTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).forEach(pId => { if (stats[pId]) stats[pId].ccfCount++; });
+            if (teamData.mprTeam) Object.values(teamData.mprTeam).flat().filter(id => id && !String(id).startsWith('MANUAL:')).forEach(pId => { if (stats[pId]) stats[pId].mprCount++; });
         }
         for (const pId in stats) { 
             if (stats[pId].availabilities > 0) { 
@@ -1244,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterTerm = statsFilterInput ? statsFilterInput.value : "";
         const filteredPersonnelIds = Object.keys(stats).filter(pId => { 
             const person = stats[pId]; 
-            const fullName = `${person.prenom} ${person.nom}`.toLowerCase(); 
+            const fullName = `${person.nom} ${person.prenom}`.toLowerCase();
             return fullName.includes(searchTerm) && (filterTerm === '' || person.fonctions.includes(filterTerm)); 
         });
         statsList.innerHTML = ''; 
@@ -1260,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <div class="personnel-avatar">${p.prenom.charAt(0)}${p.nom.charAt(0)}</div>
                 <div class="personnel-info">
-                    <h3>${p.prenom} ${p.nom}</h3>
+                    <h3>${p.nom} ${p.prenom}</h3>
                     <div class="info-block" title="Dispos"><ion-icon name="calendar-number-outline"></ion-icon><span><strong>${p.availabilities}</strong> Dispos</span></div>
                     <div class="info-block" title="Gardes CCF"><ion-icon name="bus-outline"></ion-icon><span><strong>${p.ccfCount}</strong> CCF</span></div>
                     <div class="info-block" title="Gardes MPR"><ion-icon name="car-sport-outline"></ion-icon><span><strong>${p.mprCount}</strong> MPR</span></div>
@@ -1315,12 +1340,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const PADDING = 14; const PAGE_WIDTH = doc.internal.pageSize.getWidth(); const PAGE_HEIGHT = doc.internal.pageSize.getHeight(); const CONTENT_WIDTH = PAGE_WIDTH - 2 * PADDING; const CARD_SPACING = 8; const CARD_WIDTH = (CONTENT_WIDTH - CARD_SPACING) / 2; const LINE_HEIGHT = 5; const CARD_PADDING = 5; const { ccfTeam, mprTeam } = teamData; let ccfRoles = [], mprRoles = []; let ccfCardHeight = 0, mprCardHeight = 0; 
         if (ccfTeam) { ccfRoles = [{ label: "Conducteur PL:", id: ccfTeam[ROLES.CCF_DRIVER] }, { label: "Chef d'Agrès FDF:", id: ccfTeam[ROLES.CCF_LEADER] }, { label: "Équipier FDF 1:", id: ccfTeam[ROLES.CCF_TEAMMATE]?.[0] }, { label: "Équipier FDF 2:", id: ccfTeam[ROLES.CCF_TEAMMATE]?.[1] }]; ccfCardHeight = (ccfRoles.length * LINE_HEIGHT) + (2 * CARD_PADDING) + 7; } 
         if (mprTeam) { mprRoles = [{ label: "Conducteur VL:", id: mprTeam[ROLES.MPR_DRIVER] }, { label: "Équipier DIV:", id: mprTeam[ROLES.MPR_TEAMMATE] }]; mprCardHeight = (mprRoles.length * LINE_HEIGHT) + (2 * CARD_PADDING) + 7; } 
-        const maxCardHeight = Math.max(ccfCardHeight, mprCardHeight, 15); const neededHeight = maxCardHeight + 15; 
+        
+        const eventDetails = allEvents[dateId];
+        let eventTextHeight = 0;
+        if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
+            eventTextHeight = 7;
+        }
+
+        const maxCardHeight = Math.max(ccfCardHeight, mprCardHeight, 15); const neededHeight = maxCardHeight + 15 + eventTextHeight;
         if (currentY + neededHeight > PAGE_HEIGHT - 20) { doc.addPage(); currentY = 25; } 
         if (currentY > 30) { doc.setDrawColor(PDF_COLORS.lineColor); doc.setLineWidth(0.2); doc.line(PADDING, currentY - 5, PAGE_WIDTH - PADDING, currentY - 5); } 
-        doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.emberOrange); doc.text(`Jour du ${dateId.split('-').reverse().join('/')}`, PADDING, currentY); currentY += 7; let cardStartY = currentY; let startX = PADDING; 
-        if (ccfTeam) { const isComplete = ccfRoles.every(r => r.id); const statusColor = isComplete ? PDF_COLORS.availableGreen : PDF_COLORS.fireRed; doc.setFillColor(PDF_COLORS.cardBg); doc.setDrawColor(statusColor); doc.setLineWidth(0.5); doc.rect(startX, cardStartY, CARD_WIDTH, ccfCardHeight, 'FD'); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.black); doc.text("Équipe CCF4MHP37", startX + CARD_PADDING, cardStartY + 6); let roleY = cardStartY + 13; doc.setFontSize(8); ccfRoles.forEach(role => { const name = role.id && allPersonnel[role.id] ? `${fromBase64(allPersonnel[role.id].prenom)} ${fromBase64(allPersonnel[role.id].nom)}` : "Non assigné"; const nameColor = role.id ? PDF_COLORS.black : PDF_COLORS.fireRed; doc.setFont('helvetica', 'normal'); doc.setTextColor(PDF_COLORS.textSecondary); doc.text(role.label, startX + CARD_PADDING, roleY); doc.setFont('helvetica', 'bold'); doc.setTextColor(nameColor); doc.text(name, startX + CARD_PADDING + 28, roleY); roleY += LINE_HEIGHT; }); startX += CARD_WIDTH + CARD_SPACING; } 
-        if (mprTeam) { const isComplete = mprRoles.every(r => r.id); const statusColor = isComplete ? PDF_COLORS.availableGreen : PDF_COLORS.fireRed; doc.setFillColor(PDF_COLORS.cardBg); doc.setDrawColor(statusColor); doc.setLineWidth(0.5); doc.rect(startX, cardStartY, CARD_WIDTH, mprCardHeight, 'FD'); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.black); doc.text("Équipe MPR12", startX + CARD_PADDING, cardStartY + 6); let roleY = cardStartY + 13; doc.setFontSize(8); mprRoles.forEach(role => { const name = role.id && allPersonnel[role.id] ? `${fromBase64(allPersonnel[role.id].prenom)} ${fromBase64(allPersonnel[role.id].nom)}` : "Non assigné"; const nameColor = role.id ? PDF_COLORS.black : PDF_COLORS.fireRed; doc.setFont('helvetica', 'normal'); doc.setTextColor(PDF_COLORS.textSecondary); doc.text(role.label, startX + CARD_PADDING, roleY); doc.setFont('helvetica', 'bold'); doc.setTextColor(nameColor); doc.text(name, startX + CARD_PADDING + 28, roleY); roleY += LINE_HEIGHT; }); } 
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.emberOrange); doc.text(`Jour du ${dateId.split('-').reverse().join('/')}`, PADDING, currentY); currentY += 5; 
+        
+        if (eventDetails && eventDetails.types && eventDetails.types.length > 0) {
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(PDF_COLORS.textSecondary);
+            const eventText = `Événement(s): ${eventDetails.types.join(', ')}`;
+            doc.text(eventText, PADDING, currentY);
+            currentY += eventTextHeight - 2;
+        } else {
+             currentY += 2;
+        }
+        
+        let cardStartY = currentY; let startX = PADDING; 
+        
+        const drawRole = (role) => {
+            let name;
+            let nameColor = PDF_COLORS.black;
+            if (role.id && String(role.id).startsWith('MANUAL:')) {
+                name = `(M) ${role.id.substring(7)}`; 
+            } else if (role.id && allPersonnel[role.id]) {
+                name = `${fromBase64(allPersonnel[role.id].nom)} ${fromBase64(allPersonnel[role.id].prenom)}`;
+            } else {
+                name = "Non assigné";
+                nameColor = PDF_COLORS.fireRed;
+            }
+            doc.setFont('helvetica', 'normal'); doc.setTextColor(PDF_COLORS.textSecondary); doc.text(role.label, startX + CARD_PADDING, roleY); doc.setFont('helvetica', 'bold'); doc.setTextColor(nameColor); doc.text(name, startX + CARD_PADDING + 28, roleY); roleY += LINE_HEIGHT;
+        };
+
+        if (ccfTeam) { const isComplete = ccfRoles.every(r => r.id); const statusColor = isComplete ? PDF_COLORS.availableGreen : PDF_COLORS.fireRed; doc.setFillColor(PDF_COLORS.cardBg); doc.setDrawColor(statusColor); doc.setLineWidth(0.5); doc.rect(startX, cardStartY, CARD_WIDTH, ccfCardHeight, 'FD'); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.black); doc.text("Équipe CCF4MHP37", startX + CARD_PADDING, cardStartY + 6); var roleY = cardStartY + 13; doc.setFontSize(8); ccfRoles.forEach(drawRole); startX += CARD_WIDTH + CARD_SPACING; } 
+        if (mprTeam) { const isComplete = mprRoles.every(r => r.id); const statusColor = isComplete ? PDF_COLORS.availableGreen : PDF_COLORS.fireRed; doc.setFillColor(PDF_COLORS.cardBg); doc.setDrawColor(statusColor); doc.setLineWidth(0.5); doc.rect(startX, cardStartY, CARD_WIDTH, mprCardHeight, 'FD'); doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(PDF_COLORS.black); doc.text("Équipe MPR12", startX + CARD_PADDING, cardStartY + 6); var roleY = cardStartY + 13; doc.setFontSize(8); mprRoles.forEach(drawRole); } 
         if (!ccfTeam && !mprTeam) { doc.setFontSize(9); doc.setFont('helvetica', 'italic'); doc.setTextColor(PDF_COLORS.textSecondary); doc.text("Aucune équipe générée ou applicable.", PADDING, currentY + 5); } 
         return cardStartY + maxCardHeight + 8; 
     }
@@ -1408,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDateTimeDisplay();
     setInterval(updateDateTimeDisplay, 1000);
     setInitialState();
-    createBackgroundEmbers(); // Appel de la fonction pour créer les braises
+    createBackgroundEmbers();
 
     if (exportProposalsBtn) exportProposalsBtn.addEventListener('click', exportProposalsToPDF);
     if (exportActivatedBtn) exportActivatedBtn.addEventListener('click', exportActivatedToPDF);
