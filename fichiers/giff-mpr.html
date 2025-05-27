@@ -293,6 +293,17 @@
             <p>Rôle à remplacer : <strong id="role-to-replace"></strong></p>
             <h3>Choisir un remplaçant disponible :</h3>
             <div id="replacement-options-container"></div>
+            
+            <div id="manual-replacement-section" style="margin-top: 1.5rem; border-top: 1px solid #444; padding-top: 1.5rem;">
+                <h4>Ajout manuel (hors-système)</h4>
+                <p style="font-size: 0.8em; color: var(--text-secondary-color-val); margin-bottom: 0.75rem;">
+                    Pour ajouter une personne non listée ou non disponible dans le système.
+                </p>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="manual-replacement-name" placeholder="NOM Prénom" style="width: 100%; padding: 0.8rem; border-radius: 5px; border: 1px solid var(--smoke-white); background-color: #333; color: var(--smoke-white); font-family: 'Poppins', sans-serif;">
+                    <button id="manual-replacement-btn" class="btn-primary" style="padding: 0.8rem;">Ajouter</button>
+                </div>
+            </div>
             <div class="modal-actions" style="margin-top: 1.5rem;">
                 <button id="replace-cancel-btn" class="btn-secondary">Annuler</button>
             </div>
