@@ -82,7 +82,7 @@ body {
 .add-event-btn {
     flex-shrink: 0; background-color: var(--fire-red); color: white;
     border: none; border-radius: 25px; padding: 10px 20px; cursor: pointer;
-    display: flex; align-items: center; gap: 8px; font-size: 0.9em;
+    display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9em;
     font-weight: 600; transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(229, 56, 59, 0.4);
 }
@@ -667,15 +667,38 @@ body {
     .main-content { max-width: 1100px; margin: 0 auto; padding: 30px; }
     .day-cell { min-height: 110px; }
 }
+
+/* MODIFIÉ : Styles pour mobile (< 600px) */
 @media (max-width: 600px) {
-    body { padding-top: 120px; }
-    .app-header { height: auto; flex-direction: column; align-items: stretch; padding: 10px 15px; gap: 10px; }
-    .header-controls { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
-    .add-event-btn { position: fixed; bottom: 90px; right: 20px; z-index: 102; padding: 12px; border-radius: 50%; width: 56px; height: 56px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-    .add-btn-text { display: none; }
-    .add-event-btn ion-icon { font-size: 1.8em; margin: 0; }
-    .modal-content { width: 100%; margin: 0; padding: 20px; }
+    .app-header {
+        padding: 0 10px;
+        gap: 10px;
+    }
+    #searchInput {
+        /* Permet à la recherche de prendre la place disponible */
+        flex-grow: 1;
+        min-width: 50px; /* Empêche de devenir trop petit */
+    }
+    .add-event-btn {
+        /* Transforme le bouton en cercle icône */
+        width: 44px;
+        height: 44px;
+        padding: 10px;
+        border-radius: 50%;
+    }
+    .add-btn-text {
+        /* Masque le texte du bouton */
+        display: none;
+    }
+    .add-event-btn ion-icon {
+        font-size: 1.6em;
+        margin: 0; /* Centre l'icône */
+    }
+    .modal-content {
+        width: 100%; margin: 0; padding: 20px;
+    }
 }
+
 @media (max-width: 480px) {
     .calendar-grid { gap: 3px; padding: 8px; }
     .day-cell { min-height: 90px; padding: 5px; padding-bottom: 20px; border-radius: 6px; }
