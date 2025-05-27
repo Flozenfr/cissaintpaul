@@ -545,9 +545,27 @@ body {
     .custom-alert-modal { padding: 20px; } 
 }
 @media (max-width: 480px) {
-    .day-cell { min-height: 90px; }
-    .day-event-item { font-size: 0.65em; }
-    .navigation { height: 70px; }
-    .indicator { width: 60px; height: 60px; }
-    .navigation ul li a .text { font-size: 0.7em; }
+    /* MODIFIÉ : Réduction de l'espace entre les cases pour les rendre plus larges */
+    .calendar-grid {
+        gap: 2px;
+    }
+    
+    /* MODIFIÉ : Augmentation de la hauteur minimale et du padding interne pour une meilleure cible tactile */
+    .day-cell { 
+        min-height: 100px;
+        padding: 4px;
+    }
+
+    .day-event-item { 
+        font-size: 0.65em; 
+    }
+    .navigation { 
+        height: 70px; 
+    }
+    .indicator { 
+        width: 60px; height: 60px; 
+    }
+    .navigation ul li a .text { 
+        font-size: 0.7em; 
+    }
 }
