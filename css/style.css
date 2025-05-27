@@ -45,6 +45,8 @@ body, html {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
+    /* AJOUT : Empêche les effets de défilement aux bords (ex: pull-to-refresh) */
+    overscroll-behavior: none;
 }
 
 /* Page Loader */
@@ -396,6 +398,8 @@ body.menu-open #app-main {
     height: 100%;
     border: none;
     background-color: var(--dark-bg); /* Couleur de fond pendant le chargement de l'iframe */
+    /* AJOUT : Autorise le scroll vertical mais bloque le scroll horizontal et le pinch-to-zoom */
+    touch-action: pan-y;
 }
 
 /* Nav Footer */
@@ -486,4 +490,73 @@ body.menu-open #app-main {
 
     /* Le FAB d'installation n'est plus nécessaire car il est supprimé,
         mais si d'autres éléments flottants étaient présents, ils devraient aussi considérer env(safe-area-inset-bottom) */
+}
+
+/* install-prompt.css */
+#installPrompt {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--elevation-2);
+  color: var(--accent-text);
+  border: 1px solid var(--fire-red-light);
+  border-radius: var(--border-radius-md);
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 10000;
+  max-width: 300px;
+}
+
+#installPrompt.show {
+  display: block;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+#installPrompt h4 {
+  margin-top: 0;
+  font-family: var(--font-secondary);
+}
+
+#installPrompt button {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: var(--fire-red);
+  color: var(--accent-text);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+#installPrompt button:hover {
+  background-color: var(--fire-red-light);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+#installPrompt .buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+#installPrompt button#dismissBtn {
+  background-color: transparent;
+  color: var(--accent-text);
+  border: 1px solid var(--fire-red-light);
+}
+
+#installPrompt button#dismissBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
