@@ -1,20 +1,22 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>La Tenaille</title>
-  <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/install-prompt.css">
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <link rel="apple-touch-icon" href="images/hello-icon-152.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#121212"/>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="La Tenaille">
-  <meta name="msapplication-TileImage" content="images/hello-icon-144.png">
-  <meta name="msapplication-TileColor" content="#121212">
+    <meta charset="utf-8">
+    <title>La Tenaille</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/install-prompt.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="images/hello-icon-152.png">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="theme-color" content="#121212"/>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="La Tenaille">
+    <meta name="msapplication-TileImage" content="images/hello-icon-144.png">
+    <meta name="msapplication-TileColor" content="#121212">
 </head>
 <body>
     <div class="page-loader" id="page-loader">
@@ -62,7 +64,7 @@
     </nav>
 
     <main id="app-main">
-        <iframe name="content-frame" src="fichiers/accueil.html" frameborder="0" id="content-iframe"></iframe>
+        <iframe name="content-frame" src="fichiers/accueil.html" frameborder="0" id="content-iframe" scrolling="no"></iframe>
     </main>
 
     <script>
@@ -222,15 +224,15 @@
             }
         });
     </script>
-  <div id="installPrompt">
-  <h4>Installer La Tenaille ?</h4>
-  <p>Ajoutez cette application à votre écran d’accueil pour un accès plus rapide.</p>
-  <div class="buttons">
-    <button id="installBtn">Installer</button>
-    <button id="dismissBtn">Ignorer</button>
-  </div>
-</div>
+    <div id="installPrompt">
+        <h4>Installer La Tenaille ?</h4>
+        <p>Ajoutez cette application à votre écran d’accueil pour un accès plus rapide.</p>
+        <div class="buttons">
+            <button id="installBtn">Installer</button>
+            <button id="dismissBtn">Ignorer</button>
+        </div>
+    </div>
 
-<script src="js/main.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
