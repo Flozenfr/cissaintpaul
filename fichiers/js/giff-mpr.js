@@ -265,56 +265,87 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LOGIQUE DE NAVIGATION ---
     function moveIndicator(element) {
-        if (!element || !indicator) return;
+        if (!element || !indicator || !navUl) return; // Added navUl check here for safety
         setTimeout(() => {
             const E_width = element.offsetWidth;
             const E_left = element.offsetLeft;
             const i_width = indicator.offsetWidth;
             const newX = (E_width / 2 - i_width / 2) + E_left;
-            if(navUl) navUl.style.setProperty("--indicator-x-pos", `${newX}px`);
-            if(navUl) navUl.classList.add("indicator-ready");
+            
+            navUl.style.setProperty("--indicator-x-pos", `${newX}px`);
+            navUl.classList.add("indicator-ready"); // Crucial for visibility
+            
             const shockwave = indicator.querySelector(".shockwave") || document.createElement("div");
             shockwave.className = "shockwave";
-            indicator.innerHTML = "";
+            indicator.innerHTML = ""; // Clear previous icon
             indicator.appendChild(shockwave);
             const icon = element.querySelector(".icon ion-icon");
-            if (icon) indicator.appendChild(icon.cloneNode(true));
-            indicator.classList.remove("landed");
+            if (icon) {
+                 const clonedIcon = icon.cloneNode(true);
+                 indicator.appendChild(clonedIcon);
+            }
+            indicator.classList.remove("landed"); // Reset for animation
+            // Add landed class after a short delay for shockwave effect to replay if needed
+             setTimeout(() => indicator.classList.add("landed"), 50);
+
         }, 50);
     }
-
+    
     // --- GESTION DE L'AUTHENTIFICATION ET DE L'UI ---
     const ADMIN_PASSWORD = "Aspf66220*"; 
     function updateAdminUI() {
         const loginIcon = topLoginBtn.querySelector('ion-icon');
-        const currentlyActiveTab = document.querySelector('.navigation .list.active');
+        let currentActiveLi = document.querySelector('.navigation .list.active');
+        const exportControls = document.getElementById('teams-export-controls');
+        const exportProposalsBtn = document.getElementById('export-proposals-btn');
+    
         if (isAdmin) {
             adminOnlyTabs.forEach(tab => tab.style.display = 'list-item');
             adminOnlyFlexContainers.forEach(container => container.style.display = 'flex');
             loginIcon.setAttribute('name', 'log-out-outline');
             topLoginBtn.setAttribute('title', 'Déconnexion');
-            if (currentlyActiveTab) moveIndicator(currentlyActiveTab);
         } else {
             adminOnlyTabs.forEach(tab => tab.style.display = 'none');
-            adminOnlyFlexContainers.forEach(container => container.style.display = 'none');
+            adminOnlyFlexContainers.forEach(container => {
+                if (container.id !== 'teams-export-controls') {
+                    container.style.display = 'none';
+                }
+            });
             loginIcon.setAttribute('name', 'log-in-outline');
             topLoginBtn.setAttribute('title', 'Connexion');
-            if (currentlyActiveTab && currentlyActiveTab.classList.contains('admin-only')) {
-                setActiveTab(navItems[0]);
-            } else if (currentlyActiveTab) {
-                moveIndicator(currentlyActiveTab);
+    
+            if (exportControls) {
+                exportControls.style.display = 'flex';
+                if (exportProposalsBtn) {
+                    exportProposalsBtn.style.display = 'none';
+                }
+            }
+    
+            if (currentActiveLi && currentActiveLi.classList.contains('admin-only') && currentActiveLi.style.display === 'none') {
+                setActiveTab(navItems[0]); // This handles view update and calls moveIndicator
+                return; // setActiveTab takes care of the indicator
             }
         }
+    
+        // Ensure indicator is updated for the tab that is finally active
+        currentActiveLi = document.querySelector('.navigation .list.active'); // Re-query for the true active tab
+        if (currentActiveLi) {
+            moveIndicator(currentActiveLi);
+        } else if (navItems.length > 0) {
+            setActiveTab(navItems[0]); // Fallback
+        }
     }
+    
     if(topLoginBtn) topLoginBtn.addEventListener('click', () => {
         if (isAdmin) {
             isAdmin = false;
             sessionStorage.removeItem('isAdmin');
             matriculeSessionAuth = {}; 
             showMessage('Vous avez été déconnecté.', 'warning');
-            updateAdminUI();
+            updateAdminUI(); // This will adjust UI and indicator
+            // updateActiveView should be called based on the new active tab, which updateAdminUI handles
             const activeTab = document.querySelector('.navigation .list.active');
-            if (activeTab) updateActiveView(activeTab); 
+            if (activeTab) updateActiveView(activeTab); // Update content for the new active tab
         } else {
             showCustomPrompt("Veuillez entrer le mot de passe administrateur :", (password) => {
                 if (password === ADMIN_PASSWORD) {
@@ -322,9 +353,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.setItem('isAdmin', 'true');
                     matriculeSessionAuth = {};
                     showMessage('Connexion réussie !', 'success');
-                    updateAdminUI();
+                    updateAdminUI(); // This will adjust UI and indicator
                     const activeTab = document.querySelector('.navigation .list.active');
-                    if (activeTab) updateActiveView(activeTab);
+                    if (activeTab) updateActiveView(activeTab); // Update content for the current (or new) active tab
                 } else if (password !== null) {
                     showMessage('Mot de passe incorrect.', 'error');
                 }
@@ -599,15 +630,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if(indicator) indicator.addEventListener("transitionend", (e) => { if (e.propertyName === "transform" && navUl && navUl.classList.contains("indicator-ready")) { indicator.classList.add("landed"); } });
 
     function setInitialState() {
-        updateAdminUI();
-        let activeItem = document.querySelector(".navigation .list.active") || navItems[0];
-        if (activeItem.classList.contains('admin-only') && !isAdmin) {
-            activeItem.classList.remove('active');
-            activeItem = navItems[0];
-            activeItem.classList.add('active');
+        updateAdminUI(); // Handles initial tab visibility, potential switch, and indicator.
+    
+        const activeItem = document.querySelector(".navigation .list.active");
+        if (activeItem) {
+            updateActiveView(activeItem); // Ensure view content matches the active tab.
+        } else if (navItems.length > 0) {
+            // This fallback ensures if updateAdminUI somehow didn't set an active tab,
+            // the first tab is made active and its view is shown.
+            setActiveTab(navItems[0]);
         }
-        updateActiveView(activeItem);
-        moveIndicator(activeItem);
     }
 
     // --- LOGIQUE DU CALENDRIER DE DISPONIBILITÉS ---
@@ -992,11 +1024,11 @@ document.addEventListener('DOMContentLoaded', () => {
              return;
         }
          if (availablePersonnelIds.length === 0 && (eventDetails && eventDetails.types && eventDetails.types.length > 0)) {
-            let noPersonnelHtml = `<div class="teams-display-header"><h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>${generateEventTagsHtml(dateId)}<p style="text-align:center; margin-top:1rem; color:var(--fire-red);">Aucun personnel disponible pour former les équipes pour cet événement.</p></div>`;
-            if(generatedTeamsContainer) generatedTeamsContainer.innerHTML = noPersonnelHtml;
-            if(potentialReplacementsContainer) potentialReplacementsContainer.innerHTML = '';
-            return;
-        }
+             let noPersonnelHtml = `<div class="teams-display-header"><h3>Équipes du ${dateId.split('-').reverse().join('/')}</h3>${generateEventTagsHtml(dateId)}<p style="text-align:center; margin-top:1rem; color:var(--fire-red);">Aucun personnel disponible pour former les équipes pour cet événement.</p></div>`;
+             if(generatedTeamsContainer) generatedTeamsContainer.innerHTML = noPersonnelHtml;
+             if(potentialReplacementsContainer) potentialReplacementsContainer.innerHTML = '';
+             return;
+         }
         const { ccfTeam, mprTeam } = generateProvisionalTeam(dateId, wantsCcf, wantsMpr);
         currentWorkingTeam = { ccfTeam, mprTeam };
         renderTeams(dateId, ccfTeam, mprTeam, wantsCcf, wantsMpr, false, isProvisionalDisplayState);
@@ -1057,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Object.keys(allAvailabilities[dateId] || {}).length > 0 || (allEvents[dateId] && allEvents[dateId].types && allEvents[dateId].types.length > 0) ) {
                  teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--smoke-white);">Aucune équipe applicable pour les types d'événements ou les disponibilités de cette journée.</p>`;
             } else {
-                teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--smoke-white);">Aucun personnel disponible et aucun événement défini pour cette date.</p>`;
+                 teamsHtml = `<p style="text-align:center; margin-top:1rem; color:var(--smoke-white);">Aucun personnel disponible et aucun événement défini pour cette date.</p>`;
             }
         }
         let adminActionsHtml = '';
@@ -1095,7 +1127,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }); 
         });
         
-        if (isAdmin && isFrozen && (ccfTeam || mprTeam)) { 
+        // MODIFICATION: Afficher les remplacements potentiels pour les admins, même pour les propositions
+        if (isAdmin && (ccfTeam || mprTeam)) { 
             const teamForReplacements = currentWorkingTeam; 
             if (teamForReplacements && potentialReplacementsContainer) { 
                 renderPotentialReplacements(dateId, teamForReplacements.ccfTeam, teamForReplacements.mprTeam); 
@@ -1195,28 +1228,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function performReplacement(replacementPersonnelId) {
-        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) { 
-            showMessage("Erreur: Remplacement impossible.", "error"); 
-            return; 
-        } 
+        if (!isAdmin || !currentReplacementInfo || !currentWorkingTeam) {
+            showMessage("Erreur: Remplacement impossible.", "error");
+            return;
+        }
+    
         const { dateId, teamType, roleKey, teammateIndex } = currentReplacementInfo;
-        const teamToUpdate = currentWorkingTeam[teamType + 'Team']; 
-        if (!teamToUpdate) { 
-            showMessage("Erreur: Équipe à mettre à jour non trouvée.", "error"); 
-            return; 
+    
+        if (teamType === 'ccf' && !currentWorkingTeam.ccfTeam) {
+            currentWorkingTeam.ccfTeam = { [ROLES.CCF_DRIVER]: null, [ROLES.CCF_LEADER]: null, [ROLES.CCF_TEAMMATE]: [null, null] };
         }
-        if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) { 
-            teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId; 
-        } else { 
-            teamToUpdate[roleKey] = replacementPersonnelId; 
+        if (teamType === 'mpr' && !currentWorkingTeam.mprTeam) {
+            currentWorkingTeam.mprTeam = { [ROLES.MPR_DRIVER]: null, [ROLES.MPR_TEAMMATE]: null };
         }
+    
+        const teamToUpdate = currentWorkingTeam[teamType + 'Team'];
+        if (!teamToUpdate) {
+            showMessage("Erreur: Équipe à mettre à jour non trouvée.", "error");
+            return;
+        }
+    
+        if (roleKey === ROLES.CCF_TEAMMATE && teammateIndex !== -1) {
+            // S'assurer que le tableau des équipiers existe et est un tableau
+            if (!teamToUpdate[roleKey] || !Array.isArray(teamToUpdate[roleKey])) {
+                teamToUpdate[roleKey] = [null, null]; // Initialiser si manquant ou incorrect
+            }
+            // Vérifier que l'index est valide pour le tableau (normalement 0 ou 1)
+            if (teammateIndex >= 0 && teammateIndex < teamToUpdate[roleKey].length) {
+                 teamToUpdate[roleKey][teammateIndex] = replacementPersonnelId;
+            } else {
+                console.error("Index d'équipier invalide:", teammateIndex);
+                showMessage("Erreur: Index d'équipier invalide.", "error");
+                return;
+            }
+        } else {
+            teamToUpdate[roleKey] = replacementPersonnelId;
+        }
+    
         database.ref(`assignedTeams/${dateId}`).set(currentWorkingTeam)
-            .then(() => { 
-                showMessage("Remplacement effectué et équipe mise à jour !", "success"); 
-                if(replacePersonnelModal) closeModal(replacePersonnelModal); 
+            .then(() => {
+                showMessage("Remplacement effectué et équipe mise à jour !", "success");
+                if(replacePersonnelModal) closeModal(replacePersonnelModal);
+                // Rafraîchir l'affichage des équipes
+                generateAndDisplayTeams(dateId); 
             })
-            .catch(err => { 
-                showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error"); 
+            .catch(err => {
+                showMessage("Erreur lors de la validation de l'équipe : " + err.message, "error");
             });
     }
 
@@ -1418,7 +1475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         doc.save(`propositions-${monthName}-${year}.pdf`); 
     }
     function exportActivatedToPDF() { 
-        if (!isAdmin) return; 
+        // MODIFICATION: Suppression du contrôle !isAdmin pour autoriser tous les utilisateurs
         const { jsPDF } = window.jspdf; 
         const doc = new jsPDF('p', 'mm', 'a4'); 
         const month = teamsCurrentMonth.value; 
