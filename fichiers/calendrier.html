@@ -69,11 +69,6 @@
                 <div class="event-list" id="archivedEventsList"></div>
             </details>
         </main>
-
-        <main id="profileView" class="page-view">
-             <h2>Profil</h2>
-             <p>Cette section est en cours de construction.</p>
-        </main>
     </div>
 
     <div id="eventModal" class="modal">
@@ -85,11 +80,16 @@
                 <label for="eventTitle">Titre de l'événement :</label>
                 <input type="text" id="eventTitle" required>
 
-                <label for="eventDate">Date :</label>
-                <input type="date" id="eventDate" required>
-
-                <label for="eventTime">Heure (optionnel) :</label>
-                <input type="time" id="eventTime">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventDate">Date :</label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventTime">Heure :</label>
+                        <input type="time" id="eventTime">
+                    </div>
+                </div>
 
                 <label for="eventType">Type :</label>
                 <select id="eventType" required>
@@ -139,7 +139,7 @@
             <span class="close-details-btn">&times;</span>
             <h3 id="detailsTitle"></h3>
             <p><strong>Date :</strong> <span id="detailsDate"></span></p>
-            <p id="detailsTimeWrapper" style="display: none;"><strong>Heure :</strong> <span id="detailsTime"></span></p>
+            <p><strong>Heure :</strong> <span id="detailsTime"></span></p>
             <p><strong>Lieu :</strong> <span id="detailsLocation"></span></p>
             <p><strong>Durée :</strong> <span id="detailsDuration"></span></p>
             <p><strong>Type :</strong> <span id="detailsType"></span></p>
@@ -151,6 +151,22 @@
                 <button id="joinEventBtn" class="join-btn">Rejoindre</button>
                 <button id="editEventBtn" class="edit-btn">Modifier</button>
                 <button id="deleteEventBtn" class="delete-btn">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dayActionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-day-action-btn">&times;</span>
+            <h3 id="dayActionTitle">Actions du jour</h3>
+            <p id="dayActionSubtitle">Que souhaitez-vous faire ?</p>
+            <div id="dayActionEventsList" class="day-action-events-list">
+                </div>
+            <div class="modal-actions">
+                <button id="dayActionAddBtn" class="join-btn">
+                    <ion-icon name="add-circle-outline"></ion-icon>
+                    Ajouter un nouvel événement
+                </button>
             </div>
         </div>
     </div>
@@ -170,7 +186,6 @@
             <div class="indicator"><div class="shockwave"></div></div>
             <li class="list active" data-view="calendarView"><a href="#calendar"><span class="icon"><ion-icon name="calendar-outline"></ion-icon></span><span class="text"><b>Calendrier</b></span><div class="particles"></div></a></li>
             <li class="list" data-view="eventsView"><a href="#events"><span class="icon"><ion-icon name="list-outline"></ion-icon></span><span class="text"><b>Événements</b></span><div class="particles"></div></a></li>
-            <li class="list" data-view="profileView"><a href="#profile"><span class="icon"><ion-icon name="person-outline"></ion-icon></span><span class="text"><b>Profil</b></span><div class="particles"></div></a></li>
         </ul>
     </div>
 
