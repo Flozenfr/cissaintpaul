@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewContainers = document.querySelectorAll('.view-container');
     const topLoginBtn = document.getElementById('top-login-btn');
 
+    // Nouveaux sélecteurs
+    const loaderModal = document.getElementById('loader-modal');
+    const imagePreviewModal = document.getElementById('image-preview-modal');
+    const fullImagePreview = document.getElementById('full-image-preview');
+    const headerControlGroups = document.querySelectorAll('.header-control-group');
+
     const interventionForm = document.getElementById('interventionForm');
     const materielsList = document.getElementById('materielsList');
     const photoPreview = document.getElementById('photoPreview');
@@ -34,14 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const pharmacyPasswordModal = document.getElementById('pharmacyPasswordModal');
     const materialStatusModal = document.getElementById('materialStatusModal');
 
+    // Sélecteurs pour les contrôles DANS L'EN-TÊTE
     const currentSearchInput = document.getElementById('currentSearch');
     const filterDropdownBtn = document.getElementById('filterDropdownBtn');
     const filterDropdownMenu = document.getElementById('filterDropdownMenu');
     const exportDropdownBtn = document.getElementById('exportDropdownBtn');
     const exportDropdownMenu = document.getElementById('exportDropdownMenu');
-
     const archiveSearchInput = document.getElementById('archiveSearch');
     const pharmacySearchInput = document.getElementById('pharmacySearch');
+    const exportPharmacyBtn = document.getElementById('exportPharmacyBtn');
+
 
     let monthlyChart = null;
     let statusChart = null;
@@ -58,6 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const DELETE_PASSWORD = "Aspf66220*";
     let isPharmacyAuthenticated = false;
     let currentFilterStatus = 'all';
+
+    // --- GESTION DES CONTRÔLES DE L'EN-TÊTE ---
+    function updateHeaderControls(activeViewId) {
+        headerControlGroups.forEach(group => {
+            if (group.id === `header-controls-${activeViewId.replace('-view', '')}`) {
+                group.classList.add('visible');
+            } else {
+                group.classList.remove('visible');
+            }
+        });
+    }
 
     // --- LOGIQUE DE NAVIGATION ---
     function moveIndicator(element) {
@@ -88,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeView = document.getElementById(viewId);
         if (activeView) {
             activeView.classList.add('visible');
+            updateHeaderControls(viewId); // Met à jour les contrôles de l'en-tête
             currentPage_current = 1;
             currentPage_archive = 1;
             currentPage_pharmacy = 1;
@@ -112,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const tab = e.currentTarget.closest('li');
             if (tab.dataset.view === 'pharmacy-view' && !isPharmacyAuthenticated) {
-                  promptForPharmacyPassword();
+                 promptForPharmacyPassword();
             } else {
                 setActiveTab(tab);
             }
@@ -185,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allInterventions = snapshot.val() || {};
         const activeTab = document.querySelector(".navigation .list.active");
         if(activeTab){
-            displayInterventions();
+             updateActiveView(activeTab); // Raffraîchit la vue actuelle
         } else {
             displayInterventions();
         }
@@ -220,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (inter.archived || inter.statut === 'Terminé & Réapprovisionné') {
-                 if (`${inter.numero_intervention} ${inter.nom} ${inter.date}`.toLowerCase().includes(archiveSearchTerm)) {
+                if (`${inter.numero_intervention} ${inter.nom} ${inter.date}`.toLowerCase().includes(archiveSearchTerm)) {
                     filteredArchiveArray.push(interventionData);
                 }
             }
@@ -257,6 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!matchesSearch) return false;
 
         if (filterTerm === 'all') return true;
+        if (filterTerm === 'Terminé') { // Spécifique pour les terminées non archivées
+             return inter.statut === filterTerm && !inter.archived;
+        }
         if (filterTerm === 'Urgent' || filterTerm === 'Critique') {
             return inter.urgence === filterTerm;
         }
@@ -302,18 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${statusSelectHtml}
                 </div>
                 <div class="card-body">
-                    <div class="card-item">
-                        <i class="bi bi-person-fill"></i>
-                        <span>${nom || 'N/A'}</span>
-                    </div>
-                    <div class="card-item">
-                        <i class="bi bi-calendar3"></i>
-                        <span>${formatDate(date)} à ${heure}</span>
-                    </div>
-                    <div class="card-item">
-                        <i class="bi bi-geo-alt-fill"></i>
-                        <span>${lieu || 'Lieu non spécifié'}</span>
-                    </div>
+                    <div class="card-item"> <i class="bi bi-person-fill"></i> <span>${nom || 'N/A'}</span> </div>
+                    <div class="card-item"> <i class="bi bi-calendar3"></i> <span>${formatDate(date)} à ${heure}</span> </div>
+                    <div class="card-item"> <i class="bi bi-geo-alt-fill"></i> <span>${lieu || 'Lieu non spécifié'}</span> </div>
                     ${urgenceHtml}
                 </div>
                 <div class="card-footer">
@@ -334,18 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="status-badge ${getStatusBadgeClass(statut)}">${statut}</span>
                 </div>
                 <div class="card-body">
-                    <div class="card-item">
-                        <i class="bi bi-person-fill"></i>
-                        <span>${nom || 'N/A'}</span>
-                    </div>
-                    <div class="card-item">
-                        <i class="bi bi-calendar-x"></i>
-                        <span>${formatDate(date)} à ${heure}</span>
-                    </div>
-                    <div class="card-item">
-                        <i class="bi bi-geo-alt-fill"></i>
-                        <span>${lieu || 'Lieu non spécifié'}</span>
-                    </div>
+                    <div class="card-item"> <i class="bi bi-person-fill"></i> <span>${nom || 'N/A'}</span> </div>
+                    <div class="card-item"> <i class="bi bi-calendar-x"></i> <span>${formatDate(date)} à ${heure}</span> </div>
+                    <div class="card-item"> <i class="bi bi-geo-alt-fill"></i> <span>${lieu || 'Lieu non spécifié'}</span> </div>
                 </div>
                 <div class="card-footer">
                     <button class="btn-icon-footer view-btn" title="Voir les détails"><i class="bi bi-eye-fill"></i></button>
@@ -374,22 +379,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="status-badge ${statusClass}">${statusText}</span>
                 </div>
                 <div class="card-body">
-                    <div class="card-item">
-                        <i class="bi bi-calendar-check"></i>
-                        <span>Terminée le ${formatDate(date)}</span>
-                    </div>
+                    <div class="card-item"> <i class="bi bi-calendar-check"></i> <span>Terminée le ${formatDate(date)}</span> </div>
                     <h5>Matériels à réapprovisionner :</h5>
                     ${materielsHtmlList}
                 </div>
                 <div class="card-footer">
-                    <button class="btn-primary manage-material-btn" title="Gérer le matériel">
-                        <i class="bi bi-pencil-square"></i> Gérer le Matériel
-                    </button>
+                    <button class="btn-primary manage-material-btn" title="Gérer le matériel"> <i class="bi bi-pencil-square"></i> Gérer le Matériel </button>
                 </div>
             </div>
         `;
     }
-
 
     // --- GESTIONNAIRES D'ÉVÉNEMENTS ---
     function addCardEventListeners() {
@@ -432,7 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             e.target.className = `status-select-card ${getStatusSelectClass(newStatus)}`;
 
-
         } catch (error) {
             showMessage("Erreur lors de la mise à jour du statut: " + error.message, "error");
             displayInterventions();
@@ -453,10 +451,16 @@ document.addEventListener('DOMContentLoaded', () => {
             e.currentTarget.closest('.modal').classList.remove('visible');
         });
     });
+     // Cacher le modal image en cliquant n'importe où
+    imagePreviewModal.addEventListener('click', () => {
+        imagePreviewModal.classList.remove('visible');
+    });
 
     // --- FONCTIONS DE MANIPULATION DES DONNÉES ---
     function handleFormSubmit(e) {
         e.preventDefault();
+        loaderModal.classList.add('visible'); // AFFICHER LE CHARGEMENT
+
         const id = interventionIdInput.value;
         const interventionData = {
             numero_intervention: document.getElementById('numero').value, date: document.getElementById('date').value,
@@ -469,11 +473,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!id) { interventionData.createdAt = firebase.database.ServerValue.TIMESTAMP; }
         interventionData.updatedAt = firebase.database.ServerValue.TIMESTAMP;
         const dbRef = id ? database.ref('interventions/' + id) : database.ref('interventions').push();
+        
         dbRef.set(interventionData).then(() => {
             showMessage(id ? 'Intervention modifiée !' : 'Intervention enregistrée !', 'success');
-            resetForm(); setActiveTab(document.querySelector('.list[data-view="current-view"]'));
-        }).catch(err => showMessage('Erreur: ' + err.message, 'error'));
+            resetForm(); 
+            setActiveTab(document.querySelector('.list[data-view="current-view"]'));
+        }).catch(err => {
+            showMessage('Erreur: ' + err.message, 'error');
+        }).finally(() => {
+             loaderModal.classList.remove('visible'); // CACHER LE CHARGEMENT
+        });
     }
+
     function editIntervention(id) {
         const inter = allInterventions[id]; if (!inter) return;
         document.getElementById('numero').value = inter.numero_intervention || '';
@@ -513,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (password !== null) { showMessage('Mot de passe incorrect. Suppression annulée.', 'error'); }
     }
 
-    // --- FONCTIONS UTILITAIRES ---
+    // --- FONCTIONS UTILITAIRES ET VISIONNEUSE D'IMAGE ---
     function resetForm() {
         interventionForm.reset(); interventionIdInput.value = ''; materiels = []; photosBase64 = [];
         updateMaterielsDisplay(); updatePhotosDisplay(); setDefaultDateTime();
@@ -542,12 +553,27 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         }
     }
+    
+    function showFullImage(src) {
+        fullImagePreview.src = src;
+        imagePreviewModal.classList.add('visible');
+    }
+
+    // Ajout d'un écouteur d'événements global pour ouvrir la visionneuse
+    document.body.addEventListener('click', (e) => {
+        if (e.target.classList.contains('photo-thumb')) {
+             e.stopPropagation(); // Empêche le clic de fermer la modale immédiatement
+            showFullImage(e.target.src);
+        }
+    });
+
     function updatePhotosDisplay() {
         photoPreview.innerHTML = photosBase64.map((photo, index) => `<div class="photo-thumb-wrapper"><img src="${photo}" class="photo-thumb"><button type="button" class="remove-photo-btn" data-index="${index}">&times;</button></div>`).join('');
         document.querySelectorAll('.remove-photo-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => { photosBase64.splice(e.target.dataset.index, 1); updatePhotosDisplay(); });
+            btn.addEventListener('click', (e) => { e.stopPropagation(); photosBase64.splice(e.target.dataset.index, 1); updatePhotosDisplay(); });
         });
     }
+
     function showMessage(message, type) {
         const container = document.createElement('div'); container.className = `message-container ${type}`;
         container.innerHTML = `<p>${message}</p>`; document.body.appendChild(container);
@@ -613,6 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalFooterDiv.appendChild(printBtn); modalContent.appendChild(modalFooterDiv);
         detailsModal.classList.add('visible');
     }
+    
+    // ... Reste du code JS inchangé (stats, export, pagination, modals pharmacie, etc.)
     function openMaterialStatusModal(interId) {
         const inter = allInterventions[interId]; if (!inter || !inter.materiels) return;
         document.getElementById('material-modal-inter-num').textContent = `n°${inter.numero_intervention}`;
@@ -648,7 +676,6 @@ document.addEventListener('DOMContentLoaded', () => {
         materialStatusModal.classList.remove('visible');
     });
 
-    // --- FONCTIONS STATS & EXPORT ---
     function updateStats() {
         const stats = { enCours: 0, termine: 0, enAttente: 0, archive: 0 };
         Object.values(allInterventions).forEach(inter => {
@@ -708,8 +735,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         doc.save(`Intervention_${inter.numero_intervention}.pdf`);
     }
-    document.getElementById('exportPharmacyBtn').addEventListener('click', () => {
-         const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("Export Pharmacie - Réapprovisionnement", 14, 22);
+    exportPharmacyBtn.addEventListener('click', () => {
+        const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("Export Pharmacie - Réapprovisionnement", 14, 22);
         const body = [];
         Object.entries(allInterventions).forEach(([id, inter]) => {
             if (inter.statut === 'Terminé' && inter.materiels && inter.materiels.length > 0) {
@@ -730,8 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportCsvBtn')?.addEventListener('click', exportActivesToCSV);
     function getActiveInterventionsForExport() {
         return Object.values(allInterventions).filter(inter =>
-            !inter.archived && !inter.statut.includes('Terminé') &&
-            matchesFiltersCurrent(inter, currentSearchInput.value.toLowerCase(), currentFilterStatus)
+            !inter.archived && matchesFiltersCurrent(inter, currentSearchInput.value.toLowerCase(), currentFilterStatus)
         );
     }
     function exportActivesToExcel() {
@@ -765,7 +791,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage('Export CSV généré.', 'success');
     }
 
-    // --- PAGINATION ---
     function updatePagination(elementId, currentPage, totalPages, type) {
         const paginationUl = document.getElementById(elementId); if (!paginationUl) return; paginationUl.innerHTML = '';
         if (totalPages <= 1) return;
