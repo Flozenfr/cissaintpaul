@@ -85,11 +85,11 @@
             </div>
         </div>
         <button id="top-login-btn" class="top-login-btn" title="Accès Pharmacie">
-            <ion-icon name="medkit-outline"></ion-icon>
+            <img src="https://i.imgur.com/kv8nwT3.png" alt="Accès Pharmacie Icon">
         </button>
     </div>
 
-    <div class="view-container visible" id="form-view">
+    <div class="view-container" id="form-view">
         <form id="interventionForm" class="needs-validation" novalidate>
             <div class="form-grid">
                 <div class="form-group full-width">
@@ -184,63 +184,7 @@
             <ul class="pagination" id="archivePagination"></ul>
         </div>
     </div>
-
-    <div class="view-container" id="pharmacy-view">
-        <div class="pharmacy-header">
-            <nav class="pharmacy-nav">
-                <button class="pharmacy-nav-btn active" data-tab="reappro"><i class="bi bi-arrow-repeat"></i> Réapprovisionnement</button>
-                <button class="pharmacy-nav-btn" data-tab="stock"><i class="bi bi-box-seam"></i> Gestion du Stock</button>
-                <button class="pharmacy-nav-btn" data-tab="log"><i class="bi bi-journal-text"></i> Journal</button>
-            </nav>
-        </div>
-        <div class="pharmacy-content">
-            <div class="pharmacy-tab-pane active" id="pharmacy-tab-reappro">
-                <div id="pharmacyInterventionsCards" class="cards-view"></div>
-                <div class="pagination-container">
-                    <ul class="pagination" id="pharmacyPagination"></ul>
-                </div>
-            </div>
-            <div class="pharmacy-tab-pane" id="pharmacy-tab-stock">
-                <div class="stock-management-container">
-                    <div class="stock-actions">
-                        <input type="text" id="newStockItemName" placeholder="Nom du nouvel article">
-                        <button id="addStockItemBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Ajouter au stock</button>
-                    </div>
-                    <div class="table-container">
-                        <table id="stockTable">
-                            <thead>
-                                <tr>
-                                    <th>Article</th>
-                                    <th>Quantité</th>
-                                    <th>Notes (fournisseur, péremption...)</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stockTableBody">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="pharmacy-tab-pane" id="pharmacy-tab-log">
-                 <div class="table-container">
-                    <table id="pharmacyLogTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Action</th>
-                                <th>Détails</th>
-                                <th>Par</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pharmacyLogBody">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    
     <div class="view-container" id="stats-view">
         <div class="stats-grid">
             <div class="stat-card"> <span class="stat-value" id="stats-en-cours">0</span> <span class="stat-label">En cours</span> </div>
@@ -254,42 +198,100 @@
         </div>
     </div>
 
-    <div id="detailsModal" class="modal">
+    <div class="view-container" id="reappro-view">
+        <h2>Réapprovisionnement</h2>
+        <div id="pharmacyInterventionsCards" class="cards-view"></div>
+        <div class="pagination-container">
+            <ul class="pagination" id="pharmacyPagination"></ul>
         </div>
+    </div>
 
-    <div id="pharmacyPasswordModal" class="modal">
-        <div class="modal-content">
-            <h3 class="modal-title-confirm">Accès Sécurisé</h3>
-            <p>Veuillez entrer le mot de passe pour accéder à la section pharmacie.</p>
-            <input type="password" id="pharmacyPasswordInput" placeholder="Mot de passe">
-            <div class="modal-actions">
-                <button id="pharmacy-password-cancel-btn" class="btn-secondary">Annuler</button>
-                <button id="pharmacy-password-ok-btn" class="btn-primary">Confirmer</button>
+    <div class="view-container" id="pharmacy-stock-pompier-view">
+        <h2>Gestion du Stock Pompier</h2>
+        <div class="stock-management-container">
+            <div class="stock-actions">
+                <input type="text" id="newStockItemName" placeholder="Nom du nouvel article">
+                <button id="addStockItemBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Ajouter au stock</button>
+            </div>
+            <div class="table-container">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Article</th>
+                            <th>Quantité</th>
+                            <th>Notes (fournisseur, péremption...)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+
+    <div class="view-container" id="pharmacy-stock-pharmacie-view">
+        <h2>Gestion du Stock Pharmacie</h2>
+        <p style="text-align:center; margin: 2rem;">Contenu à développer pour la gestion du stock Pharmacie.</p>
+    </div>
+
+    <div class="view-container" id="pharmacy-archives-view">
+        <h2>Archives Pharmacie</h2>
+        <p style="text-align:center; margin: 2rem;">Contenu à développer pour les archives de la pharmacie.</p>
+    </div>
+
+    <div class="view-container" id="pharmacy-stats-view">
+        <h2>Statistiques Pharmacie</h2>
+        <p style="text-align:center; margin: 2rem;">Contenu à développer pour les statistiques de la pharmacie.</p>
+    </div>
+
+
+    <div id="detailsModal" class="modal"></div>
 
     <div id="postInterventionMaterialModal" class="modal">
         <div class="modal-content large">
             <span class="close-button">&times;</span>
             <h3 class="modal-title-confirm">Gestion du matériel - Post-Intervention</h3>
             <p>Intervention <strong id="post-inter-modal-inter-num"></strong></p>
-            <div id="post-inter-material-list">
-                </div>
+            <div id="post-inter-material-list"></div>
             <div class="modal-actions">
                 <button id="save-post-inter-material-btn" class="btn-primary"><i class="bi bi-save"></i> Enregistrer les statuts</button>
             </div>
         </div>
     </div>
+    
+    <div id="custom-dialog-modal" class="modal">
+        <div class="modal-content-dialog">
+            <h3 id="dialog-title" class="dialog-title">Titre de la modale</h3>
+            <p id="dialog-message" class="dialog-message">Message de la modale.</p>
+            <div id="dialog-input-container" class="dialog-input-container">
+                <input type="text" id="dialog-input" class="dialog-input">
+            </div>
+            <div id="dialog-actions" class="modal-actions">
+                <button id="dialog-cancel-btn" class="btn-secondary">Annuler</button>
+                <button id="dialog-confirm-btn" class="btn-primary">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
 
     <div class="navigation">
-        <ul>
-            <div class="indicator"><div class="shockwave"></div></div>
+        <div class="indicator"><div class="shockwave"></div></div>
+
+        <ul id="main-nav-ul">
             <li class="list active" data-view="form-view"> <a href="#"> <span class="icon"><ion-icon name="add-circle-outline"></ion-icon></span> <span class="text"><b>Nouvelle</b></span> </a> </li>
             <li class="list" data-view="current-view"> <a href="#"> <span class="icon"><ion-icon name="play-circle-outline"></ion-icon></span> <span class="text"><b>Actives</b></span> </a> </li>
             <li class="list" data-view="archive-view"> <a href="#"> <span class="icon"><ion-icon name="archive-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
-            <li class="list" data-view="pharmacy-view"> <a href="#"> <span class="icon"><ion-icon name="medkit-outline"></ion-icon></span> <span class="text"><b>Pharmacie</b></span> </a> </li>
             <li class="list" data-view="stats-view"> <a href="#"> <span class="icon"><ion-icon name="stats-chart-outline"></ion-icon></span> <span class="text"><b>Stats</b></span> </a> </li>
+        </ul>
+
+        <ul id="pharmacy-nav-ul">
+             <li class="list" data-view="reappro-view"> <a href="#"> <span class="icon"><ion-icon name="repeat-outline"></ion-icon></span> <span class="text"><b>Réappro</b></span> </a> </li>
+             <li class="list" data-view="pharmacy-stock-pompier-view"> <a href="#"> <span class="icon"><ion-icon name="medkit-outline"></ion-icon></span> <span class="text"><b>Stock Pompier</b></span> </a> </li>
+             <li class="list" data-view="pharmacy-stock-pharmacie-view"> <a href="#"> <span class="icon"><ion-icon name="beaker-outline"></ion-icon></span> <span class="text"><b>Stock Pharma</b></span> </a> </li>
+             <li class="list" data-view="pharmacy-archives-view"> <a href="#"> <span class="icon"><ion-icon name="folder-open-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
+             <li class="list" data-view="pharmacy-stats-view"> <a href="#"> <span class="icon"><ion-icon name="analytics-outline"></ion-icon></span> <span class="text"><b>Stats</b></span> </a> </li>
+             <li class="list logout-btn" id="pharmacy-logout-btn"> <a href="#"> <span class="icon"><ion-icon name="log-out-outline"></ion-icon></span> <span class="text"><b>Quitter</b></span> </a> </li>
         </ul>
     </div>
 
