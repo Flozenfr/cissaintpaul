@@ -14,7 +14,8 @@
     --background-card: #2a2a2e;
     --background-card-hover: #313135;
     --text-secondary-color: #b0b0b0;
-    --available-green: #2a9d8f;
+    --available-green: #2a9d8f; /* Vert pour la pharmacie */
+    --available-green-hover: #238276; /* Vert plus foncé pour hover */
     --provisional-blue: #0077b6;
     --header-height: 60px;
     --danger-dark: #6a040f;
@@ -93,26 +94,35 @@ body {
     font-size: 1.8rem;
 }
 
+/* MODIFICATION DU BOUTON PHARMACIE */
 #top-login-btn {
     flex-shrink: 0;
-    background-color: var(--background-card);
-    border: 1px solid var(--ember-orange);
-    color: var(--ember-orange);
+    background-color: var(--available-green); /* Couleur verte */
+    border: 1px solid var(--available-green); /* Bordure verte */
     width: 45px;
     height: 45px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5em;
     cursor: pointer;
     transition: all 0.2s ease;
+    padding: 7px; /* Ajustez le padding pour la taille de l'image */
+    box-sizing: border-box;
 }
+
+#top-login-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Garde les proportions de l'image */
+}
+
 #top-login-btn:hover {
-    background-color: var(--ember-orange);
-    color: var(--charcoal);
+    background-color: var(--available-green-hover); /* Vert plus foncé au survol */
+    border-color: var(--available-green-hover);
     transform: scale(1.1);
 }
+
 
 /* --- CONTRÔLES D'EN-TÊTE --- */
 #header-controls {
@@ -182,6 +192,13 @@ body {
     margin: auto;
 }
 .view-container.visible { display: block; }
+.view-container h2 {
+    color: var(--ember-orange);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
 
 /* --- FORMULAIRE --- */
 #interventionForm {
@@ -514,7 +531,6 @@ select {
 .close-button { color: #aaa; position: absolute; top: 0.8rem; right: 1rem; font-size: 2rem; font-weight: bold; cursor: pointer; transition: color 0.2s; }
 .close-button:hover { color: var(--fire-red); }
 
-.modal-title-confirm { margin-top: 0; margin-bottom: 1rem; color: var(--ember-orange); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
 
 /* Modal Détails */
@@ -532,18 +548,11 @@ select {
 .detail-item i { color: var(--ember-orange); margin-top: 0.15em; font-size: 1.1em; width: 20px; text-align: center; }
 .detail-item strong { color: var(--text-secondary-color); min-width: 90px; display: inline-block; }
 .detail-item span { color: var(--smoke-white); word-break: break-word; }
-.category-badge { display: inline-block; padding: 0.3em 0.7em; font-size: 0.9em; font-weight: 500; border-radius: 15px; color: white; }
-.category-Incendie { background-color: var(--fire-red); }
-.category-Accident { background-color: var(--provisional-blue); }
-.category-Secours { background-color: var(--available-green); }
-.category-Formation { background-color: var(--ember-orange); color: var(--charcoal); }
-.category-Autre { background-color: var(--text-secondary-color); }
 #modalBody .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.75rem; margin-top: 0.5rem; }
 #modalBody .photo-thumb { width: 100%; height: 100px; object-fit: cover; border-radius: 5px; border: 1px solid var(--border-color); cursor: pointer; transition: opacity 0.2s; }
 #modalBody .photo-thumb:hover { opacity: 0.8; }
 .detail-section.full-width { grid-column: 1 / -1; }
 
-/* NOUVEAU: Modale Gestion Matériel Post-Intervention */
 #post-inter-material-list .material-management-item {
     display: grid;
     grid-template-columns: 1fr 1fr 1.5fr;
@@ -555,12 +564,45 @@ select {
 #post-inter-material-list .material-management-item:last-child {
     border-bottom: none;
 }
-#post-inter-material-list .material-management-item span {
-    font-weight: 500;
+
+/* --- MODALE DE DIALOGUE PERSONNALISÉE --- */
+.modal-content-dialog {
+    background-color: var(--background-card);
+    padding: 1.5rem;
+    border-top: 5px solid var(--fire-red);
+    width: 90%;
+    max-width: 450px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+    animation: slideIn 0.3s ease-out;
 }
-#post-inter-material-list .material-management-item select,
-#post-inter-material-list .material-management-item input {
+.dialog-title {
+    color: var(--ember-orange);
+    font-size: 1.4rem;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+}
+.dialog-message {
+    color: var(--smoke-white);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+.dialog-input-container {
+    display: none; 
+    margin-bottom: 1.5rem;
+}
+.dialog-input {
     width: 100%;
+    padding: 0.8rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background-color: var(--charcoal);
+    color: var(--smoke-white);
+}
+.dialog-input:focus {
+    outline: none;
+    border-color: var(--ember-orange);
 }
 
 
@@ -571,8 +613,34 @@ select {
 @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 /* --- NAVIGATION BASSE --- */
-.navigation { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--smoke-white); backdrop-filter: blur(10px); display: flex; justify-content: center; border-top: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 -8px 32px 0 rgba(0, 0, 0, 0.37); z-index: 100; }
-.navigation ul { position: relative; display: flex; width: 100%; max-width: 600px; height: 100%; padding: 0; margin: 0; --indicator-x-pos: 0px; }
+.navigation { 
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 75px; 
+    background: var(--smoke-white); 
+    backdrop-filter: blur(10px); 
+    display: flex; 
+    justify-content: center; 
+    border-top: 1px solid rgba(255, 255, 255, 0.2); 
+    box-shadow: 0 -8px 32px 0 rgba(0, 0, 0, 0.37); 
+    z-index: 100; 
+    --indicator-x-pos: 0px; 
+}
+.navigation ul { 
+    position: relative; 
+    display: flex; 
+    width: 100%; 
+    max-width: 600px; 
+    height: 100%; 
+    padding: 0; 
+    margin: 0; 
+}
+
+#pharmacy-nav-ul {
+    display: none;
+}
 .navigation ul li { position: relative; list-style: none; flex: 1; }
 .navigation ul li:not(:last-child) { border-right: 1px solid var(--charcoal); }
 .navigation ul li a { position: relative; display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%; text-align: center; text-decoration: none; height: 100%; -webkit-tap-highlight-color: transparent; gap: 4px; overflow: hidden; cursor: pointer; }
@@ -580,57 +648,46 @@ select {
 .navigation ul li a .text { font-weight: 400; font-size: 0.6em; letter-spacing: 0.05em; color: var(--charcoal); transition: color 0.3s ease, font-weight 0.3s ease; text-transform: uppercase; }
 .navigation ul li.active a .icon { opacity: 0; transition: opacity 0.1s ease-in; }
 .navigation ul li.active a .text { color: var(--fire-red); font-weight: 400; }
-.indicator { position: absolute; top: 0; left: 0; width: 70px; height: 70px; background: var(--fire-red); border-radius: 50%; border: 6px solid var(--charcoal); display: flex; align-items: center; justify-content: center; transform: translateX(var(--indicator-x-pos)) translateY(40px) scale(0); opacity: 0; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; z-index: 1; }
-.navigation ul.indicator-ready .indicator { transform: translateX(var(--indicator-x-pos)) translateY(-50%) scale(1); opacity: 1; }
+
+.navigation ul li.logout-btn a .icon,
+.navigation ul li.logout-btn a .text {
+    color: var(--fire-red);
+}
+
+.indicator { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 70px; 
+    height: 70px; 
+    background: var(--fire-red); 
+    border-radius: 50%; 
+    border: 6px solid var(--charcoal); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    transform: translateX(var(--indicator-x-pos)) translateY(40px) scale(0); 
+    opacity: 0; 
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; 
+    z-index: 1; 
+}
+.navigation.indicator-ready .indicator { 
+    transform: translateX(var(--indicator-x-pos)) translateY(-50%) scale(1); 
+    opacity: 1; 
+}
 .indicator ion-icon { color: white; font-size: 2.2em; }
 .shockwave { position: absolute; top: -3px; left: -3px; width: 100%; height: 100%; border: 3px solid var(--fire-red); border-radius: 50%; opacity: 0; transform: scale(0.5); }
 .indicator.landed .shockwave { animation: shockwave-effect 0.5s ease-out; }
 @keyframes shockwave-effect { from { transform: scale(1); opacity: 0.7; } to { transform: scale(2.5); opacity: 0; } }
 
-/* --- NOUVEAUX STYLES PHARMACIE --- */
-.pharmacy-header {
-    background-color: var(--background-card);
-    border-radius: 10px;
-    padding: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-.pharmacy-nav {
+/* --- NOUVEAUX STYLES PHARMACIE (Contenu interne) --- */
+.stock-management-container .stock-actions {
     display: flex;
-    gap: 0.5rem;
-    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
-.pharmacy-nav-btn {
+.stock-management-container .stock-actions input {
     flex-grow: 1;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary-color);
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-weight: 500;
-}
-.pharmacy-nav-btn:hover {
-    background-color: var(--charcoal);
-    border-color: var(--ember-orange);
-    color: var(--ember-orange);
-}
-.pharmacy-nav-btn.active {
-    background-color: var(--ember-orange);
-    color: var(--charcoal);
-    border-color: var(--ember-orange);
-    font-weight: 600;
-}
-.pharmacy-tab-pane {
-    display: none;
-}
-.pharmacy-tab-pane.active {
-    display: block;
-    animation: fadeIn 0.5s;
 }
 .table-container {
     background-color: var(--background-card);
@@ -655,14 +712,6 @@ th {
 tbody tr:hover {
     background-color: var(--background-card-hover);
 }
-.stock-management-container .stock-actions {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-.stock-management-container .stock-actions input {
-    flex-grow: 1;
-}
 #stockTable .btn-icon-footer {
     margin: 0 0.2rem;
 }
@@ -672,7 +721,7 @@ tbody tr:hover {
     .btn-header-text { display: none; }
     .btn-header { padding: 0; width: 40px; justify-content: center; }
     #header-controls .actions-group { gap: 0.5rem; }
-    .pharmacy-nav-btn { flex-direction: column; font-size: 0.8em; }
+    .navigation ul#pharmacy-nav-ul a .text { font-size: 0.5em; } 
 }
 
 @media (max-width: 420px) {
