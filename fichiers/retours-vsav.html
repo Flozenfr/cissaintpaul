@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/retours-vsav.css">
+    <link rel="stylesheet" href="retours-vsav.css">
 </head>
 <body>
 
@@ -30,9 +30,8 @@
         <div id="main-header-content">
             <h1 class="app-title">
                 <i class="bi bi-clipboard2-pulse-fill"></i>
-                </h1>
+            </h1>
         </div>
-
         <div id="header-controls">
             <div id="header-controls-current" class="header-control-group">
                 <div class="search-box">
@@ -45,14 +44,14 @@
                             <i class="bi bi-funnel"></i> <span class="btn-header-text">Filtres</span>
                         </button>
                         <ul class="dropdown-menu" id="filterDropdownMenu">
-                           <li><a class="dropdown-item active" href="#" data-filter="all"><i class="bi bi-collection"></i> Toutes</a></li>
-                           <li><hr class="dropdown-divider"></li>
-                           <li><a class="dropdown-item" href="#" data-filter="En cours"><i class="bi bi-hourglass-split"></i> En cours</a></li>
-                           <li><a class="dropdown-item" href="#" data-filter="Terminé"><i class="bi bi-check-circle"></i> Terminées</a></li>
-                           <li><a class="dropdown-item" href="#" data-filter="En attente"><i class="bi bi-pause-circle"></i> En attente</a></li>
-                           <li><hr class="dropdown-divider"></li>
-                           <li><a class="dropdown-item" href="#" data-filter="Urgent"><i class="bi bi-exclamation-triangle"></i> Urgentes</a></li>
-                           <li><a class="dropdown-item" href="#" data-filter="Critique"><i class="bi bi-exclamation-octagon"></i> Critiques</a></li>
+                            <li><a class="dropdown-item active" href="#" data-filter="all"><i class="bi bi-collection"></i> Toutes</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-filter="En cours"><i class="bi bi-hourglass-split"></i> En cours</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="Terminé"><i class="bi bi-check-circle"></i> Terminées</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="En attente"><i class="bi bi-pause-circle"></i> En attente</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" data-filter="Urgent"><i class="bi bi-exclamation-triangle"></i> Urgentes</a></li>
+                            <li><a class="dropdown-item" href="#" data-filter="Critique"><i class="bi bi-exclamation-octagon"></i> Critiques</a></li>
                         </ul>
                     </div>
                     <div class="dropdown export-dropdown">
@@ -68,24 +67,23 @@
                 </div>
             </div>
             <div id="header-controls-archive" class="header-control-group">
-                 <div class="search-box">
+                <div class="search-box">
                     <i class="bi bi-search"></i>
                     <input type="text" id="archiveSearch" placeholder="Rechercher dans les archives...">
                 </div>
             </div>
-             <div id="header-controls-pharmacy" class="header-control-group">
-                 <div class="search-box">
+            <div id="header-controls-pharmacy" class="header-control-group">
+                <div class="search-box">
                     <i class="bi bi-search"></i>
                     <input type="text" id="pharmacySearch" placeholder="Rechercher matériel/N° Inter...">
                 </div>
-                 <div class="actions-group">
+                <div class="actions-group">
                     <button id="exportPharmacyBtn" class="btn-header" title="Exporter Pharmacie">
                         <i class="bi bi-file-earmark-arrow-down-fill"></i> <span class="btn-header-text">Exporter</span>
                     </button>
                 </div>
             </div>
         </div>
-
         <button id="top-login-btn" class="top-login-btn" title="Accès Pharmacie">
             <ion-icon name="medkit-outline"></ion-icon>
         </button>
@@ -124,8 +122,8 @@
                 <div class="form-group">
                     <label for="statut"><i class="bi bi-info-circle"></i> Statut</label>
                     <select id="statut">
-                        <option value="En attente" selected>En attente</option>
-                        <option value="En cours">En cours</option>
+                        <option value="En cours" selected>En cours</option>
+                        <option value="En attente">En attente</option>
                         <option value="Terminé">Terminé</option>
                     </select>
                 </div>
@@ -188,9 +186,58 @@
     </div>
 
     <div class="view-container" id="pharmacy-view">
-         <div id="pharmacyInterventionsCards" class="cards-view"></div>
-        <div class="pagination-container">
-            <ul class="pagination" id="pharmacyPagination"></ul>
+        <div class="pharmacy-header">
+            <nav class="pharmacy-nav">
+                <button class="pharmacy-nav-btn active" data-tab="reappro"><i class="bi bi-arrow-repeat"></i> Réapprovisionnement</button>
+                <button class="pharmacy-nav-btn" data-tab="stock"><i class="bi bi-box-seam"></i> Gestion du Stock</button>
+                <button class="pharmacy-nav-btn" data-tab="log"><i class="bi bi-journal-text"></i> Journal</button>
+            </nav>
+        </div>
+        <div class="pharmacy-content">
+            <div class="pharmacy-tab-pane active" id="pharmacy-tab-reappro">
+                <div id="pharmacyInterventionsCards" class="cards-view"></div>
+                <div class="pagination-container">
+                    <ul class="pagination" id="pharmacyPagination"></ul>
+                </div>
+            </div>
+            <div class="pharmacy-tab-pane" id="pharmacy-tab-stock">
+                <div class="stock-management-container">
+                    <div class="stock-actions">
+                        <input type="text" id="newStockItemName" placeholder="Nom du nouvel article">
+                        <button id="addStockItemBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Ajouter au stock</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="stockTable">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Quantité</th>
+                                    <th>Notes (fournisseur, péremption...)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="pharmacy-tab-pane" id="pharmacy-tab-log">
+                 <div class="table-container">
+                    <table id="pharmacyLogTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>Détails</th>
+                                <th>Par</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pharmacyLogBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -208,14 +255,7 @@
     </div>
 
     <div id="detailsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <div id="modalBody"></div>
-            <div class="modal-actions">
-                <button type="button" class="btn-primary" id="printIntervention"><i class="bi bi-printer"></i> Imprimer</button>
-            </div>
         </div>
-    </div>
 
     <div id="pharmacyPasswordModal" class="modal">
         <div class="modal-content">
@@ -229,14 +269,15 @@
         </div>
     </div>
 
-    <div id="materialStatusModal" class="modal">
-        <div class="modal-content">
+    <div id="postInterventionMaterialModal" class="modal">
+        <div class="modal-content large">
             <span class="close-button">&times;</span>
-            <h3 class="modal-title-confirm">Gérer le statut du matériel</h3>
-            <p>Intervention <strong id="material-modal-inter-num"></strong></p>
-            <div id="material-management-list"></div>
+            <h3 class="modal-title-confirm">Gestion du matériel - Post-Intervention</h3>
+            <p>Intervention <strong id="post-inter-modal-inter-num"></strong></p>
+            <div id="post-inter-material-list">
+                </div>
             <div class="modal-actions">
-                <button id="material-status-close-btn" class="btn-secondary">Fermer</button>
+                <button id="save-post-inter-material-btn" class="btn-primary"><i class="bi bi-save"></i> Enregistrer les statuts</button>
             </div>
         </div>
     </div>
@@ -260,6 +301,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="js/retours-vsav.js"></script>
+    <script src="retours-vsav.js"></script>
 </body>
 </html>
