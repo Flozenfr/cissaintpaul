@@ -74,7 +74,7 @@ body {
 .light-blue {
     background: radial-gradient(circle at 90% 10%, rgba(0, 81, 255, 0.4) 0%, transparent 40%);
     animation: flash-blue 2s infinite;
-    animation-delay: 1s; /* Décalage pour alterner les flashs */
+    animation-delay: 1s;
 }
 @keyframes flash-red {
     0%, 100% { opacity: 0; }
@@ -85,65 +85,98 @@ body {
     50% { opacity: 0.7; }
 }
 
-/* --- EFFET DE FUMÉE --- */
+/* --- EFFET DE FUMÉE VIVANTE --- */
 .smoke-container {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     overflow: hidden;
-    z-index: 3; /* Se place au-dessus de la vidéo mais sous le contenu */
-    pointer-events: none; /* Permet de cliquer à travers */
+    z-index: 3;
+    pointer-events: none;
 }
+
 .smoke-effect {
     position: absolute;
-    width: 50vw; /* Taille large pour un effet diffus */
+    width: 50vw; /* Taille du conteneur de la fumée */
     height: 50vh;
-    background: radial-gradient(circle, rgba(245, 245, 245, 0.1) 0%, rgba(245, 245, 245, 0) 65%);
+}
+
+/* Positionnement des conteneurs dans chaque coin */
+.smoke-top-left     { top: -25vh; left: -25vw; }
+.smoke-top-right    { top: -25vh; right: -25vw; }
+.smoke-bottom-left  { bottom: -25vh; left: -25vw; }
+.smoke-bottom-right { bottom: -25vh; right: -25vw; }
+
+/* Chaque .smoke-effect a 2 couches de fumée (before et after) */
+.smoke-effect::before,
+.smoke-effect::after {
+    content: '';
+    position: absolute;
+    background: radial-gradient(circle, rgba(245, 245, 245, 0.25) 0%, rgba(245, 245, 245, 0) 65%);
     border-radius: 50%;
-    animation: billow 50s infinite linear;
+    animation-name: swirl;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
     opacity: 0;
 }
-.smoke-top-left {
-    top: -25vh;
-    left: -25vw;
+
+/* Couche de fumée 1 */
+.smoke-effect::before {
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    animation-duration: 22s;
 }
-.smoke-top-right {
-    top: -25vh;
-    right: -25vw;
-    animation-delay: -12s; /* Décalage pour désynchroniser les animations */
+
+/* Couche de fumée 2 (plus petite, plus rapide, sens inverse) */
+.smoke-effect::after {
+    width: 70%; height: 70%;
+    top: 15%; left: 15%;
+    animation-duration: 16s;
+    animation-direction: reverse;
 }
-.smoke-bottom-left {
-    bottom: -25vh;
-    left: -25vw;
-    animation-delay: -25s;
-}
-.smoke-bottom-right {
-    bottom: -25vh;
-    right: -25vw;
-    animation-delay: -37s;
-}
-@keyframes billow {
+
+/* Décalage des animations pour que chaque coin soit unique */
+.smoke-top-left::before     { animation-delay: -8s; }
+.smoke-top-left::after      { animation-delay: -4s; }
+
+.smoke-top-right::before    { animation-delay: -14s; }
+.smoke-top-right::after     { animation-delay: -10s; }
+
+.smoke-bottom-left::before  { animation-delay: -20s; }
+.smoke-bottom-left::after   { animation-delay: -16s; }
+
+.smoke-bottom-right::before { animation-delay: -26s; }
+.smoke-bottom-right::after  { animation-delay: -22s; }
+
+
+/* Animation de tourbillon complexe pour un effet réaliste */
+@keyframes swirl {
     0% {
-        transform: scale(1) rotate(0deg);
         opacity: 0;
+        transform: scale(0.9) translate(0, 0) rotate(0deg);
     }
-    10% {
-        opacity: 0.7;
+    15% {
+        opacity: 0.8;
+    }
+    25% {
+        transform: scale(1) translate(-20px, 15px) rotate(45deg);
     }
     50% {
-        transform: scale(1.6) rotate(15deg);
-        opacity: 0.5;
+        opacity: 0.9;
+        transform: scale(1.2) translate(10px, -20px) rotate(90deg);
+    }
+    75% {
+        transform: scale(1) translate(-15px, 10px) rotate(135deg);
     }
     90% {
-        opacity: 0.7;
+        opacity: 0.8;
     }
     100% {
-        transform: scale(1) rotate(-15deg);
         opacity: 0;
+        transform: scale(0.9) translate(0, 0) rotate(180deg);
     }
 }
+
 
 .hero-content {
     position: relative; z-index: 4; padding: 1rem;
