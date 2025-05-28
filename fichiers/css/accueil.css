@@ -65,7 +65,6 @@ body {
     pointer-events: none;
 }
 
-/* AMÉLIORÉ : Style du tuyau plus réaliste */
 .hose {
     position: absolute;
     width: 35px;
@@ -73,9 +72,7 @@ body {
     transform-origin: top center;
     animation: swing-hose 8s infinite ease-in-out;
     border-radius: 5px;
-    /* Superposition de dégradés pour la texture et l'effet 3D */
     background:
-        /* Couche 1: Texture tissée */
         repeating-linear-gradient(
             45deg,
             transparent,
@@ -83,63 +80,86 @@ body {
             rgba(0, 0, 0, 0.2) 8px,
             rgba(0, 0, 0, 0.2) 16px
         ),
-        /* Couche 2: Ombrage cylindrique */
         linear-gradient(
             to right,
             var(--dark-red) 0%,
             var(--fire-red) 30%,
-            #ff5555 50%, /* Point de lumière */
+            #ff5555 50%,
             var(--fire-red) 70%,
             var(--dark-red) 100%
         );
 }
 
-/* AMÉLIORÉ : Style de la lance plus détaillé */
-.hose::after {
-    content: '';
+/* NOUVELLE STRUCTURE : Conteneur pour la lance et l'eau */
+.nozzle-assembly {
     position: absolute;
-    bottom: -15px; /* Chevauche légèrement le tuyau */
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 45px;   /* Largeur du connecteur */
-    height: 70px;  /* Hauteur totale de la lance */
-    /* "Dessin" de la lance avec plusieurs dégradés */
-    background:
-        /* Partie 1: Embout noir (en haut) */
-        linear-gradient(#333, #111) 50% 0 / 70% 15px no-repeat,
-        /* Partie 2: Corps rouge (au milieu) */
-        linear-gradient(var(--fire-red), var(--dark-red)) 50% 15px / 90% 40px no-repeat,
-        /* Partie 3: Connecteur gris (en bas) */
-        linear-gradient(#adadad, #787878) 50% 55px / 100% 15px no-repeat;
+    width: 60px;
+    height: 90px;
+}
+
+/* NOUVELLE STRUCTURE : La lance visible */
+.nozzle-visual {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    /* SVG simplifié et fiable (avec couleurs unies) */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 90'%3E%3Cpath d='M20,90 H40 V70 H55 V55 H5 V70 H20 Z' fill='%23888888'/%3E%3Cpath d='M5,55 H55 V25 H5 Z' fill='%23d10000'/%3E%3Cpath d='M15,25 H45 V0 H15 Z' fill='%23222222'/%3E%3C/svg%3E");
 }
 
 .hose.left {
-    left: 20%;
-    top: -10%;
+    left: 20%; top: -10%;
     transform: rotate(-45deg);
     animation-delay: -2s;
 }
 
 .hose.right {
-    right: 20%;
-    top: -10%;
+    right: 20%; top: -10%;
     transform: rotate(45deg);
     animation-delay: -6s;
     animation-direction: alternate-reverse;
 }
 
 @keyframes swing-hose {
-    0% {
-        transform: rotate(-45deg) scaleY(1);
-    }
-    50% {
-        transform: rotate(45deg) scaleY(1.02);
-    }
-    100% {
-        transform: rotate(-45deg) scaleY(1);
-    }
+    0% { transform: rotate(-45deg) scaleY(1); }
+    50% { transform: rotate(45deg) scaleY(1.02); }
+    100% { transform: rotate(-45deg) scaleY(1); }
 }
 
+/* Effet de jet d'eau */
+.water-stream {
+    position: absolute;
+    /* CORRIGÉ : Positionné en haut de la lance visible */
+    top: 0; 
+    left: 50%;
+    width: 200px;
+    height: 300px;
+    transform: translateX(-50%) perspective(200px) rotateX(45deg);
+    pointer-events: none;
+}
+.water-particle {
+    position: absolute;
+    background: rgba(200, 225, 255, 0.6);
+    border-radius: 50%;
+    opacity: 0;
+    animation: spray linear;
+    filter: blur(2px);
+}
+@keyframes spray {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(300px) scale(0.2);
+    }
+}
 
 .hero-content {
     position: relative; z-index: 4; padding: 1rem;
