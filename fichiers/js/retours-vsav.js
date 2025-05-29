@@ -37,7 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const materialManagementModal = document.getElementById('materialManagementModal');
     const currentSearchInput = document.getElementById('currentSearch');
     const archiveSearchInput = document.getElementById('archiveSearch');
-    const pharmacySearchInput = document.getElementById('pharmacySearch');
+    const pharmacySearchInput = document.getElementById('pharmacySearch'); // Input de recherche partagé
+    const mobileSearchIcon = document.getElementById('mobile-search-icon'); // Nouvelle icône de recherche mobile
+    const pharmacySearchBox = document.querySelector('#header-controls-pharmacy .search-box'); // La search-box de pharmacie
+
     const journalTableBody = document.getElementById('journalTableBody');
     
     const unifiedStockCards = document.getElementById('unifiedStockCards');
@@ -190,12 +193,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeNav = isPharmacyAuthenticated ? pharmacyNavUl : mainNavUl;
         const activeTab = activeNav.querySelector(".list.active");
         if (activeTab) {
-            updateActiveView(activeTab, false); // false = ne pas redéplacer l'indicateur si déjà là
-            setTimeout(() => { // Assurer que l'indicateur est bien positionné
+            updateActiveView(activeTab, false); 
+            setTimeout(() => { 
                 const currentActiveTab = (isPharmacyAuthenticated ? pharmacyNavUl : mainNavUl).querySelector(".list.active");
                 if (currentActiveTab) moveIndicator(currentActiveTab);
             }, 100);
-        } else { // Si aucun onglet actif, activer le premier
+        } else { 
             const firstTab = isPharmacyAuthenticated ? pharmacyNavUl.querySelector('.list') : mainNavUl.querySelector('.list');
             if (firstTab) setActiveTab(firstTab, isPharmacyAuthenticated ? pharmacyNavUl : mainNavUl);
         }
@@ -207,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const navigationContainer = element.closest('.navigation');
         if (!navigationContainer) return;
     
-        setTimeout(() => { // setTimeout pour s'assurer que les dimensions sont calculées
+        setTimeout(() => { 
             const ul = element.closest('ul');
             if (!ul) return; 
             const ulLeft = ul.offsetLeft; 
@@ -239,9 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
         viewContainers.forEach(v => v.classList.remove('visible'));
         const activeView = document.getElementById(viewId);
     
-        // Gérer la visibilité des FABs
         fabAddManualCommand.style.display = 'none';
         fabAddStockItem.style.display = 'none';
+        if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible'); // Fermer la recherche mobile en changeant de vue
 
         if (activeView) {
             activeView.classList.add('visible');
@@ -260,11 +263,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'stock-unified-view': 
                     displayUnifiedStockView();
-                    if (isPharmacyAuthenticated) fabAddStockItem.style.display = 'block'; // Afficher FAB pour stock
+                    if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddStockItem.style.display = 'block';
                     break;
                 case 'commandes-view':
                     displayCommandes();
-                     if (isPharmacyAuthenticated) fabAddManualCommand.style.display = 'block'; // Afficher FAB pour commandes
+                     if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddManualCommand.style.display = 'block';
                     break;
             }
         }
@@ -300,19 +303,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateHeaderControls(activeViewId) {
         headerControlGroups.forEach(group => group.classList.remove('visible'));
+        if (mobileSearchIcon) mobileSearchIcon.style.display = 'none';
+        if (pharmacySearchBox && !pharmacySearchBox.classList.contains('mobile-visible')) { // Ne pas cacher si volontairement ouvert
+             // pharmacySearchBox.classList.remove('mobile-visible'); // Géré dans updateActiveView
+        }
+
+
         let targetIdSuffix = activeViewId.replace('-view', '');
+        let showPharmacySearchGroup = false;
     
         if (isPharmacyAuthenticated) {
-            // En mode pharmacie, le header a une barre de recherche générique 'pharmacy'
-            // sauf pour les vues pompier qui ne sont pas accessibles en mode pharmacie de toute façon.
-            if (['reappro', 'commandes', 'stock-unified', 'pharmacy-archives', 'journal'].includes(targetIdSuffix)) {
-                targetIdSuffix = 'pharmacy'; 
-            } else if (targetIdSuffix === 'form') { 
-                 targetIdSuffix = 'none'; 
-            } else { // Pour current, archive (normalement pas visibles en mode pharma via nav pharma)
-                 targetIdSuffix = 'none'; 
+            globalHeader.classList.add('pharmacy-mode');
+            document.body.classList.add('pharmacy-active-padding'); // Pour ajuster le padding-top du body
+
+            const pharmacySearchRelevantViews = ['reappro', 'commandes', 'stock-unified', 'pharmacy-archives', 'journal'];
+            if (pharmacySearchRelevantViews.includes(targetIdSuffix)) {
+                if (window.innerWidth <= 768) { // Mobile pharmacie
+                    if (mobileSearchIcon) mobileSearchIcon.style.display = 'flex';
+                    // La search-box pharmacie elle-même (pharmacySearchBox) est gérée par l'icône
+                    // On s'assure que `pharmacySearchInput` est bien celui utilisé pour filtrer.
+                } else { // Desktop pharmacie
+                    showPharmacySearchGroup = true;
+                }
+                targetIdSuffix = 'pharmacy'; // Pour s'assurer que pharmacySearchInput est utilisé
+            } else {
+                targetIdSuffix = 'none'; // Pas de recherche pour les autres vues (ex: form-view pharma)
             }
         } else { // Mode Pompier
+            globalHeader.classList.remove('pharmacy-mode');
+            document.body.classList.remove('pharmacy-active-padding');
             if (!['current', 'archive', 'form'].includes(targetIdSuffix)) {
                 targetIdSuffix = 'none';
             }
@@ -323,29 +342,45 @@ document.addEventListener('DOMContentLoaded', () => {
             
         const targetGroup = document.getElementById(`header-controls-${targetIdSuffix}`);
         if (targetGroup) {
-            targetGroup.classList.add('visible');
+            if (isPharmacyAuthenticated && window.innerWidth <= 768 && targetIdSuffix === 'pharmacy') {
+                // Sur mobile pharmacie, le groupe de recherche pharmacie n'est pas rendu visible directement,
+                // seule l'icône l'est. La search-box est affichée/cachée via JS.
+            } else {
+                targetGroup.classList.add('visible');
+            }
+        }
+        if (showPharmacySearchGroup) { // Pour desktop pharmacie, s'assurer que le bon groupe est visible
+            const pharmaSearchGroup = document.getElementById('header-controls-pharmacy');
+            if (pharmaSearchGroup) pharmaSearchGroup.classList.add('visible');
         }
     }
 
 
     function updatePharmacyHeaderSubNav(activeViewId) {
         pharmacyHeaderSubnavContainer.innerHTML = ''; 
-        pharmacyHeaderSubnavContainer.style.display = 'none'; // Par défaut caché
+        pharmacyHeaderSubnavContainer.style.display = 'none'; 
         
         const desktopSubNavCommandes = document.querySelector('#commandes-view .desktop-sub-nav');
         const desktopSubNavStock = document.querySelector('#stock-unified-view .desktop-sub-nav');
 
-        if(desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex'; // Afficher par défaut
+        // Par défaut, les sub-navs dans les vues sont visibles (seront cachées si header subnav prend le relais)
+        if(desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex';
         if(desktopSubNavStock) desktopSubNavStock.style.display = 'flex';
 
 
-        if (!isPharmacyAuthenticated) return;
+        if (!isPharmacyAuthenticated) {
+            // globalHeader.classList.remove('pharmacy-mode'); // Géré par updateHeaderControls
+            return;
+        }
+        
+        // globalHeader.classList.add('pharmacy-mode'); // Géré par updateHeaderControls
 
-        globalHeader.classList.add('pharmacy-mode'); // Ajoute une classe pour styler le header en mode pharmacie
+        const isDesktopOrLargeTablet = window.innerWidth > 768; // Seuil pour cacher les subnavs de vue
 
         if (activeViewId === 'commandes-view') {
             pharmacyHeaderSubnavContainer.style.display = 'flex';
-            if(desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'none';
+            if(desktopSubNavCommandes && isDesktopOrLargeTablet) desktopSubNavCommandes.style.display = 'none';
+            
             pharmacyHeaderSubnavContainer.innerHTML = `
                 <button class="header-sub-nav-btn ${currentCommandView === 'current' ? 'active' : ''}" data-command-view="current">En cours</button>
                 <button class="header-sub-nav-btn ${currentCommandView === 'archived' ? 'active' : ''}" data-command-view="archived">Archivées</button>
@@ -360,7 +395,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else if (activeViewId === 'stock-unified-view') {
             pharmacyHeaderSubnavContainer.style.display = 'flex';
-            if(desktopSubNavStock) desktopSubNavStock.style.display = 'none';
+            if(desktopSubNavStock && isDesktopOrLargeTablet) desktopSubNavStock.style.display = 'none';
+            
             pharmacyHeaderSubnavContainer.innerHTML = `
                 <button class="header-sub-nav-btn ${currentStockSubView === 'pompier' ? 'active' : ''}" data-stock-type="pompier">Stock VSAV</button>
                 <button class="header-sub-nav-btn ${currentStockSubView === 'pharmacie' ? 'active' : ''}" data-stock-type="pharmacie">Stock Pharmacie</button>
@@ -374,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         } else {
-             globalHeader.classList.remove('pharmacy-mode'); // Retirer si pas de subnav spécifique
+             // Ne rien faire si pas de subnav spécifique pour la vue
         }
     }
 
@@ -387,13 +423,15 @@ document.addEventListener('DOMContentLoaded', () => {
         topLoginBtn.style.display = isEntering ? 'none' : 'flex';
         headerLogoutBtn.style.display = isEntering ? 'flex' : 'none';
         
+        if (mobileSearchIcon) mobileSearchIcon.style.display = 'none'; 
+        if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible');
+        
         const addCmdBtnContainerDesktop = document.getElementById('manual-command-actions-section');
         const addStockBtnContainerDesktop = document.getElementById('unifiedStockModalActions');
 
         if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = isEntering ? 'flex' : 'none';
         if (addStockBtnContainerDesktop) addStockBtnContainerDesktop.style.display = isEntering ? 'flex' : 'none';
         
-        // Cacher les FABs par défaut, leur affichage sera géré par updateActiveView
         fabAddManualCommand.style.display = 'none';
         fabAddStockItem.style.display = 'none';
 
@@ -401,27 +439,25 @@ document.addEventListener('DOMContentLoaded', () => {
         pharmacyHeaderSubnavContainer.innerHTML = ''; 
         pharmacyHeaderSubnavContainer.style.display = 'none';
         globalHeader.classList.toggle('pharmacy-mode', isEntering);
+        document.body.classList.toggle('pharmacy-active-padding', isEntering);
 
 
         if (isEntering) {
             currentUser = sessionStorage.getItem('pharmaUserName') || "Pharmacien";
             const pharmacyDefaultTab = pharmacyNavUl.querySelector('.list[data-view="reappro-view"]');
-            setActiveTab(pharmacyDefaultTab, pharmacyNavUl);
+            if (pharmacyDefaultTab) setActiveTab(pharmacyDefaultTab, pharmacyNavUl);
         } else {
             currentUser = sessionStorage.getItem('userName') || "Pompier";
             const mainDefaultTab = mainNavUl.querySelector('.list[data-view="current-view"]');
-            setActiveTab(mainDefaultTab, mainNavUl);
-            // S'assurer que les sub-navs desktop sont visibles si on quitte le mode pharma
+            if (mainDefaultTab) setActiveTab(mainDefaultTab, mainNavUl);
             document.querySelectorAll('.desktop-sub-nav').forEach(nav => nav.style.display = 'flex');
         }
         
-        // Mettre à jour les contrôles et la subnav du header en fonction de la nouvelle vue active
         const activeNav = isEntering ? pharmacyNavUl : mainNavUl;
         const activeTab = activeNav.querySelector(".list.active");
         if (activeTab) {
-            updateHeaderControls(activeTab.dataset.view); // Mettre à jour la barre de recherche
-            updatePharmacyHeaderSubNav(activeTab.dataset.view); // Mettre à jour les boutons de sous-navigation du header
-            updateActiveView(activeTab, false); // Redéclenche la logique d'affichage des FABs
+            // updateHeaderControls et updatePharmacyHeaderSubNav sont appelés dans updateActiveView
+            updateActiveView(activeTab, false); 
         }
     }
 
@@ -689,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function editIntervention(id) {
         const inter = allInterventions[id];
         if (!inter) return;
-        if (inter.archived && !isPharmacyAuthenticated) { // Logique métier: Pompier ne peut éditer que si non archivé
+        if (inter.archived && !isPharmacyAuthenticated) { 
             showMessage("Les interventions archivées ne peuvent pas être modifiées par les pompiers.", "warning");
             return;
         }
@@ -706,7 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMaterielsTagDisplay();
         photosBase64 = inter.photos || [];
         updatePhotosDisplay();
-        setActiveTab(mainNavUl.querySelector('.list[data-view="form-view"]'), mainNavUl);
+        const formTab = mainNavUl.querySelector('.list[data-view="form-view"]');
+        if(formTab) setActiveTab(formTab, mainNavUl);
     }
 
     async function unarchiveIntervention(id) {
@@ -1014,8 +1051,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (isPharmacyProcessingAnyItem) { 
                 let allItemsFullyProcessedByPharmacy = true;
-                // Vérifier tous les matériels de l'intervention, y compris ceux non modifiés dans cette session de modale
-                 Object.keys(intervention.materiels).forEach(matKey => {
+                Object.keys(intervention.materiels).forEach(matKey => {
                     const finalMatStatus = updates[`materiels/${matKey}/pharma_status`] || intervention.materiels[matKey].pharma_status;
                     if(!finalMatStatus || (finalMatStatus !== 'Réapprovisionné' && finalMatStatus !== 'Pas besoin')) {
                        allItemsFullyProcessedByPharmacy = false;
@@ -1041,7 +1077,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (addStockBtnContainerDesktop) {
             addStockBtnContainerDesktop.style.display = isPharmacyAuthenticated ? 'flex' : 'none';
         }
-        fabAddStockItem.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'block' : 'none';
         setupStockCardCreation(currentStockSubView, unifiedStockCards);
     }
 
@@ -1214,7 +1249,6 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.display = 'grid'; 
             isArchivedView = false;
             if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = isPharmacyAuthenticated ? 'flex' : 'none';
-            fabAddManualCommand.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'block' : 'none';
 
         } else { 
             container = archivedCommandesCards;
@@ -1222,7 +1256,6 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.display = 'grid';
             isArchivedView = true;
             if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = 'none'; 
-            fabAddManualCommand.style.display = 'none';
         }
         container.innerHTML = ''; 
         const filteredCommands = Object.entries(commandLog)
@@ -1427,9 +1460,6 @@ document.addEventListener('DOMContentLoaded', () => {
         stockDatalist.innerHTML = sortedStockNames.map(item => `<option value="${item}"></option>`).join('');
     }
 
-    // La fonction addMaterielTag (ajout rapide manuel) a été retirée car l'input group a été supprimé.
-    // L'ajout se fait via la modale de sélection.
-
     function updateMaterielsTagDisplay() {
         materielsList.innerHTML = materiels.map(mat => 
             `<span class="tag-item">${mat.name} (x${mat.qty})<button type="button" class="close-tag" data-materiel-name="${mat.name}" title="Retirer">&times;</button></span>`
@@ -1611,7 +1641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (index > -1) tempSelectedMaterielsModal.splice(index, 1);
                 }
             });
-             qtyInput.addEventListener('focus', () => qtyInput.select()); // Sélectionner le contenu au focus
+             qtyInput.addEventListener('focus', () => qtyInput.select()); 
         });
     }
 
@@ -1676,39 +1706,53 @@ document.addEventListener('DOMContentLoaded', () => {
         setupNavEventListeners(pharmacyNavUl);
         
         const initialActiveTab = isPharmacyAuthenticated 
-            ? pharmacyNavUl.querySelector('.list.active') || pharmacyNavUl.querySelector('.list')
-            : mainNavUl.querySelector('.list.active') || mainNavUl.querySelector('.list'); 
+            ? (pharmacyNavUl.querySelector('.list.active') || pharmacyNavUl.querySelector('.list'))
+            : (mainNavUl.querySelector('.list.active') || mainNavUl.querySelector('.list')); 
         if (initialActiveTab) {
             const parentNav = initialActiveTab.closest('ul');
-            setActiveTab(initialActiveTab, parentNav); 
+            if (parentNav) setActiveTab(initialActiveTab, parentNav); 
+        } else { // Fallback if no tab is active or found (e.g. first load)
+            const defaultNav = isPharmacyAuthenticated ? pharmacyNavUl : mainNavUl;
+            const firstItem = defaultNav.querySelector('.list');
+            if (firstItem) setActiveTab(firstItem, defaultNav);
         }
 
+
         interventionForm.addEventListener('submit', handleFormSubmit);
-        // document.getElementById('ajouterMateriel').addEventListener('click', addMaterielTag); // Retiré
         document.getElementById('photo').addEventListener('change', handlePhotoUpload);
         document.getElementById('resetForm').addEventListener('click', resetForm);
         
         currentSearchInput.addEventListener('input', () => { currentPage_current = 1; displayInterventions(); });
         archiveSearchInput.addEventListener('input', () => { currentPage_archive = 1; displayInterventions(); });
+        
+        // pharmacySearchInput est l'unique input pour les recherches en mode pharmacie
         pharmacySearchInput.addEventListener('input', () => {
             const activeViewId = document.querySelector('.view-container.visible')?.id;
-            if (activeViewId === 'commandes-view') { displayCommandes(); } // Pagination gérée dans displayCommandes si besoin
+            if (activeViewId === 'commandes-view') { displayCommandes(); } 
             else if (activeViewId === 'stock-unified-view') { displayUnifiedStockView(); } 
             else if (activeViewId === 'journal-view') { displayJournal(); } 
             else if (['reappro-view', 'pharmacy-archives-view'].includes(activeViewId)) {
                  currentPage_pharmacy = 1; currentPage_pharmacy_archive = 1; displayInterventions();
             }
         });
+        
+        if (mobileSearchIcon && pharmacySearchBox) {
+            mobileSearchIcon.addEventListener('click', () => {
+                pharmacySearchBox.classList.toggle('mobile-visible');
+                if (pharmacySearchBox.classList.contains('mobile-visible')) {
+                    pharmacySearchInput.focus();
+                }
+            });
+        }
+
 
         document.querySelectorAll('.modal .close-button, .modal .modal-close-btn').forEach(btn => {
             btn.addEventListener('click', (e) => e.currentTarget.closest('.modal').classList.remove('visible'));
         });
-        // cancelMaterielSelectionBtn est déjà géré spécifiquement
 
         topLoginBtn.addEventListener('click', handlePharmacyLogin);
         headerLogoutBtn.addEventListener('click', handlePharmacyLogout);
         
-        // Listeners pour boutons Desktop et FABs
         openAddManualCommandModalBtn.addEventListener('click', () => addManualCommandModal.classList.add('visible'));
         fabAddManualCommand.addEventListener('click', () => addManualCommandModal.classList.add('visible'));
         saveNewManualCommandBtn.addEventListener('click', handleManualCommandViaModal);
@@ -1725,6 +1769,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.currentTarget.classList.add('active');
                 currentCommandView = e.currentTarget.dataset.commandView;
                 displayCommandes();
+                // Si la subnav du header est visible, la mettre à jour aussi
                 if(pharmacyHeaderSubnavContainer.style.display === 'flex') updatePharmacyHeaderSubNav('commandes-view');
             });
         });
@@ -1738,15 +1783,37 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Ajuster la visibilité des FABs au redimensionnement
         window.addEventListener('resize', () => {
             const activeViewId = document.querySelector('.view-container.visible')?.id;
+            if (activeViewId) {
+                updateHeaderControls(activeViewId); // Réévaluer les contrôles du header
+                updatePharmacyHeaderSubNav(activeViewId); // Réévaluer la subnav du header
+            }
+
+
             if (isPharmacyAuthenticated) {
                 fabAddManualCommand.style.display = (activeViewId === 'commandes-view' && window.innerWidth <= 768) ? 'block' : 'none';
                 fabAddStockItem.style.display = (activeViewId === 'stock-unified-view' && window.innerWidth <= 768) ? 'block' : 'none';
+                
+                // Gérer la visibilité de la search-box pharmacie au redimensionnement
+                if (window.innerWidth > 768) {
+                    if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible'); // Cacher si on passe en desktop
+                    if (mobileSearchIcon) mobileSearchIcon.style.display = 'none'; // Cacher l'icône
+                    // S'assurer que la barre de recherche normale est visible si applicable
+                    if (document.getElementById('header-controls-pharmacy')?.classList.contains('visible')) {
+                         if(pharmacySearchBox) pharmacySearchBox.style.display = 'flex';
+                    }
+                } else {
+                    // La logique dans updateHeaderControls gère l'affichage de l'icône
+                     if (pharmacySearchBox && !pharmacySearchBox.classList.contains('mobile-visible')) {
+                        // pharmacySearchBox.style.display = 'none'; // S'assurer qu'elle est cachée si pas active
+                    }
+                }
+
             } else {
                 fabAddManualCommand.style.display = 'none';
                 fabAddStockItem.style.display = 'none';
+                if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible');
             }
         });
     }
