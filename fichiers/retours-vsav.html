@@ -37,7 +37,7 @@
             <p>Intervention <strong id="material-modal-inter-num"></strong></p>
             <div id="material-management-list"></div>
             <div class="modal-actions">
-                <button id="save-material-btn" class="btn-primary"><i class="bi bi-save"></i> Enregistrer</button>
+                <button id="save-material-btn" class="btn-primary"><i class="bi bi-save"></i> <span class="btn-text">Enregistrer</span></button>
             </div>
         </div>
     </div>
@@ -50,8 +50,8 @@
                 <input type="text" id="dialog-input" class="dialog-input">
             </div>
             <div id="dialog-actions" class="modal-actions">
-                <button id="dialog-cancel-btn" class="btn-secondary">Annuler</button>
-                <button id="dialog-confirm-btn" class="btn-primary">Confirmer</button>
+                <button id="dialog-cancel-btn" class="btn-secondary"><i class="bi bi-x-lg"></i> <span class="btn-text">Annuler</span></button>
+                <button id="dialog-confirm-btn" class="btn-primary"><i class="bi bi-check-lg"></i> <span class="btn-text">Confirmer</span></button>
             </div>
         </div>
     </div>
@@ -67,7 +67,7 @@
                     <input type="text" id="materielSearchModalInput" placeholder="Rechercher matériel dans le stock...">
                 </div>
                 <div id="materielSelectionList" class="materiel-selection-list-container">
-                    </div>
+                </div>
                 <hr>
                 <h4>Ajouter un matériel non listé :</h4>
                 <div class="form-grid">
@@ -84,38 +84,30 @@
                         </div>
                     </div>
                 </div>
-                 <button type="button" id="addManualMaterielFromModalBtn" class="btn-secondary btn-small-margin"><i class="bi bi-plus-circle"></i> Ajouter ce matériel manuel</button>
+                 <button type="button" id="addManualMaterielFromModalBtn" class="btn-secondary btn-small-margin"><i class="bi bi-plus-circle"></i> <span class="btn-text">Ajouter ce matériel manuel</span></button>
             </div>
             <div class="modal-actions">
-                <button type="button" id="cancelMaterielSelectionBtn" class="btn-secondary">Annuler</button>
-                <button type="button" id="confirmMaterielSelectionBtn" class="btn-primary"><i class="bi bi-check-circle"></i> Confirmer Sélection</button>
+                <button type="button" id="cancelMaterielSelectionBtn" class="btn-secondary"><i class="bi bi-x-lg"></i> <span class="btn-text">Annuler</span></button>
+                <button type="button" id="confirmMaterielSelectionBtn" class="btn-primary"><i class="bi bi-check-circle"></i> <span class="btn-text">Confirmer Sélection</span></button>
             </div>
         </div>
     </div>
 
     <div id="addManualCommandModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content large"> <div class="modal-header">
                 <h3><i class="bi bi-cart-plus"></i> Créer une Commande Manuelle</h3>
                 <span class="close-button">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="newCommandMaterialNameModal">Nom du matériel</label>
-                    <input type="text" id="newCommandMaterialNameModal" list="stockDatalist" placeholder="Nom du matériel à commander...">
-                </div>
-                <div class="form-group">
-                    <label for="newCommandQuantityModal">Quantité</label>
-                     <div class="quantity-input-group">
-                        <button type="button" class="qty-adjust-btn" data-target="newCommandQuantityModal" data-action="decrement">-</button>
-                        <input type="number" id="newCommandQuantityModal" placeholder="Qté" min="1" value="1">
-                        <button type="button" class="qty-adjust-btn" data-target="newCommandQuantityModal" data-action="increment">+</button>
+                <div id="manualCommandItemsContainer">
                     </div>
-                </div>
+                <button type="button" id="addAnotherItemToManualCommandBtn" class="btn-secondary btn-small-margin" title="Ajouter un autre article à la commande"><i class="bi bi-plus-circle"></i> <span class="btn-text">Ajouter un article</span></button>
+                <hr>
+                <p><small>Chaque article sera enregistré comme une commande distincte pour le suivi.</small></p>
             </div>
             <div class="modal-actions">
-                 <button type="button" class="btn-secondary modal-close-btn">Annuler</button>
-                <button type="button" id="saveNewManualCommandBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Créer la commande</button>
+                 <button type="button" class="btn-secondary modal-close-btn"><i class="bi bi-x-lg"></i> <span class="btn-text">Annuler</span></button>
+                <button type="button" id="saveNewManualCommandBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> <span class="btn-text">Créer la/les commande(s)</span></button>
             </div>
         </div>
     </div>
@@ -148,8 +140,8 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn-secondary modal-close-btn">Annuler</button>
-                <button type="button" id="saveNewStockItemBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Ajouter au stock</button>
+                <button type="button" class="btn-secondary modal-close-btn"><i class="bi bi-x-lg"></i> <span class="btn-text">Annuler</span></button>
+                <button type="button" id="saveNewStockItemBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> <span class="btn-text">Ajouter au stock</span></button>
             </div>
         </div>
     </div>
@@ -218,7 +210,7 @@
                     <label for="lieu"><i class="bi bi-geo-alt"></i> Adresse</label>
                     <div class="input-group">
                         <input type="text" id="lieu" placeholder="Saisir ou géolocaliser">
-                        <button class="btn-icon" type="button" id="geolocateBtn"><i class="bi bi-geo"></i></button>
+                        <button class="btn-icon" type="button" id="geolocateBtn" title="Géolocaliser"><i class="bi bi-geo"></i></button>
                     </div>
                 </div>
                 <div class="form-group">
@@ -253,7 +245,7 @@
                     <label><i class="bi bi-tools"></i> Matériels utilisés</label>
                     <div class="material-input-container">
                          <button type="button" id="openMaterielSelectionModalBtn" class="btn-primary btn-block-level" title="Sélectionner depuis le stock">
-                            <i class="bi bi-card-checklist"></i> Rechercher / Ajouter Matériel
+                            <i class="bi bi-card-checklist"></i> <span class="btn-text">Rechercher / Ajouter Matériel</span>
                         </button>
                         <datalist id="stockDatalist"></datalist> </div>
                     <div id="materielsList" class="tags-list"></div>
@@ -269,8 +261,8 @@
                 </div>
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn-primary"><i class="bi bi-save"></i> Enregistrer</button>
-                <button type="button" class="btn-secondary" id="resetForm"><i class="bi bi-arrow-counterclockwise"></i> Réinitialiser</button>
+                <button type="submit" class="btn-primary" title="Enregistrer l'intervention"><i class="bi bi-save"></i> <span class="btn-text">Enregistrer</span></button>
+                <button type="button" class="btn-secondary" id="resetForm" title="Réinitialiser le formulaire"><i class="bi bi-arrow-counterclockwise"></i> <span class="btn-text">Réinitialiser</span></button>
             </div>
             <input type="hidden" id="interventionId">
         </form>
@@ -305,7 +297,7 @@
             <button class="sub-nav-btn" data-command-view="archived">Archivées</button>
         </div>
         <div class="stock-management-container desktop-actions-only" id="manual-command-actions-section">
-             <button id="openAddManualCommandModalBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Nouvelle Commande</button>
+             <button id="openAddManualCommandModalBtn" class="btn-primary" title="Créer une nouvelle commande manuelle"><i class="bi bi-plus-circle"></i> <span class="btn-text">Nouvelle Commande</span></button>
         </div>
         <div id="currentCommandesCards" class="cards-view"></div>
         <div id="archivedCommandesCards" class="cards-view" style="display:none;"></div>
@@ -321,10 +313,10 @@
             <button class="sub-nav-btn" data-stock-type="pharmacie">Stock Pharmacie</button>
         </div>
         <div class="stock-management-container desktop-actions-only" id="unifiedStockModalActions">
-            <button id="openAddStockItemModalBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> Ajouter Article</button>
+            <button id="openAddStockItemModalBtn" class="btn-primary" title="Ajouter un nouvel article au stock"><i class="bi bi-plus-circle"></i> <span class="btn-text">Ajouter Article</span></button>
         </div>
         <div id="unifiedStockCards" class="cards-view"></div>
-        <button id="fabAddStockItem" class="fab-add-mobile" title="Ajouter Article" style="display: none;">
+        <button id="fabAddStockItem" class="fab-add-mobile" title="Ajouter Article au Stock" style="display: none;">
             <i class="bi bi-plus-lg"></i>
         </button>
     </div>
@@ -340,7 +332,7 @@
     <div class="view-container" id="journal-view">
         <div class="journal-header">
             <h2><i class="bi bi-journals"></i> Journal d'Activité</h2>
-            <button id="clearJournalBtn" class="btn-secondary"><i class="bi bi-eraser-fill"></i> Effacer le Journal</button>
+            <button id="clearJournalBtn" class="btn-secondary" title="Effacer tout le journal d'activité (Admin requis)"><i class="bi bi-eraser-fill"></i> <span class="btn-text">Effacer le Journal</span></button>
         </div>
         <div class="table-container">
             <table id="journalTable">
@@ -361,17 +353,17 @@
         <div class="indicator"><div class="shockwave"></div></div>
 
         <ul id="main-nav-ul">
-            <li class="list active" data-view="form-view"> <a href="#"> <span class="icon"><ion-icon name="add-circle-outline"></ion-icon></span> <span class="text"><b>Nouvelle</b></span> </a> </li>
-            <li class="list" data-view="current-view"> <a href="#"> <span class="icon"><ion-icon name="play-circle-outline"></ion-icon></span> <span class="text"><b>Actives</b></span> </a> </li>
-            <li class="list" data-view="archive-view"> <a href="#"> <span class="icon"><ion-icon name="archive-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
+            <li class="list active" data-view="form-view" title="Nouvelle Intervention"> <a href="#"> <span class="icon"><ion-icon name="add-circle-outline"></ion-icon></span> <span class="text"><b>Nouvelle</b></span> </a> </li>
+            <li class="list" data-view="current-view" title="Interventions Actives"> <a href="#"> <span class="icon"><ion-icon name="play-circle-outline"></ion-icon></span> <span class="text"><b>Actives</b></span> </a> </li>
+            <li class="list" data-view="archive-view" title="Archives Pompier"> <a href="#"> <span class="icon"><ion-icon name="archive-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
         </ul>
 
         <ul id="pharmacy-nav-ul">
-             <li class="list" data-view="reappro-view"> <a href="#"> <span class="icon"><ion-icon name="repeat-outline"></ion-icon></span> <span class="text"><b>À Traiter</b></span> </a> </li>
-             <li class="list" data-view="commandes-view"> <a href="#"> <span class="icon"><ion-icon name="cart-outline"></ion-icon></span> <span class="text"><b>Commandes</b></span> </a> </li>
-             <li class="list" data-view="stock-unified-view"> <a href="#"> <span class="icon"><ion-icon name="cube-outline"></ion-icon></span> <span class="text"><b>Stocks</b></span> </a> </li>
-             <li class="list" data-view="journal-view"> <a href="#"> <span class="icon"><ion-icon name="reader-outline"></ion-icon></span> <span class="text"><b>Journal</b></span> </a> </li>
-             <li class="list" data-view="pharmacy-archives-view"> <a href="#"> <span class="icon"><ion-icon name="folder-open-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
+             <li class="list" data-view="reappro-view" title="Interventions à Traiter"> <a href="#"> <span class="icon"><ion-icon name="repeat-outline"></ion-icon></span> <span class="text"><b>À Traiter</b></span> </a> </li>
+             <li class="list" data-view="commandes-view" title="Suivi des Commandes"> <a href="#"> <span class="icon"><ion-icon name="cart-outline"></ion-icon></span> <span class="text"><b>Commandes</b></span> </a> </li>
+             <li class="list" data-view="stock-unified-view" title="Gestion des Stocks"> <a href="#"> <span class="icon"><ion-icon name="cube-outline"></ion-icon></span> <span class="text"><b>Stocks</b></span> </a> </li>
+             <li class="list" data-view="journal-view" title="Journal d'Activité"> <a href="#"> <span class="icon"><ion-icon name="reader-outline"></ion-icon></span> <span class="text"><b>Journal</b></span> </a> </li>
+             <li class="list" data-view="pharmacy-archives-view" title="Archives Pharmacie"> <a href="#"> <span class="icon"><ion-icon name="folder-open-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
         </ul>
     </nav>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
@@ -379,5 +371,31 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="js/retours-vsav.js"></script>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const embersContainer = document.querySelector('.background-embers');
+            if (embersContainer) {
+                const numberOfEmbers = 40; // Ajustez la densité des particules
+
+                for (let i = 0; i < numberOfEmbers; i++) {
+                    const ember = document.createElement('div');
+                    ember.className = 'ember';
+
+                    const size = Math.random() * 6 + 2; // Taille entre 2px et 8px
+                    ember.style.width = `${size}px`;
+                    ember.style.height = `${size}px`;
+                    ember.style.left = `${Math.random() * 100}%`; // Position horizontale aléatoire
+
+                    const duration = Math.random() * 15 + 10; // Durée entre 10s et 25s
+                    ember.style.animationDuration = `${duration}s`;
+
+                    const delay = Math.random() * 15; // Délai d'apparition jusqu'à 15s
+                    ember.style.animationDelay = `${delay}s`;
+
+                    embersContainer.appendChild(ember);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
