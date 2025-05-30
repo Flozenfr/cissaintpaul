@@ -18,7 +18,7 @@
     --available-green-hover: #238276;
     --provisional-blue: #0077b6;
     --header-height: auto; 
-    --min-header-height: 50px; /* Adjusted for thinner band */
+    --min-header-height: 45px; /* Adjusted for thinner band */
     --danger-dark: #6a040f;
     --border-color: #444;
     --dropdown-bg: #333;
@@ -26,6 +26,9 @@
     --warning-light: #fca311;
     --info-light: #00b4d8;
     --nav-bar-height: 75px; 
+    --cancelled-grey: #6c757d;
+    --btn-danger-bg: #dc3545; /* Bootstrap's danger color for cancel button */
+    --btn-danger-hover-bg: #c82333;
 }
 
 body {
@@ -33,8 +36,8 @@ body {
     color: var(--smoke-white);
     position: relative;
     overflow-x: hidden;
-    padding: 1rem;
-    padding-top: calc(var(--min-header-height) + 1.5rem); /* Adjusted for new header */
+    padding: 0.5rem;
+    padding-top: calc(var(--min-header-height) + 1rem); 
     padding-bottom: calc(var(--nav-bar-height) + 1rem); 
     min-height: 100vh;
 }
@@ -75,42 +78,48 @@ body {
     display: flex;
     align-items: center;
     flex-wrap: nowrap; 
-    gap: 0.5rem; /* Reduced gap */
-    padding: 0.25rem 0.75rem; /* Reduced padding for thinner band */
-    background-color: var(--charcoal);
+    gap: 0.25rem; 
+    padding: 0.15rem 0.5rem; 
+    background-color: var(--charcoal); 
     z-index: 1000;
     min-height: var(--min-header-height);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    height: var(--min-header-height); 
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
     transition: height 0.3s ease; 
 }
 
 .app-title {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.25rem; 
     color: var(--smoke-white);
-    font-size: 1rem; 
+    font-size: 0.9rem; 
     font-weight: 600;
-    flex-shrink: 0;
-    margin-right: 0.5rem; /* Space before next element */
+    flex-shrink: 0; 
+    margin-right: 0.25rem; 
+}
+.app-title-text { 
+    display: inline;
 }
 
 .app-title i {
     color: var(--fire-red);
-    font-size: 1.4rem;
+    font-size: 1.3rem; 
 }
 
 /* --- SOUS-NAVIGATION PHARMACIE DANS L'EN-TÊTE --- */
 #pharmacy-header-subnav-container {
-    display: none; 
+    display: none; /* Managed by JS */
     flex-direction: row;
-    gap: 0.3rem; /* Reduced gap */
+    gap: 0.2rem; 
     align-items: center;
     flex-shrink: 1; 
+    flex-grow: 0; 
     overflow-x: auto; 
     -ms-overflow-style: none;  
     scrollbar-width: none;  
-    margin: 0 0.5rem; /* Margin around subnav */
+    margin: 0 0.25rem; 
+    max-width: 220px; /* MODIFICATION: Slightly increased max-width */
 }
 #pharmacy-header-subnav-container::-webkit-scrollbar { 
     display: none;
@@ -120,12 +129,13 @@ body {
     background-color: var(--background-card);
     border: 1px solid var(--border-color);
     color: var(--text-secondary-color);
-    padding: 0.3rem 0.6rem; /* More compact */
-    font-size: 0.7rem; /* Smaller font */
-    border-radius: 10px; /* Smaller radius */
+    padding: 0.3rem 0.6rem;  /* MODIFICATION: Increased padding */
+    font-size: 0.7rem;      /* MODIFICATION: Slightly increased font size */
+    border-radius: 8px; 
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap; 
+    line-height: 1.2; 
 }
 .header-sub-nav-btn:hover {
     border-color: var(--ember-orange);
@@ -135,22 +145,22 @@ body {
     background-color: var(--ember-orange);
     color: var(--charcoal);
     border-color: var(--ember-orange);
-    font-weight: 600;
+    font-weight: 500; 
 }
 
 #top-login-btn {
     flex-shrink: 0;
     background-color: var(--available-green);
     border: 1px solid var(--available-green);
-    width: 36px; 
-    height: 36px;
+    width: 30px; 
+    height: 30px; 
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    padding: 5px;
+    padding: 4px; 
     box-sizing: border-box;
 }
 
@@ -163,7 +173,7 @@ body {
 #top-login-btn:hover {
     background-color: var(--available-green-hover);
     border-color: var(--available-green-hover);
-    transform: scale(1.1);
+    transform: scale(1.05); 
 }
 
 /* --- CONTRÔLES D'EN-TÊTE (Recherche) --- */
@@ -172,8 +182,9 @@ body {
     align-items: center;
     flex-grow: 1; 
     flex-shrink: 1; 
-    min-width: 100px; /* Adjusted min-width */
+    min-width: 30px; 
     margin-left: auto; 
+    margin-right: 0.25rem; 
 }
 .header-control-group {
     display: none; 
@@ -189,49 +200,52 @@ body {
 }
 #header-controls .search-box i.bi-search {
     position: absolute;
-    left: 0.6rem; /* Adjusted */
+    left: 0.5rem; 
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-secondary-color);
-    font-size: 0.9rem; /* Smaller search icon */
+    font-size: 0.9rem; 
+    cursor: pointer; 
+    z-index: 2; 
 }
 #header-controls .search-box input[type="text"] {
     width: 100%;
-    padding: 0.4rem 0.6rem 0.4rem 1.8rem; /* Adjusted padding for thinner band and icon */
-    border-radius: 15px; /* Smaller radius */
+    padding: 0.3rem 0.5rem 0.3rem 1.8rem; 
+    border-radius: 12px; 
     border: 1px solid var(--border-color);
     background-color: var(--charcoal);
     color: var(--smoke-white);
-    height: 32px; /* Adjusted height */
-    font-size: 0.8em; /* Smaller font */
+    height: 28px; 
+    font-size: 0.7em; 
+    transition: width 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; 
 }
+
 .header-actions-right {
     display: flex;
     align-items: center;
-    gap: 0.4rem; 
+    gap: 0.25rem; 
     flex-shrink: 0; 
-    margin-left: 0.5rem; /* Space before actions */
 }
 .btn-header { 
     background-color: var(--background-card);
     border: 1px solid var(--border-color);
     color: var(--smoke-white);
-    padding: 0.4rem; /* Adjusted */
-    border-radius: 15px;
+    padding: 0.3rem; 
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center; 
     cursor: pointer;
     transition: all 0.2s ease;
-    width: 32px; 
-    height: 32px;
+    width: 30px; 
+    height: 30px;
 }
 .btn-header:hover {
     border-color: var(--ember-orange);
     color: var(--ember-orange);
 }
 #header-logout-btn ion-icon {
-    font-size: 1.2rem; /* Adjusted */
+    font-size: 1.1rem; 
     color: var(--fire-red);
 }
 #header-logout-btn:hover {
@@ -239,6 +253,27 @@ body {
 }
 #header-logout-btn:hover ion-icon {
     color: white;
+}
+
+/* Status badge for Cancelled Commands */
+.badge-annulee {
+    background-color: var(--cancelled-grey);
+    color: white;
+}
+.command-card.cancelled-command {
+    border-left-color: var(--cancelled-grey);
+    opacity: 0.8;
+}
+.btn-danger { 
+    background-color: var(--btn-danger-bg) !important;
+    color: white !important;
+}
+.btn-danger:hover {
+    background-color: var(--btn-danger-hover-bg) !important;
+}
+.btn-danger ion-icon {
+    font-size: 1.2em;
+    margin-right: 0.3rem;
 }
 
 
@@ -367,12 +402,13 @@ select {
 .badge-en-cours { background-color: var(--provisional-blue); }
 .badge-termine { background-color: var(--success-light); }
 .badge-a-traiter { background-color: var(--warning-light); color: var(--charcoal); }
+.badge-en-attente { background-color: var(--warning-light); color: var(--charcoal); } /* Added for pharmacyStatus 'En attente' */
 .badge-en-cours-de-traitement { background-color: var(--info-light); color: var(--charcoal);}
 .badge-traite { background-color: var(--success-light); }
 .card-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem; flex-grow: 1; }
 .card-item { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9em; color: var(--smoke-white); padding: 0.25rem; }
 .card-item i { font-size: 1.2em; color: var(--ember-orange); width: 20px; text-align: center; }
-.card-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: auto; padding: 1rem; border-top: 1px solid var(--border-color); background-color: rgba(0,0,0,0.1); }
+.card-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: auto; padding: 1rem; border-top: 1px solid var(--border-color); background-color: rgba(0,0,0,0.1); flex-wrap: wrap; }
 .card-footer-actions { display: flex; justify-content: flex-end; gap: 0.5rem;}
 .card-footer .btn-icon-footer { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-secondary-color); width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; }
 .card-footer .btn-icon-footer:hover { background-color: var(--ember-orange); color: var(--charcoal); border-color: var(--ember-orange); transform: scale(1.1); }
@@ -458,8 +494,9 @@ select {
 .material-management-item.firefighter-view { grid-template-columns: 1.5fr 0.5fr 1fr 1.5fr; }
 .material-management-item.pharmacy-view { grid-template-columns: 2fr 1fr 2fr; }
 .material-management-item input[type="number"], .material-management-item input[type="text"], .material-management-item select { padding: 0.5rem; font-size: 0.9em; }
-.missing-qty-input { display: none; margin-top: 0.5rem; }
-.missing-qty-input.visible { display: block; }
+.missing-qty-input { display: none; }
+.missing-qty-input.visible { display: flex; align-items: center; margin-top: 0.5rem;}
+
 .modal-content-dialog { background-color: var(--background-card); padding: 1.5rem; border-top: 5px solid var(--fire-red); width: 90%; max-width: 450px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6); animation: slideIn 0.3s ease-out; }
 .dialog-title { color: var(--ember-orange); font-size: 1.4rem; margin-top: 0; margin-bottom: 0.75rem; }
 .dialog-message { color: var(--smoke-white); font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem; }
@@ -493,11 +530,11 @@ select {
     flex-grow: 1;
     color: var(--smoke-white);
 }
-.materiel-selection-item input[type="number"] {
-    width: 60px; /* Reduced width */
+.materiel-selection-item input[type="number"] { 
+    width: 60px; 
     padding: 0.5rem;
     text-align: center;
-    margin: 0 0.25rem; /* Margin around input */
+    margin: 0 0.25rem; 
     -moz-appearance: textfield;
 }
 .materiel-selection-item input[type="number"]::-webkit-outer-spin-button,
@@ -519,17 +556,23 @@ select {
     width: 70px; 
     text-align: center;
     margin: 0 0.25rem;
-    border-radius: 0 !important; /* Override if other styles conflict */
+    border-radius: 0 !important; 
+    padding: 0.6rem 0.2rem; 
+    font-size: 0.9em; 
 }
 .qty-adjust-btn {
     background-color: #444;
     color: white;
     border: 1px solid var(--border-color);
-    padding: 0.5rem 0.7rem; /* Adjust padding as needed */
+    padding: 0.5rem 0.7rem; 
     cursor: pointer;
     font-size: 1rem;
     line-height: 1;
     transition: background-color 0.2s;
+    height: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .qty-adjust-btn:hover {
     background-color: var(--ember-orange);
@@ -578,7 +621,7 @@ select {
 .form-group-card label { font-size: 0.8rem; color: var(--text-secondary-color); font-weight: 500; }
 .form-group-card input, .form-group-card select { padding: 0.6rem; font-size: 1rem; -moz-appearance: textfield; }
 .form-group-card select { -moz-appearance: menulist !important; -webkit-appearance: menulist !important; appearance: menulist !important; background-image: none !important; } 
-.stock-card-footer, .command-card-footer { margin-top: auto; padding: 0.75rem 1.25rem; background-color: rgba(0,0,0,0.15); display: flex; justify-content: flex-end; gap: 0.75rem; }
+.stock-card-footer, .command-card-footer { margin-top: auto; padding: 0.75rem 1.25rem; background-color: rgba(0,0,0,0.15); display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;}
 .btn-icon-card { background: transparent; border: none; color: var(--text-secondary-color); font-size: 1.8rem; cursor: pointer; transition: color 0.2s, transform 0.2s; padding: 0.2rem; display: flex; align-items: center; justify-content: center; }
 .btn-icon-card:hover { transform: scale(1.1); }
 .btn-icon-card.save-stock-btn:hover { color: var(--available-green); }
@@ -589,7 +632,11 @@ select {
 .command-inter-link { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary-color); }
 .command-inter-link a { color: var(--ember-orange); text-decoration: none; }
 .command-inter-link a:hover { text-decoration: underline; }
-.command-card-footer .btn-primary, .command-card-footer .btn-secondary { flex-grow: 1; max-width: 50%; }
+.command-card-footer .btn-primary, .command-card-footer .btn-secondary, .command-card-footer .btn-danger { 
+    flex-grow: 1; 
+    max-width: calc(50% - 0.375rem); 
+    min-width: 120px; 
+}
 .command-card-footer .btn-primary ion-icon, .command-card-footer .btn-secondary ion-icon { margin-right: 0.5rem; font-size: 1.2em; } 
 
 /* --- SOUS-NAVIGATION (pour Commandes et Stocks - version DANS la vue) --- */
@@ -599,6 +646,9 @@ select {
     margin-bottom: 1rem;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 0.5rem;
+}
+.sub-nav.desktop-sub-nav.hidden-by-header { 
+    display: none !important;
 }
 .sub-nav-btn {
     background-color: transparent;
@@ -691,95 +741,59 @@ th { font-weight: 600; color: var(--ember-orange); }
 .indicator.landed .shockwave { animation: shockwave-effect 0.5s ease-out; }
 @keyframes shockwave-effect { from { transform: scale(1); opacity: 0.7; } to { transform: scale(2.5); opacity: 0; } }
 
-/* --- RESPONSIVE ADJUSTMENTS --- */
-
-/* Ajustements pour l'en-tête global en mode pharmacie pour tablettes et potentiellement mobiles */
-@media (max-width: 992px) { 
-    #global-header.pharmacy-mode {
-        flex-wrap: wrap; 
-        padding-bottom: 0.5rem; /* Add some space if it wraps */
-    }
-    /* Order of elements can be adjusted if wrapping occurs */
-    #global-header.pharmacy-mode .app-title {
-         /* Allow title to take space, but not push everything else if not enough room */
-        min-width: fit-content; /* Or a fixed min-width */
-    }
-     #global-header.pharmacy-mode #pharmacy-header-subnav-container {
-        order: 3; /* After title and actions */
-        width: 100%;
-        justify-content: center; /* Center subnav buttons if they wrap */
-        margin-top: 0.25rem; /* Space if wrapped */
-    }
-    #global-header.pharmacy-mode #header-controls {
-        order: 4; /* Search bar last if wrapping */
-        width: 100%; 
-        margin-left: 0;
-        margin-top: 0.25rem;
-    }
-     #global-header.pharmacy-mode .header-actions-right {
-        order: 2; /* Actions after title */
-        margin-left: auto; /* Push to the right of the title */
-    }
-
-    /* Hide in-view sub-navigation if header sub-nav is active */
-    .desktop-sub-nav.hidden-by-header { 
-       display: none !important;
-    }
-}
-
-
-@media (max-width: 768px) { /* Mobile */
+/* --- RESPONSIVE ADJUSTMENTS for Global Header & general mobile --- */
+@media (max-width: 768px) { 
     #global-header {
-        flex-wrap: wrap; 
-        padding: 0.25rem 0.5rem; /* Further reduce padding */
+        flex-wrap: nowrap; 
+        gap: 0.2rem;
+        padding: 0.1rem 0.3rem;
     }
     .app-title {
-        flex-grow: 1; 
-        font-size: 0.9rem; /* Smaller title */
+        font-size: 0.8rem; 
+        margin-right: 0.1rem;
     }
      .app-title i {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+     }
+     .app-title-text {
+        display: none; 
      }
     
      #pharmacy-header-subnav-container {
-        width: 100%;
-        order: 3; 
-        margin-top: 0.25rem;
-        justify-content: center; 
-    }
-    .header-sub-nav-btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.65rem;
+        margin: 0 0.1rem;
+        max-width: 150px; /* MODIFICATION: Adjusted for potentially wider buttons */
+     }
+    .header-sub-nav-btn { /* Styles for this size if needed, but base is now larger */
+        padding: 0.25rem 0.5rem; /* MODIFICATION: Adjusted for consistency */
+        font-size: 0.65rem;     /* MODIFICATION: Adjusted for consistency */
     }
 
     #header-controls { 
-        width: 100%;
-        order: 4; 
-        margin-top: 0.25rem;
-        margin-left: 0; 
+        flex-grow: 1; 
+        min-width: 28px; 
+        margin-left: 0.1rem;
+        max-width: calc(100% - 120px); 
     }
     #header-controls .search-box input[type="text"] {
-        height: 30px; /* Smaller search bar */
-        font-size: 0.75em;
-        padding-left: 1.6rem; /* Adjust for smaller icon if needed */
+        height: 26px; 
+        font-size: 0.65em;
+        padding: 0.2rem 0.4rem 0.2rem 1.6rem; 
     }
      #header-controls .search-box i.bi-search {
-        left: 0.5rem;
+        left: 0.4rem;
         font-size: 0.8rem;
      }
 
      .header-actions-right { 
-        margin-left: auto; 
-        order: 2; 
-        gap: 0.3rem;
+        gap: 0.2rem;
     }
-     #top-login-btn, .btn-header {
-        width: 30px;
-        height: 30px;
-        padding: 4px;
+     #top-login-btn, .btn-header { 
+        width: 28px;
+        height: 28px;
+        padding: 3px;
      }
      #header-logout-btn ion-icon {
-        font-size: 1.1rem;
+        font-size: 1rem;
      }
 
     .desktop-actions-only {
@@ -791,27 +805,51 @@ th { font-weight: 600; color: var(--ember-orange); }
         padding: 1rem 0.5rem;
     }
     .journal-header { flex-direction: column; gap: 1rem; }
-    .command-card-footer { flex-direction: column; gap: 0.5rem; }
-    .command-card-footer .btn-primary, .command-card-footer .btn-secondary { max-width: 100%; }
+    .command-card-footer { 
+        flex-direction: column; 
+        gap: 0.5rem; 
+    }
+    .command-card-footer .btn-primary, .command-card-footer .btn-secondary, .command-card-footer .btn-danger { 
+        max-width: 100%; 
+    }
 }
 
 
-@media (max-width: 420px) {
-    .navigation { height: 70px; }
-    .indicator { width: 60px; height: 60px; }
-    .indicator ion-icon { font-size: 2em; }
-    .navigation ul li a .icon { font-size: 1.5em; }
-    .navigation ul li a .text { font-size: 0.55em; }
-    .app-title { font-size: 0.8rem;}
-    .app-title i { font-size: 1.1rem; }
-    #global-header { gap: 0.2rem;}
-    
+@media (max-width: 480px) { 
+    .app-title i { 
+        margin-right: 0; 
+    }
+    .app-title-text {
+        display: none; 
+    }
+     #global-header {
+        gap: 0.1rem; 
+    }
+    #pharmacy-header-subnav-container {
+        max-width: 120px; /* MODIFICATION: Adjusted */
+    }
     .header-sub-nav-btn {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.6em;
+        font-size: 0.6rem;  /* MODIFICATION: Slightly increased */
+        padding: 0.2rem 0.4rem; /* MODIFICATION: Slightly increased */
     }
-    #header-controls .search-box input[type="text"] {
-        height: 28px;
-        font-size: 0.7em;
+    
+    #header-controls .search-box input[type="text"] { /* Default state for small screens */
+        width: 28px; 
+        padding-left: 1.6rem; 
+        opacity: 0; 
+        pointer-events: none;
+        transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
     }
+    /* Expand on focus - triggered by JS focusing the input */
+    #header-controls .search-box input[type="text"]:focus {
+        width: 100%; 
+        opacity: 1;
+        pointer-events: auto;
+    }
+     /* No need for .search-input-collapsed class if JS directly focuses */
+}
+
+/* Ensure in-view desktop sub-navs are hidden when pharmacy mode is active and sub-nav is in header */
+#global-header.pharmacy-mode-subnav-active .desktop-sub-nav {
+    display: none !important;
 }
