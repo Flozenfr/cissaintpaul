@@ -397,5 +397,20 @@
             }
         });
     </script>
+  <div id="lowStockAlertModal" class="modal">
+        <div class="modal-content"> <div class="modal-header">
+                <h3><i class="bi bi-exclamation-triangle-fill"></i> Alerte Stock VSAV Bas</h3>
+                <span class="close-button modal-close-btn" id="closeLowStockAlertBtn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Les articles suivants dans le stock VSAV ont une quantité critique (égale ou inférieure à 3) :</p>
+                <ul id="lowStockAlertList" style="list-style-type: disc; padding-left: 25px; margin-top: 10px;">
+                    </ul>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary modal-close-btn">Fermer</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
