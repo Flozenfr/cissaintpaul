@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const DELETE_PASSWORD = "Aspf66220*"; 
     let isPharmacyAuthenticated = false;
     let currentUser = "Anonyme";
+    let initialPompierStockLoad = true; // Flag for low stock alert
 
     // --- GESTION DE LA MODALE PERSONNALISÉE ---
     const dialog = {
@@ -147,6 +148,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- ALERTE STOCK BAS ---
+    function checkAndShowLowStockAlert() {
+        const lowStockItems = [];
+        for (const itemName in pompierStock) {
+            if (pompierStock[itemName].quantity <= 3) {
+                lowStockItems.push({ name: itemName, quantity: pompierStock[itemName].quantity });
+            }
+        }
+
+        if (lowStockItems.length > 0) {
+            const lowStockAlertModalEl = document.getElementById('lowStockAlertModal');
+            const lowStockAlertListEl = document.getElementById('lowStockAlertList');
+            
+            if (!lowStockAlertModalEl || !lowStockAlertListEl) {
+                console.error("Low stock alert modal elements not found in HTML!");
+                return;
+            }
+
+            lowStockAlertListEl.innerHTML = lowStockItems
+                .map(item => `<li>${item.name}: ${item.quantity} restant(s)</li>`)
+                .join('');
+            lowStockAlertModalEl.classList.add('visible');
+        }
+    }
+
+
     // --- GESTION DES DONNÉES ET AFFICHAGE ---
     function fetchData() {
         database.ref('interventions').on('value', snapshot => {
@@ -161,6 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (materielSelectionModal.classList.contains('visible')) {
                 populateMaterielSelectionModal();
+            }
+            if (initialPompierStockLoad) { // Check low stock on initial load
+                checkAndShowLowStockAlert();
+                initialPompierStockLoad = false;
             }
         });
         database.ref('stocks/pharmacie').on('value', snapshot => {
@@ -393,7 +424,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LOGIQUE PHARMACIE (Login / Logout) ---
     function togglePharmacyMode(isEntering) {
-        isPharmacyAuthenticated = isEntering;
+        isPharmacyAuthenticated = isEntering; // Update global state
+
         mainNavUl.style.display = isEntering ? 'none' : 'flex';
         pharmacyNavUl.style.display = isEntering ? 'flex' : 'none';
         topLoginBtn.style.display = isEntering ? 'none' : 'flex';
@@ -415,17 +447,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const pharmacyDefaultTab = pharmacyNavUl.querySelector('.list[data-view="reappro-view"]');
             setActiveTab(pharmacyDefaultTab, pharmacyNavUl);
         } else {
-            currentUser = sessionStorage.getItem('userName') || "Pompier"; 
+            currentUser = sessionStorage.getItem('userName') || "Utilisateur VSAV"; 
+            if (!sessionStorage.getItem('userName')) { // If it was the default, store it
+                sessionStorage.setItem('userName', "Utilisateur VSAV");
+            }
             const mainDefaultTab = mainNavUl.querySelector('.list[data-view="form-view"]'); 
             setActiveTab(mainDefaultTab, mainNavUl);
             globalHeader.classList.remove('pharmacy-mode'); 
-             globalHeader.classList.remove('pharmacy-mode-subnav-active');
+            globalHeader.classList.remove('pharmacy-mode-subnav-active');
         }
         
         const activeNav = isEntering ? pharmacyNavUl : mainNavUl;
         const activeTab = activeNav.querySelector(".list.active"); 
         if (activeTab) {
             updateActiveView(activeTab, false); 
+        } else { // Fallback if no active tab somehow (e.g. first load and default tab doesn't exist)
+             const firstFallbackTab = isEntering 
+                ? pharmacyNavUl.querySelector('.list') 
+                : mainNavUl.querySelector('.list');
+            if (firstFallbackTab) setActiveTab(firstFallbackTab, activeNav);
         }
     }
 
@@ -601,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'En cours de traitement': statusText = 'En Cours Pharma'; statusClass = 'badge-en-cours-de-traitement'; break;
             case 'Traité':  statusText = 'Traité'; statusClass = 'badge-traite'; break;
             case 'En attente': statusText = 'En Attente Traitement'; statusClass = 'badge-en-attente';  break;
-            case 'À vérifier par pharmacie': statusText = 'Vérification Pharmacie'; statusClass = 'badge-a-traiter'; break; // Updated for new status
+            case 'À vérifier par pharmacie': statusText = 'Vérification Pharmacie'; statusClass = 'badge-warning-light'; break;
             default: statusText = 'À Traiter'; statusClass = 'badge-a-traiter';
         }
 
@@ -660,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.close-intervention-btn').forEach(btn => btn.addEventListener('click', (e) => closeInterventionDirectly(e.currentTarget.dataset.id)));
         document.querySelectorAll('.process-material-btn').forEach(btn => btn.addEventListener('click', (e) => openMaterialManagementModal(e.currentTarget.dataset.id, 'pharmacy')));
     
-        // Event listeners for VSAV stock card editing (dynamically added buttons)
+        // Event listeners for VSAV stock card editing (delegated from parent)
         unifiedStockCards.addEventListener('click', async (e) => {
             const editBtn = e.target.closest('.edit-vsav-stock-btn');
             const saveBtn = e.target.closest('.save-vsav-stock-btn');
@@ -912,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirmed) {
             loaderModal.classList.add('visible');
             let logMessage = `Intervention n°${inter.numero_intervention} remise 'À traiter' par Pharmacie (${currentUser}).`;
-            let allDBPromises = []; // Combined promises for all DB operations
+            let allDBPromises = []; 
             let stockReversalLogEntries = [];
             let materialResetLog = [];
             let cancelledCmdMsgs = [];
@@ -949,14 +989,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                             return pompierStockRef.set(0);
                                         } else {
                                             stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' non trouvé pour retrait de ${qtyReversed}.`);
-                                            // Avoid creating negative stock if it doesn't exist, log it.
-                                            // If it must be set to negative, this line would do it:
-                                            // return pompierStockRef.set(firebase.database.ServerValue.increment(-qtyReversed));
-                                            return Promise.resolve(); // Or handle as error if critical
+                                            return Promise.resolve(); 
                                         }
                                     })
                                 );
-                                stockReversalLogEntries.push(`Stock inversé pour '${matKey}': +${qtyReversed} Pharmacie, -${qtyReversed} VSAV (ou ajusté si stock VSAV bas/inexistant)`);
+                                stockReversalLogEntries.push(`Stock inversé pour '${matKey}': +${qtyReversed} Pharmacie, -${qtyReversed} VSAV (ou ajusté)`);
                             }
                         }
                     }
@@ -1094,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'Traité': pharmaStatusText = 'Traité Pharmacie'; pharmaStatusClass = 'badge-traite'; break;
             case 'En cours de traitement': pharmaStatusText = 'En Cours (Pharma)'; pharmaStatusClass = 'badge-en-cours-de-traitement'; break;
             case 'En attente': pharmaStatusText = 'En Attente (Pharma)'; pharmaStatusClass = 'badge-en-attente'; break;
-            case 'À vérifier par pharmacie': pharmaStatusText = 'Vérification Pharmacie Requise'; pharmaStatusClass = 'badge-warning-light'; break; // Custom class needed for warning
+            case 'À vérifier par pharmacie': pharmaStatusText = 'Vérification Pharmacie Requise'; pharmaStatusClass = 'badge-warning-light'; break; 
             default: pharmaStatusText = 'À Traiter (Pharma)'; pharmaStatusClass = 'badge-a-traiter';
         }
 
@@ -1125,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div>${Object.entries(inter.materiels || {}).map(([name, d]) => {
                             let reapproStatusDisplay = d.reappro_status || 'Non défini';
                             if (d.reappro_status === 'Manquant') {
-                                reapproStatusDisplay += ` (Qté Manquante VSAV: ${d.quantity_missing || d.quantity_used || 'N/A'})`;
+                                reapproStatusDisplay += ` (Qté demandée pour vérif. Pharmacie: ${d.quantity_missing || d.quantity_used || 'N/A'})`;
                             }
                             let pharmaStatusDisplay = d.pharma_status || 'Non traité par pharmacie';
                             if (d.pharma_status === 'En commande') {
@@ -1211,9 +1248,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="Pas besoin" ${details.reappro_status === 'Pas besoin' ? 'selected' : ''}>Pas besoin de réappro.</option>
                         </select>
                         <div class="quantity-input-group missing-qty-input ${details.reappro_status === 'Manquant' ? 'visible' : ''}" style="margin-top: 0.5rem;">
-                            <label style="font-size:0.8em; margin-right:5px;">Qté manquante:</label>
+                            <label style="font-size:0.8em; margin-right:5px;">Qté pour vérif. pharmacie:</label>
                             <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="decrement">-</button>
-                            <input type="number" class="missing-qty-value" placeholder="Qté manquante" value="${details.quantity_missing || qtyUsedOriginal}" min="1" step="1">
+                            <input type="number" class="missing-qty-value" placeholder="Qté" value="${details.quantity_missing || qtyUsedOriginal}" min="1" step="1">
                             <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="increment">+</button>
                         </div>
                     </div>
@@ -1224,12 +1261,12 @@ document.addEventListener('DOMContentLoaded', () => {
                  const pompierMissingQty = details.quantity_missing || 0;
                  let materialContext = `Utilisé: ${qtyUsedOriginal}. Demande Pompier (VSAV): ${pompierReapproStatus}`;
                  if (pompierReapproStatus === 'Manquant' && pompierMissingQty > 0) {
-                     materialContext += ` (Qté demandée: ${pompierMissingQty})`;
+                     materialContext += ` (Qté pour vérif: ${pompierMissingQty})`;
                  } else if (pompierReapproStatus === 'Manquant' && pompierMissingQty === 0) {
-                     materialContext += ` (Qté demandée: ${qtyUsedOriginal})`; 
+                     materialContext += ` (Qté pour vérif: ${qtyUsedOriginal})`; 
                  }
                  if (details.pharma_status === 'À vérifier par pharmacie') {
-                    materialContext += `. Statut actuel pharmacie: À vérifier.`;
+                    materialContext += `. Pharmacie: À vérifier pour commande/réappro.`;
                  }
 
 
@@ -1277,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let isPharmacyProcessingAnyItem = false; 
         let pharmacyActionsLog = [];
         let pompierActionsLog = [];
-        let dbOperationPromises = []; // Renamed from stockUpdatePromises
+        let dbOperationPromises = []; 
 
 
         document.querySelectorAll('#material-management-list .material-management-item:not(.header)').forEach(item => {
@@ -1298,11 +1335,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         missingInput.style.borderColor = ''; 
                     }
-                    // MODIFICATION: Set pharma_status for pharmacy review, DO NOT create command
                     updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; 
                     pompierActionsLog.push(`${quantity_missing} x '${matName}' signalé manquant (vérification pharmacie requise) pour inter n°${intervention.numero_intervention}`);
-                } else {
-                     updates[`materiels/${matName}/pharma_status`] = interventionMaterialDetails.pharma_status || ''; // Preserve if already set, or clear
+                } else if (reappro_status === 'Réapprovisionné' || reappro_status === 'Pas besoin') {
+                    // If firefighter handles it or says not needed, clear any pending pharma check for this item
+                     updates[`materiels/${matName}/pharma_status`] = interventionMaterialDetails.pharma_status === 'À vérifier par pharmacie' ? '' : (interventionMaterialDetails.pharma_status || '');
+                } else { // Statut vide
+                     updates[`materiels/${matName}/pharma_status`] = interventionMaterialDetails.pharma_status || '';
                 }
 
 
@@ -1329,7 +1368,6 @@ document.addEventListener('DOMContentLoaded', () => {
                          pompierActionsLog.push(`Alerte: '${matName}' marqué réapprovisionné VSAV mais stock VSAV inexistant ou à 0. Quantité utilisée: ${qtyUsedOriginal}.`);
                     }
                 }
-                 // Removed automatic command creation for "Manquant" by firefighter
             } else { // userType === 'pharmacy'
                  const pharma_status = item.querySelector('.mat-pharma-status').value;
                  const pharma_comment = item.querySelector('.mat-pharma-comment').value;
@@ -1397,69 +1435,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 updates['archived'] = true;   
                 updates['archivedAt'] = firebase.database.ServerValue.TIMESTAMP;
                 
-                let needsPharmacyAction = false;
+                let needsPharmacyActionGlobal = false;
                 if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
                     for (const matName of Object.keys(intervention.materiels)) {
-                        const matDetails = updates[`materiels/${matName}/pharma_status`] ? { pharma_status: updates[`materiels/${matName}/pharma_status`] } : intervention.materiels[matName];
-                         // Check if this material, after firefighter processing, requires pharmacy attention
-                        if (updates[`materiels/${matName}/reappro_status`] === 'Manquant') { // Firefighter explicitly marked as missing
-                            needsPharmacyAction = true;
-                            updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; // Ensure this is set
-                            break; 
+                        if (updates[`materiels/${matName}/pharma_status`] === 'À vérifier par pharmacie') {
+                            needsPharmacyActionGlobal = true;
+                            break;
                         }
-                        // If not "Manquant", but other conditions might imply pharmacy check (e.g. default state if reappro_status is empty)
-                        // However, the logic now is: if "Manquant", flag for pharma. Otherwise, assume handled or no action by pharma based on initial state.
                     }
                 }
 
-
-                if (needsPharmacyAction) {
-                    updates['pharmacyStatus'] = 'À traiter';
+                if (needsPharmacyActionGlobal) {
+                    updates['pharmacyStatus'] = 'À traiter'; // Or 'À vérifier par pharmacie' at intervention level
                     updates['pharmacyProcessedAt'] = null;
                 } else {
-                    // If no material is explicitly marked "Manquant" by firefighter,
-                    // and thus pharma_status isn't set to 'À vérifier par pharmacie',
-                    // we assume pharmacy doesn't need to act further based on firefighter's input.
-                    // It could be already 'Traité' or remains 'En attente' if it was so.
-                    // This part might need refinement if default state for pharmacy should be 'Traité' if no items are 'Manquant'.
-                    // For now, keep existing pharmacyStatus unless explicitly needs action.
-                    if (!intervention.pharmacyStatus || intervention.pharmacyStatus === 'En attente' && !needsPharmacyAction) {
-                         // If materials exist but none require pharmacy action from this firefighter update
-                         // And initial pharmacy status was 'En attente', it could be considered 'Traité' IF no items are 'Manquant'
-                         let allNotManquant = true;
-                         if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
-                             for (const matName of Object.keys(intervention.materiels)) {
-                                 if (updates[`materiels/${matName}/reappro_status`] === 'Manquant') {
-                                     allNotManquant = false;
-                                     break;
-                                 }
-                             }
-                             if (allNotManquant && Object.keys(intervention.materiels).length > 0) {
-                                 updates['pharmacyStatus'] = 'Traité';
-                                 if (!intervention.pharmacyProcessedAt) {
-                                     updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
-                                 }
-                             } else if (!needsPharmacyAction) { // If not needing action but also not all "not manquant"
-                                updates['pharmacyStatus'] = intervention.pharmacyStatus || 'En attente'; // Keep existing or default
-                             }
-
-                         } else { // No materials, so pharmacy is 'Traité'
-                            updates['pharmacyStatus'] = 'Traité';
-                            if (!intervention.pharmacyProcessedAt) {
-                                updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
+                    // If no material is flagged 'À vérifier par pharmacie',
+                    // then overall pharmacy status depends on whether all items are 'Pas besoin' by firefighter,
+                    // or if there are no materials.
+                    let allPompierPasBesoinOuReappro = true;
+                    let hasMaterialsRequiringDecision = false;
+                    if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
+                        hasMaterialsRequiringDecision = true;
+                        for (const matName of Object.keys(intervention.materiels)) {
+                            const reappro = updates[`materiels/${matName}/reappro_status`];
+                            if (reappro !== 'Pas besoin' && reappro !== 'Réapprovisionné') {
+                                allPompierPasBesoinOuReappro = false;
+                                break;
                             }
-                         }
-                    } else if (needsPharmacyAction) {
-                        updates['pharmacyStatus'] = 'À traiter';
-                        updates['pharmacyProcessedAt'] = null;
+                        }
+                    } else { // No materials
+                        allPompierPasBesoinOuReappro = true; 
+                        hasMaterialsRequiringDecision = false;
                     }
-                    // If it was already 'Traité' by pharmacy, don't change it unless firefighter input forces re-evaluation.
-                     if(intervention.pharmacyStatus === 'Traité' && !needsPharmacyAction){
+                    
+                    if (allPompierPasBesoinOuReappro) {
                         updates['pharmacyStatus'] = 'Traité';
-                        updates['pharmacyProcessedAt'] = intervention.pharmacyProcessedAt || firebase.database.ServerValue.TIMESTAMP;
+                         if (!intervention.pharmacyProcessedAt || !hasMaterialsRequiringDecision) { // Set timestamp if newly traité or no materials
+                            updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
+                        } else {
+                             updates['pharmacyProcessedAt'] = intervention.pharmacyProcessedAt; // Keep existing if was already traité
+                        }
+                    } else {
+                        // This case should ideally be covered by needsPharmacyActionGlobal if some items are left empty by firefighter
+                        updates['pharmacyStatus'] = intervention.pharmacyStatus || 'En attente'; // Default or keep existing
                     }
-
-
                 }
                 addLogEntry('Intervention Clôturée (Pompier)', `n°${intervention.numero_intervention} archivée, matériel géré par ${currentUser}. ${pompierActionsLog.join('. ')}`);
             } else { // userType === 'pharmacy'
@@ -1518,9 +1537,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         filteredStock.forEach(([name, details]) => {
-            const isVSAVStockViewByPharmacie = isPharmacyAuthenticated && viewType === 'pompier';
+            const isVSAVStock = viewType === 'pompier';
             const canEditPharmacieStock = isPharmacyAuthenticated && viewType === 'pharmacie';
-            
+            // VSAV stock can be edited by pharmacie with password, otherwise readonly. Pharmacie stock editable by pharmacie.
+            const isGenerallyReadOnly = !isPharmacyAuthenticated || (isVSAVStock && !isPharmacyAuthenticated); 
+
+
             let footerHtml = '';
             if (isPharmacyAuthenticated) {
                 if (viewType === 'pharmacie') { // Pharma stock view, by Pharmacie
@@ -1556,20 +1578,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const cardHtml = `
-            <div class="stock-card" data-name="${name}" data-stock-type="${viewType}" data-original-quantity="${details.quantity || 0}" data-original-notes="${details.notes || ''}">
+            <div class="stock-card" data-name="${name}" data-stock-type="${viewType}" 
+                 data-original-quantity="${details.quantity || 0}" data-original-notes="${details.notes || ''}">
                 <div class="stock-card-header"><h3>${name}</h3></div>
                 <div class="stock-card-body">
                     <div class="form-group-card">
                         <label>Quantité</label>
                         <div class="quantity-input-group stock-qty-group">
                             ${canEditPharmacieStock ? `<button type="button" class="qty-adjust-btn stock-card-qty-adjust" data-action="decrement">-</button>` : ''}
-                            <input type="number" class="stock-quantity-input" value="${details.quantity || 0}" ${!canEditPharmacieStock && viewType === 'pharmacie' || viewType === 'pompier' ? 'readonly' : ''} min="0" step="1">
+                            <input type="number" class="stock-quantity-input" value="${details.quantity || 0}" ${isGenerallyReadOnly || isVSAVStock ? 'readonly' : ''} min="0" step="1">
                             ${canEditPharmacieStock ? `<button type="button" class="qty-adjust-btn stock-card-qty-adjust" data-action="increment">+</button>` : ''}
                         </div>
                     </div>
                     <div class="form-group-card">
                         <label>Notes</label>
-                        <input type="text" class="stock-notes-input" value="${details.notes || ''}" placeholder="Aucune note..." ${!canEditPharmacieStock && viewType === 'pharmacie' || viewType === 'pompier' ? 'readonly' : ''}>
+                        <input type="text" class="stock-notes-input" value="${details.notes || ''}" placeholder="Aucune note..." ${isGenerallyReadOnly || isVSAVStock ? 'readonly' : ''}>
                     </div>
                 </div>
                 ${footerHtml}
@@ -1578,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if(isPharmacyAuthenticated) {
-            cardsContainer.querySelectorAll('.save-stock-btn').forEach(btn => btn.onclick = (e) => { // For Pharmacie stock
+            cardsContainer.querySelectorAll('.save-stock-btn').forEach(btn => btn.onclick = (e) => { 
                 const card = e.currentTarget.closest('.stock-card');
                 const name = card.dataset.name;
                 const stockType = card.dataset.stockType; 
@@ -1622,12 +1645,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (password === PHARMACY_PASSWORD) {
+            card.classList.add('editing-vsav-stock'); // Add class to signify editing state
             card.querySelector('.stock-quantity-input').readOnly = false;
             card.querySelector('.stock-notes-input').readOnly = false;
 
             const qtyGroup = card.querySelector('.stock-qty-group');
-            // Add +/- buttons if not already there
-            if (!qtyGroup.querySelector('.stock-card-qty-adjust')) {
+            if (!qtyGroup.querySelector('.stock-card-qty-adjust')) { // Add buttons only if not present
                 const decrementBtn = document.createElement('button');
                 decrementBtn.type = 'button';
                 decrementBtn.className = 'qty-adjust-btn stock-card-qty-adjust';
@@ -1668,10 +1691,10 @@ document.addEventListener('DOMContentLoaded', () => {
             addLogEntry('Modification Stock VSAV (Admin Pharmacie)', `Article '${itemName}' stock VSAV modifié (Qté: ${newQuantity}, Notes: ${newNotes || 'aucune'}) par ${currentUser}.`);
             showMessage(`Stock VSAV pour "${itemName}" sauvegardé avec succès.`, 'success');
             
-            card.dataset.originalQuantity = newQuantity; // Update original for subsequent cancels
+            card.dataset.originalQuantity = newQuantity; 
             card.dataset.originalNotes = newNotes;
+            card.classList.remove('editing-vsav-stock'); // Remove editing state
 
-            // Revert to read-only state
             card.querySelector('.stock-quantity-input').readOnly = true;
             card.querySelector('.stock-notes-input').readOnly = true;
             
@@ -1694,6 +1717,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         card.querySelector('.stock-quantity-input').value = originalQuantity;
         card.querySelector('.stock-notes-input').value = originalNotes;
+        card.classList.remove('editing-vsav-stock'); // Remove editing state
 
         card.querySelector('.stock-quantity-input').readOnly = true;
         card.querySelector('.stock-notes-input').readOnly = true;
@@ -2097,10 +2121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const inter = interSnapshot.val();
                     if (inter && inter.materiels && inter.materiels[cmdData.materialName]) {
                         const materialUpdates = {};
-                        // When a command is cancelled, the material status in intervention should reflect it needs re-evaluation
                         materialUpdates[`interventions/${cmdData.interventionId}/materiels/${cmdData.materialName}/pharma_status`] = 'À vérifier par pharmacie'; 
-                        // We don't necessarily reset reappro_status here, as the firefighter's assessment of need might still be valid.
-                        // The pharmacy will see "À vérifier par pharmacie" and can decide the next step.
                         await database.ref().update(materialUpdates);
                         logDetails += ` Statut matériel pharmacie pour '${cmdData.materialName}' réinitialisé à 'À vérifier par pharmacie' pour inter n°${cmdData.interventionNum}.`;
                     }
@@ -2479,10 +2500,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MODAL DE SÉLECTION DE MATÉRIEL (pour formulaire intervention) ---
     function populateMaterielSelectionModal(searchTerm = '') {
         materielSelectionList.innerHTML = ''; 
-        const combinedStock = { ...pompierStock, ...pharmaStock }; 
+        // Utilise pompierStock pour l'affichage des quantités, car c'est le stock de référence pour le pompier
+        const stockToDisplay = pompierStock; 
         const lowerSearchTerm = searchTerm.toLowerCase();
         
-        const sortedStockNames = Object.keys(combinedStock)
+        // On prend les noms de tous les articles (pompier + pharmacie) pour la recherche, mais on affiche que la quantité VSAV
+        const combinedStockNames = [...new Set([...Object.keys(pompierStock), ...Object.keys(pharmaStock)])];
+
+        const sortedStockNames = combinedStockNames
             .filter(name => name.toLowerCase().includes(lowerSearchTerm))
             .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
@@ -2495,14 +2520,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sortedStockNames.forEach(name => {
             const itemDetailsPompier = pompierStock[name] || { quantity: 0 };
-            const itemDetailsPharma = pharmaStock[name] || { quantity: 0 };
+            // const itemDetailsPharma = pharmaStock[name] || { quantity: 0 }; // Plus affiché
             const existingSelection = tempSelectedMaterielsModal.find(m => m.name === name);
             const currentQtyInModal = existingSelection ? existingSelection.qty : 0;
             
             const itemDiv = document.createElement('div');
             itemDiv.className = 'materiel-selection-item';
             itemDiv.innerHTML = `
-                <span>${name} <small class="stock-info">(Stock VSAV: ${itemDetailsPompier.quantity}, Stock Pharmacie: ${itemDetailsPharma.quantity})</small></span>
+                <span>${name} <small class="stock-info">(Stock VSAV: ${itemDetailsPompier.quantity})</small></span>
                 <div class="quantity-input-group">
                     <button type="button" class="qty-adjust-btn" data-action="decrement">-</button>
                     <input type="number" value="${currentQtyInModal}" min="0" data-name="${name}" placeholder="Qté" class="materiel-selection-qty-input" step="1">
@@ -2591,7 +2616,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const action = targetButton.dataset.action;
             let inputEl;
             const card = targetButton.closest('.stock-card');
-            const isVSAVStockCardByPharmacie = card && card.dataset.stockType === 'pompier' && isPharmacyAuthenticated;
+             // Check if the button is specifically for a stock card and if that card is in editing mode for VSAV
+            const isStockCardQtyAdjust = targetButton.classList.contains('stock-card-qty-adjust');
+            const isVSAVStockCardInEditing = card && card.dataset.stockType === 'pompier' && card.classList.contains('editing-vsav-stock') && isPharmacyAuthenticated;
 
 
             if (targetButton.dataset.target) { 
@@ -2603,9 +2630,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (inputEl) {
-                // Prevent action if input is readonly (e.g. for locked VSAV stock quantity by pharmacie)
-                 if (inputEl.readOnly && (inputEl.classList.contains('mat-qty-used') || (isVSAVStockCardByPharmacie && !card.classList.contains('editing-vsav-stock')) )) {
-                    return;
+                 // Prevent action if input is readonly (e.g. for locked VSAV stock quantity by pharmacie)
+                // OR if it's a stock card qty adjust button but not for an editing VSAV card or editable pharmacie card
+                if (inputEl.readOnly && !isVSAVStockCardInEditing) { // If readonly and not an explicitly allowed edit case for VSAV
+                     if (! (card && card.dataset.stockType === 'pharmacie' && isPharmacyAuthenticated) ) { // Allow for pharmacie stock
+                        return;
+                     }
                 }
 
 
@@ -2641,24 +2671,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialisation ---
     function initializeApp() {
-        currentUser = sessionStorage.getItem('userName'); 
-        const pharmaUser = sessionStorage.getItem('pharmaUserName'); 
-        if (pharmaUser) { 
-            currentUser = pharmaUser;
-            isPharmacyAuthenticated = true; 
-        } else if (!currentUser) { 
-            currentUser = prompt("Votre nom ou matricule pour suivi (Pompier) :", "Pompier");
-            sessionStorage.setItem('userName', currentUser || "Pompier");
-        }
-        currentUser = currentUser || (isPharmacyAuthenticated ? "Pharmacien" : "Pompier");
+        // Determine initial authentication state based on sessionStorage (for page refresh)
+        isPharmacyAuthenticated = !!sessionStorage.getItem('pharmaUserName'); 
+
+        // togglePharmacyMode will set the correct currentUser name
+        togglePharmacyMode(isPharmacyAuthenticated);
         
-        fetchData(); 
+        fetchData(); // fetchData will now trigger checkAndShowLowStockAlert via its 'on value' callback for pompierStock
         setDefaultDateTime(); 
 
         setupNavEventListeners(mainNavUl);
         setupNavEventListeners(pharmacyNavUl);
-        
-        togglePharmacyMode(isPharmacyAuthenticated); 
                                                   
         interventionForm.addEventListener('submit', handleFormSubmit);
         document.getElementById('photo').addEventListener('change', handlePhotoUpload);
