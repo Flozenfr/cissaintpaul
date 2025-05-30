@@ -77,7 +77,11 @@
                     </div>
                     <div class="form-group">
                         <label for="manualMaterielQtyModal">Quantité</label>
-                        <input type="number" id="manualMaterielQtyModal" value="1" min="1">
+                        <div class="quantity-input-group">
+                            <button type="button" class="qty-adjust-btn" data-target="manualMaterielQtyModal" data-action="decrement">-</button>
+                            <input type="number" id="manualMaterielQtyModal" value="1" min="1">
+                            <button type="button" class="qty-adjust-btn" data-target="manualMaterielQtyModal" data-action="increment">+</button>
+                        </div>
                     </div>
                 </div>
                  <button type="button" id="addManualMaterielFromModalBtn" class="btn-secondary btn-small-margin"><i class="bi bi-plus-circle"></i> Ajouter ce matériel manuel</button>
@@ -102,7 +106,11 @@
                 </div>
                 <div class="form-group">
                     <label for="newCommandQuantityModal">Quantité</label>
-                    <input type="number" id="newCommandQuantityModal" placeholder="Qté" min="1" value="1">
+                     <div class="quantity-input-group">
+                        <button type="button" class="qty-adjust-btn" data-target="newCommandQuantityModal" data-action="decrement">-</button>
+                        <input type="number" id="newCommandQuantityModal" placeholder="Qté" min="1" value="1">
+                        <button type="button" class="qty-adjust-btn" data-target="newCommandQuantityModal" data-action="increment">+</button>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
@@ -125,7 +133,11 @@
                 </div>
                 <div class="form-group">
                     <label for="newUnifiedStockItemQtyModal">Quantité initiale</label>
-                    <input type="number" id="newUnifiedStockItemQtyModal" placeholder="Qté" value="0" min="0">
+                    <div class="quantity-input-group">
+                        <button type="button" class="qty-adjust-btn" data-target="newUnifiedStockItemQtyModal" data-action="decrement">-</button>
+                        <input type="number" id="newUnifiedStockItemQtyModal" placeholder="Qté" value="0" min="0">
+                        <button type="button" class="qty-adjust-btn" data-target="newUnifiedStockItemQtyModal" data-action="increment">+</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="newUnifiedStockTargetModal">Ajouter à</label>
@@ -144,19 +156,14 @@
 
 
     <header id="global-header">
-    <h1 class="app-title">
-        <i class="bi bi-clipboard2-pulse-fill"></i>
+        <h1 class="app-title">
+            <i class="bi bi-clipboard2-pulse-fill"></i>
         </h1>
-
-    <div class="pharmacy-header-main-line">
+        
         <div id="pharmacy-header-subnav-container">
             </div>
 
         <div id="header-controls">
-            <button id="mobile-search-icon" class="btn-header" style="display: none;" title="Rechercher">
-                <i class="bi bi-search"></i>
-            </button>
-
             <div id="header-controls-current" class="header-control-group">
                 <div class="search-box">
                     <i class="bi bi-search"></i>
@@ -169,24 +176,23 @@
                     <input type="text" id="archiveSearch" placeholder="Rechercher archive pompier...">
                 </div>
             </div>
-            <div id="header-controls-pharmacy" class="header-control-group"> <div class="search-box"> <i class="bi bi-search"></i>
+            <div id="header-controls-pharmacy" class="header-control-group"> <div class="search-box">
+                    <i class="bi bi-search"></i>
                     <input type="text" id="pharmacySearch" placeholder="Rechercher...">
                 </div>
             </div>
-            <div id="header-controls-none" class="header-control-group">
+             <div id="header-controls-none" class="header-control-group">
                 </div>
         </div>
-    </div>
-
-    <div class="header-actions-right">
-        <button id="header-logout-btn" class="btn-header" style="display: none;" title="Quitter le mode Pharmacie">
-            <ion-icon name="log-out-outline"></ion-icon>
-        </button>
-        <button id="top-login-btn" class="top-login-btn" title="Accès Pharmacie">
-            <img src="https://i.imgur.com/kv8nwT3.png" alt="Accès Pharmacie Icon">
-        </button>
-    </div>
-</header>
+        <div class="header-actions-right">
+            <button id="header-logout-btn" class="btn-header" style="display: none;" title="Quitter le mode Pharmacie">
+                <ion-icon name="log-out-outline"></ion-icon>
+            </button>
+            <button id="top-login-btn" class="top-login-btn" title="Accès Pharmacie">
+                <img src="https://i.imgur.com/kv8nwT3.png" alt="Accès Pharmacie Icon">
+            </button>
+        </div>
+    </header>
 
     <div class="view-container" id="form-view">
         <form id="interventionForm" novalidate>
@@ -248,8 +254,7 @@
                          <button type="button" id="openMaterielSelectionModalBtn" class="btn-primary btn-block-level" title="Sélectionner depuis le stock">
                             <i class="bi bi-card-checklist"></i> Rechercher / Ajouter Matériel
                         </button>
-                        <datalist id="stockDatalist"></datalist>
-                    </div>
+                        <datalist id="stockDatalist"></datalist> </div>
                     <div id="materielsList" class="tags-list"></div>
                 </div>
                 <div class="form-group full-width">
