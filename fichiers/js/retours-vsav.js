@@ -37,10 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const materialManagementModal = document.getElementById('materialManagementModal');
     const currentSearchInput = document.getElementById('currentSearch');
     const archiveSearchInput = document.getElementById('archiveSearch');
-    const pharmacySearchInput = document.getElementById('pharmacySearch'); // Input de recherche partagé
-    const mobileSearchIcon = document.getElementById('mobile-search-icon'); // Nouvelle icône de recherche mobile
-    const pharmacySearchBox = document.querySelector('#header-controls-pharmacy .search-box'); // La search-box de pharmacie
-
+    const pharmacySearchInput = document.getElementById('pharmacySearch');
     const journalTableBody = document.getElementById('journalTableBody');
     
     const unifiedStockCards = document.getElementById('unifiedStockCards');
@@ -244,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
         fabAddManualCommand.style.display = 'none';
         fabAddStockItem.style.display = 'none';
-        if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible'); // Fermer la recherche mobile en changeant de vue
 
         if (activeView) {
             activeView.classList.add('visible');
@@ -267,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'commandes-view':
                     displayCommandes();
-                     if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddManualCommand.style.display = 'block';
+                     if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddManualCommand.style.display = 'block'; 
                     break;
             }
         }
@@ -303,35 +299,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateHeaderControls(activeViewId) {
         headerControlGroups.forEach(group => group.classList.remove('visible'));
-        if (mobileSearchIcon) mobileSearchIcon.style.display = 'none';
-        if (pharmacySearchBox && !pharmacySearchBox.classList.contains('mobile-visible')) { // Ne pas cacher si volontairement ouvert
-             // pharmacySearchBox.classList.remove('mobile-visible'); // Géré dans updateActiveView
-        }
-
-
         let targetIdSuffix = activeViewId.replace('-view', '');
-        let showPharmacySearchGroup = false;
     
         if (isPharmacyAuthenticated) {
-            globalHeader.classList.add('pharmacy-mode');
-            document.body.classList.add('pharmacy-active-padding'); // Pour ajuster le padding-top du body
-
-            const pharmacySearchRelevantViews = ['reappro', 'commandes', 'stock-unified', 'pharmacy-archives', 'journal'];
-            if (pharmacySearchRelevantViews.includes(targetIdSuffix)) {
-                if (window.innerWidth <= 768) { // Mobile pharmacie
-                    if (mobileSearchIcon) mobileSearchIcon.style.display = 'flex';
-                    // La search-box pharmacie elle-même (pharmacySearchBox) est gérée par l'icône
-                    // On s'assure que `pharmacySearchInput` est bien celui utilisé pour filtrer.
-                } else { // Desktop pharmacie
-                    showPharmacySearchGroup = true;
-                }
-                targetIdSuffix = 'pharmacy'; // Pour s'assurer que pharmacySearchInput est utilisé
-            } else {
-                targetIdSuffix = 'none'; // Pas de recherche pour les autres vues (ex: form-view pharma)
+            if (['reappro', 'commandes', 'stock-unified', 'pharmacy-archives', 'journal'].includes(targetIdSuffix)) {
+                targetIdSuffix = 'pharmacy'; 
+            } else if (targetIdSuffix === 'form') { 
+                 targetIdSuffix = 'none'; 
+            } else { 
+                 targetIdSuffix = 'none'; 
             }
-        } else { // Mode Pompier
-            globalHeader.classList.remove('pharmacy-mode');
-            document.body.classList.remove('pharmacy-active-padding');
+        } else { 
             if (!['current', 'archive', 'form'].includes(targetIdSuffix)) {
                 targetIdSuffix = 'none';
             }
@@ -342,19 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
         const targetGroup = document.getElementById(`header-controls-${targetIdSuffix}`);
         if (targetGroup) {
-            if (isPharmacyAuthenticated && window.innerWidth <= 768 && targetIdSuffix === 'pharmacy') {
-                // Sur mobile pharmacie, le groupe de recherche pharmacie n'est pas rendu visible directement,
-                // seule l'icône l'est. La search-box est affichée/cachée via JS.
-            } else {
-                targetGroup.classList.add('visible');
-            }
-        }
-        if (showPharmacySearchGroup) { // Pour desktop pharmacie, s'assurer que le bon groupe est visible
-            const pharmaSearchGroup = document.getElementById('header-controls-pharmacy');
-            if (pharmaSearchGroup) pharmaSearchGroup.classList.add('visible');
+            targetGroup.classList.add('visible');
         }
     }
-
 
     function updatePharmacyHeaderSubNav(activeViewId) {
         pharmacyHeaderSubnavContainer.innerHTML = ''; 
@@ -363,54 +331,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const desktopSubNavCommandes = document.querySelector('#commandes-view .desktop-sub-nav');
         const desktopSubNavStock = document.querySelector('#stock-unified-view .desktop-sub-nav');
 
-        // Par défaut, les sub-navs dans les vues sont visibles (seront cachées si header subnav prend le relais)
-        if(desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex';
-        if(desktopSubNavStock) desktopSubNavStock.style.display = 'flex';
-
-
-        if (!isPharmacyAuthenticated) {
-            // globalHeader.classList.remove('pharmacy-mode'); // Géré par updateHeaderControls
-            return;
-        }
-        
-        // globalHeader.classList.add('pharmacy-mode'); // Géré par updateHeaderControls
-
-        const isDesktopOrLargeTablet = window.innerWidth > 768; // Seuil pour cacher les subnavs de vue
-
-        if (activeViewId === 'commandes-view') {
-            pharmacyHeaderSubnavContainer.style.display = 'flex';
-            if(desktopSubNavCommandes && isDesktopOrLargeTablet) desktopSubNavCommandes.style.display = 'none';
-            
-            pharmacyHeaderSubnavContainer.innerHTML = `
-                <button class="header-sub-nav-btn ${currentCommandView === 'current' ? 'active' : ''}" data-command-view="current">En cours</button>
-                <button class="header-sub-nav-btn ${currentCommandView === 'archived' ? 'active' : ''}" data-command-view="archived">Archivées</button>
-            `;
-            pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    currentCommandView = e.currentTarget.dataset.commandView;
-                    displayCommandes();
+        if (isPharmacyAuthenticated) {
+            globalHeader.classList.add('pharmacy-mode');
+            let subNavHtml = '';
+            if (activeViewId === 'commandes-view') {
+                pharmacyHeaderSubnavContainer.style.display = 'flex';
+                if(desktopSubNavCommandes) desktopSubNavCommandes.classList.add('hidden-by-header'); else if (desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'none';
+                
+                subNavHtml = `
+                    <button class="header-sub-nav-btn ${currentCommandView === 'current' ? 'active' : ''}" data-command-view="current">En cours</button>
+                    <button class="header-sub-nav-btn ${currentCommandView === 'archived' ? 'active' : ''}" data-command-view="archived">Archivées</button>
+                `;
+                pharmacyHeaderSubnavContainer.innerHTML = subNavHtml;
+                pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                        currentCommandView = e.currentTarget.dataset.commandView;
+                        displayCommandes();
+                    });
                 });
-            });
-        } else if (activeViewId === 'stock-unified-view') {
-            pharmacyHeaderSubnavContainer.style.display = 'flex';
-            if(desktopSubNavStock && isDesktopOrLargeTablet) desktopSubNavStock.style.display = 'none';
-            
-            pharmacyHeaderSubnavContainer.innerHTML = `
-                <button class="header-sub-nav-btn ${currentStockSubView === 'pompier' ? 'active' : ''}" data-stock-type="pompier">Stock VSAV</button>
-                <button class="header-sub-nav-btn ${currentStockSubView === 'pharmacie' ? 'active' : ''}" data-stock-type="pharmacie">Stock Pharmacie</button>
-            `;
-            pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    currentStockSubView = e.currentTarget.dataset.stockType;
-                    displayUnifiedStockView();
+            } else if (activeViewId === 'stock-unified-view') {
+                pharmacyHeaderSubnavContainer.style.display = 'flex';
+                 if(desktopSubNavStock) desktopSubNavStock.classList.add('hidden-by-header'); else if (desktopSubNavStock) desktopSubNavStock.style.display = 'none';
+
+                subNavHtml = `
+                    <button class="header-sub-nav-btn ${currentStockSubView === 'pompier' ? 'active' : ''}" data-stock-type="pompier">Stock VSAV</button>
+                    <button class="header-sub-nav-btn ${currentStockSubView === 'pharmacie' ? 'active' : ''}" data-stock-type="pharmacie">Stock Pharmacie</button>
+                `;
+                pharmacyHeaderSubnavContainer.innerHTML = subNavHtml;
+                pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                        currentStockSubView = e.currentTarget.dataset.stockType;
+                        displayUnifiedStockView();
+                    });
                 });
-            });
-        } else {
-             // Ne rien faire si pas de subnav spécifique pour la vue
+            } else {
+                globalHeader.classList.remove('pharmacy-mode');
+                if(desktopSubNavCommandes) desktopSubNavCommandes.classList.remove('hidden-by-header'); else if (desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex';
+                if(desktopSubNavStock) desktopSubNavStock.classList.remove('hidden-by-header'); else if (desktopSubNavStock) desktopSubNavStock.style.display = 'flex';
+            }
+        } else { // Not pharmacy authenticated
+            globalHeader.classList.remove('pharmacy-mode');
+            if(desktopSubNavCommandes) desktopSubNavCommandes.classList.remove('hidden-by-header'); else if (desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex';
+            if(desktopSubNavStock) desktopSubNavStock.classList.remove('hidden-by-header'); else if (desktopSubNavStock) desktopSubNavStock.style.display = 'flex';
         }
     }
 
@@ -423,9 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
         topLoginBtn.style.display = isEntering ? 'none' : 'flex';
         headerLogoutBtn.style.display = isEntering ? 'flex' : 'none';
         
-        if (mobileSearchIcon) mobileSearchIcon.style.display = 'none'; 
-        if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible');
-        
         const addCmdBtnContainerDesktop = document.getElementById('manual-command-actions-section');
         const addStockBtnContainerDesktop = document.getElementById('unifiedStockModalActions');
 
@@ -436,27 +399,24 @@ document.addEventListener('DOMContentLoaded', () => {
         fabAddStockItem.style.display = 'none';
 
         viewContainers.forEach(v => v.classList.remove('visible'));
-        pharmacyHeaderSubnavContainer.innerHTML = ''; 
-        pharmacyHeaderSubnavContainer.style.display = 'none';
-        globalHeader.classList.toggle('pharmacy-mode', isEntering);
-        document.body.classList.toggle('pharmacy-active-padding', isEntering);
-
-
+        // pharmacyHeaderSubnavContainer cleared/hidden by updatePharmacyHeaderSubNav via setActiveTab
+        
         if (isEntering) {
             currentUser = sessionStorage.getItem('pharmaUserName') || "Pharmacien";
             const pharmacyDefaultTab = pharmacyNavUl.querySelector('.list[data-view="reappro-view"]');
-            if (pharmacyDefaultTab) setActiveTab(pharmacyDefaultTab, pharmacyNavUl);
+            setActiveTab(pharmacyDefaultTab, pharmacyNavUl);
         } else {
             currentUser = sessionStorage.getItem('userName') || "Pompier";
             const mainDefaultTab = mainNavUl.querySelector('.list[data-view="current-view"]');
-            if (mainDefaultTab) setActiveTab(mainDefaultTab, mainNavUl);
-            document.querySelectorAll('.desktop-sub-nav').forEach(nav => nav.style.display = 'flex');
+            setActiveTab(mainDefaultTab, mainNavUl);
+            globalHeader.classList.remove('pharmacy-mode'); 
+            // Ensure desktop subnavs are reset if necessary (handled by updatePharmacyHeaderSubNav)
         }
         
         const activeNav = isEntering ? pharmacyNavUl : mainNavUl;
         const activeTab = activeNav.querySelector(".list.active");
         if (activeTab) {
-            // updateHeaderControls et updatePharmacyHeaderSubNav sont appelés dans updateActiveView
+             // updateActiveView will call updateHeaderControls and updatePharmacyHeaderSubNav
             updateActiveView(activeTab, false); 
         }
     }
@@ -520,9 +480,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (document.getElementById('archive-view')?.classList.contains('visible') && searchableInterventionText.includes(archiveSearchTerm)) {
                     filteredArchive.push(data);
                 }
+                // For Pharmacy Archives, show if archived AND pharmacyStatus is 'Traité'
                 if (document.getElementById('pharmacy-archives-view')?.classList.contains('visible') && 
                     searchableInterventionText.includes(pharmacyGlobalSearchTerm) && 
-                    inter.pharmacyStatus === 'Traité') {
+                    inter.pharmacyStatus === 'Traité') { // Condition added
                      filteredPharmacyArchive.push(data);
                 }
             } else { 
@@ -531,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                  if (document.getElementById('reappro-view')?.classList.contains('visible') && 
                      searchableInterventionText.includes(pharmacyGlobalSearchTerm) && 
-                     inter.pharmacyStatus !== 'Traité') {
+                     inter.pharmacyStatus !== 'Traité') { // Not archived and not fully Traité by pharmacy
                     if (!filteredPharmacyReappro.find(item => item.id === id)) { 
                         filteredPharmacyReappro.push(data);
                     }
@@ -542,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPaginatedView(filteredCurrent, currentInterventionsCards, 'currentCardsPagination', currentPage_current, createInterventionCard, 'current');
         renderPaginatedView(filteredArchive, archivedInterventionsCards, 'archivePagination', currentPage_archive, createArchivedInterventionCard, 'archive');
         renderPaginatedView(filteredPharmacyReappro, pharmacyInterventionsCards, 'pharmacyPagination', currentPage_pharmacy, createPharmacyCard, 'pharmacy');
-        renderPaginatedView(filteredPharmacyArchive, pharmacyArchivedInterventionsCards, 'pharmacyArchivePagination', currentPage_pharmacy_archive, createPharmacyCard, 'pharmacy_archive');
+        renderPaginatedView(filteredPharmacyArchive, pharmacyArchivedInterventionsCards, 'pharmacyArchivePagination', currentPage_pharmacy_archive, createPharmacyArchiveCard, 'pharmacy_archive'); // Changed card creator
     
         addCardEventListeners();
     }
@@ -620,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
     }
 
-    function createPharmacyCard(inter) {
+    function createPharmacyCard(inter) { // For "À Traiter" view
         const { id, numero_intervention, date, pharmacyStatus } = inter;
         let statusText, statusClass;
         switch(pharmacyStatus) {
@@ -628,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusText = 'En cours';
                 statusClass = 'badge-en-cours-de-traitement';
                 break;
-            case 'Traité':
+            case 'Traité': // Should ideally not show here, but as a fallback
                  statusText = 'Traité';
                  statusClass = 'badge-traite';
                  break;
@@ -655,12 +616,35 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>`;
     }
+
+     function createPharmacyArchiveCard(inter) { // For "Archives Pharmacie" view
+        const { id, numero_intervention, date, pharmacyStatus } = inter;
+        // In this view, pharmacyStatus should be 'Traité' and inter.archived should be true
+        return `
+        <div class="intervention-card pharmacy-card archived-card" data-id="${id}">
+            <div class="card-header">
+                <h4><i class="bi bi-hash"></i>${numero_intervention}</h4>
+                <span class="status-badge badge-traite">Traité et Archivé</span>
+            </div>
+            <div class="card-body">
+                <div class="card-item"><i class="bi bi-calendar-check"></i> <span>Intervention du ${formatDate(date)}</span></div>
+                <div class="card-item"><i class="bi bi-person"></i> <span>Par: ${inter.nom || 'N/A'}</span></div>
+            </div>
+            <div class="card-footer">
+                <div class="card-footer-actions">
+                    <button class="btn-icon-footer view-btn" title="Voir les détails"><i class="bi bi-eye-fill"></i></button>
+                    <button class="btn-icon-footer pharmacy-unarchive-btn" title="Désarchiver (Pharmacie)"><i class="bi bi-box-arrow-up"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }
     
     // --- GESTIONNAIRES D'ÉVÉNEMENTS ---
     function addCardEventListeners() {
         document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', (e) => showDetailsModal(e.currentTarget.closest('[data-id]').dataset.id)));
         document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => editIntervention(e.currentTarget.closest('[data-id]').dataset.id)));
-        document.querySelectorAll('.unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => unarchiveIntervention(e.currentTarget.closest('[data-id]').dataset.id)));
+        document.querySelectorAll('.unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => unarchiveIntervention(e.currentTarget.closest('[data-id]').dataset.id))); // Pompier unarchive
+        document.querySelectorAll('.pharmacy-unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => handlePharmacyUnarchive(e.currentTarget.closest('[data-id]').dataset.id))); // Pharmacy unarchive
         document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteIntervention(e.currentTarget.closest('[data-id]').dataset.id)));
         document.querySelectorAll('.manage-material-btn').forEach(btn => btn.addEventListener('click', (e) => openMaterialManagementModal(e.currentTarget.dataset.id, 'firefighter')));
         document.querySelectorAll('.close-intervention-btn').forEach(btn => btn.addEventListener('click', (e) => closeInterventionDirectly(e.currentTarget.dataset.id)));
@@ -692,7 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
             categorie: document.getElementById('categorie').value,
             commentaire: document.getElementById('commentaire').value,
             photos: photosBase64,
-            materiels: materiels.reduce((obj, mat) => ({ ...obj, [mat.name]: { quantity_used: mat.qty, status: 'Non défini' } }), {}),
+            materiels: materiels.reduce((obj, mat) => ({ ...obj, [mat.name]: { quantity_used: mat.qty, status: 'Non défini' } }), {}), // quantity_used instead of just quantity
             archived: false, 
             pharmacyStatus: (materiels.length > 0) ? 'En attente' : 'Traité', 
         };
@@ -742,50 +726,134 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMaterielsTagDisplay();
         photosBase64 = inter.photos || [];
         updatePhotosDisplay();
-        const formTab = mainNavUl.querySelector('.list[data-view="form-view"]');
-        if(formTab) setActiveTab(formTab, mainNavUl);
+        setActiveTab(mainNavUl.querySelector('.list[data-view="form-view"]'), mainNavUl);
     }
 
-    async function unarchiveIntervention(id) {
+    async function unarchiveIntervention(id) { // Pompier unarchive
         const inter = allInterventions[id];
         if (!inter) return;
         const confirmed = await showCustomDialog({
-            title: "Désarchiver l'intervention",
-            message: `Voulez-vous vraiment désarchiver l'intervention n°${inter.numero_intervention} ? Le statut passera à "En cours" et le stock utilisé (si réapprovisionné depuis VSAV) sera restitué.`
+            title: "Désarchiver l'intervention (Pompier)",
+            message: `Voulez-vous vraiment désarchiver l'intervention n°${inter.numero_intervention} ? Le statut passera à "En cours". Le stock VSAV utilisé (si réapprovisionné depuis VSAV lors de la clôture) sera restitué.`
         });
 
         if (confirmed) {
             const updates = {
                 archived: false,
                 statut: 'En cours', 
-                pharmacyStatus: (inter.materiels && Object.keys(inter.materiels).length > 0) ? 'À traiter' : 'Traité'
+                // If materials exist, set pharmacyStatus to 'À traiter', otherwise 'Traité'
+                pharmacyStatus: (inter.materiels && Object.keys(inter.materiels).length > 0) ? 'À traiter' : 'Traité' 
             };
             let stockLogEntries = [];
+            // Restore stock only if it was marked as réapprovisionné from VSAV
             if (inter.materiels) {
                 for (const matName in inter.materiels) {
                     const details = inter.materiels[matName];
-                    if (details.reappro_status === 'Réapprovisionné') {
+                    if (details.reappro_status === 'Réapprovisionné') { // Material was taken from VSAV stock
                         const qtyUsed = details.quantity_used || 0;
                         if (pompierStock[matName] && qtyUsed > 0) { 
+                            // Add back to pompier stock
                             await database.ref(`stocks/pompier/${matName}/quantity`).set(firebase.database.ServerValue.increment(qtyUsed));
                             stockLogEntries.push(`+${qtyUsed} de '${matName}' (Stock VSAV)`);
                         }
                     }
-                    updates[`materiels/${matName}/reappro_status`] = ""; 
-                    updates[`materiels/${matName}/pharma_status`] = "";
-                    updates[`materiels/${matName}/pharma_comment`] = "";
-                    updates[`materiels/${matName}/quantity_missing`] = 0; 
+                    // Reset material specific statuses for this intervention
+                    updates[`materiels/${matName}/reappro_status`] = ""; // Reset pompier reappro status
+                    updates[`materiels/${matName}/pharma_status`] = "";  // Reset pharmacy processing status for this material
+                    updates[`materiels/${matName}/pharma_comment`] = ""; // Reset pharmacy comment
+                    updates[`materiels/${matName}/quantity_missing`] = 0; // Reset missing quantity
                 }
             }
             await database.ref(`interventions/${id}`).update(updates);
-            let logDetails = `Intervention n°${inter.numero_intervention}`;
+            let logDetails = `Intervention n°${inter.numero_intervention} (Pompier)`;
             if(stockLogEntries.length > 0) {
-                logDetails += `. Stock restitué: ${stockLogEntries.join(', ')}`;
+                logDetails += `. Stock VSAV restitué: ${stockLogEntries.join(', ')}`;
             }
-            addLogEntry('Désarchivage', `${logDetails} par ${currentUser}`);
-            showMessage('Intervention désarchivée et stock (si applicable) restitué.', 'success');
+            addLogEntry('Désarchivage Pompier', `${logDetails} par ${currentUser}`);
+            showMessage('Intervention désarchivée. Statut pompier "En cours". Stock VSAV (si applicable) restitué.', 'success');
         }
     }
+    
+    async function handlePharmacyUnarchive(id) {
+        const inter = allInterventions[id];
+        if (!inter || !inter.archived || inter.pharmacyStatus !== 'Traité') {
+            showMessage("Cette intervention ne peut pas être désarchivée par la pharmacie dans son état actuel.", "warning");
+            return;
+        }
+
+        const confirmed = await showCustomDialog({
+            title: "Désarchiver l'Intervention (Pharmacie)",
+            message: `Désarchiver l'intervention n°${inter.numero_intervention} ?\nCela la remettra "En cours" pour les pompiers et "À traiter" pour la pharmacie.\nLe stock VSAV initialement utilisé (si réapprovisionné depuis VSAV) sera restitué.\nToutes les informations de traitement matériel (statuts, commentaires pharmacie/pompier) seront réinitialisées.`
+        });
+
+        if (confirmed) {
+            loaderModal.classList.add('visible');
+            try {
+                const updates = {
+                    archived: false,
+                    statut: 'En cours', // Pompier status
+                    pharmacyStatus: 'À traiter' // Pharmacy status
+                };
+
+                let stockLogEntries = [];
+                if (inter.materiels) {
+                    const materialUpdates = {};
+                    for (const matName in inter.materiels) {
+                        const details = inter.materiels[matName];
+                        const qtyUsed = details.quantity_used || 0;
+
+                        // If material was marked as 'Réapprovisionné' by firefighter (meaning taken from VSAV stock)
+                        // This check is based on the assumption that 'Réapprovisionné' in reappro_status means it came from VSAV.
+                        if (details.reappro_status === 'Réapprovisionné' && qtyUsed > 0) {
+                             // Check if item exists in pompierStock before trying to increment
+                            if (pompierStock.hasOwnProperty(matName)) {
+                                await database.ref(`stocks/pompier/${matName}/quantity`).set(firebase.database.ServerValue.increment(qtyUsed));
+                                stockLogEntries.push(`+${qtyUsed} '${matName}' (VSAV)`);
+                            } else {
+                                // If item doesn't exist, create it with the restituted quantity
+                                await database.ref(`stocks/pompier/${matName}`).set({ quantity: qtyUsed, notes: 'Restitué lors désarchivage pharmacie' });
+                                stockLogEntries.push(`+${qtyUsed} '${matName}' (VSAV - créé)`);
+                            }
+                        }
+                        
+                        // Reset all material processing details within the intervention
+                        materialUpdates[`${matName}/reappro_status`] = "";
+                        materialUpdates[`${matName}/comment`] = "";
+                        materialUpdates[`${matName}/pharma_status`] = "";
+                        materialUpdates[`${matName}/pharma_comment`] = "";
+                        materialUpdates[`${matName}/quantity_missing`] = 0;
+                        // quantity_used remains as it was originally
+                    }
+                    updates.materiels = { ...inter.materiels }; // Keep original quantities used
+                    for(const matName in materialUpdates) { // Apply resets
+                        const parts = matName.split('/');
+                        if (updates.materiels[parts[0]]) {
+                             updates.materiels[parts[0]][parts[1]] = materialUpdates[matName];
+                        }
+                    }
+                }
+
+                await database.ref(`interventions/${id}`).update(updates);
+                
+                let logMessage = `Intervention n°${inter.numero_intervention} désarchivée par Pharmacie (${currentUser}). Statuts réinitialisés.`;
+                if (stockLogEntries.length > 0) {
+                    logMessage += ` Stock VSAV restitué: ${stockLogEntries.join(', ')}.`;
+                }
+                addLogEntry('Désarchivage Pharmacie', logMessage);
+                showMessage('Intervention désarchivée et réinitialisée avec succès.', 'success');
+                
+            } catch (error) {
+                console.error("Erreur désarchivage pharmacie:", error);
+                showMessage(`Erreur lors du désarchivage: ${error.message}`, 'error');
+                addLogEntry('Erreur Désarchivage Pharmacie', `Inter n°${inter.numero_intervention}, Erreur: ${error.message}`);
+            } finally {
+                loaderModal.classList.remove('visible');
+                // Refresh view might be needed or will happen automatically if 'on value' listeners are robust
+                displayInterventions(); // Force a refresh
+            }
+        }
+    }
+
 
     async function deleteIntervention(id) {
         const password = await showCustomDialog({
@@ -895,12 +963,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const headerHtml = userType === 'firefighter' 
             ? `<div class="material-management-item header firefighter-view"><strong>Matériel</strong><strong>Qté Utilisée</strong><strong>Statut Réappro. VSAV</strong><strong>Commentaire Pompier</strong></div>`
             : `<div class="material-management-item header pharmacy-view"><strong>Matériel</strong><strong>Statut Traitement Pharmacie</strong><strong>Commentaire Pharmacie</strong></div>`;
+        
         const itemsHtml = Object.entries(inter.materiels).map(([matName, details]) => {
+            const qtyUsedOriginal = details.quantity_used || 1;
             if (userType === 'firefighter') {
                 return `
                 <div class="material-management-item firefighter-view" data-mat-name="${matName}">
                     <span>${matName}</span>
-                    <input type="number" class="mat-qty-used" value="${details.quantity_used || 1}" min="0" readonly title="Quantité utilisée initialement">
+                    <input type="number" class="mat-qty-used" value="${qtyUsedOriginal}" min="0" readonly title="Quantité utilisée initialement">
                     <div>
                         <select class="mat-reappro-status">
                             <option value="">Choisir statut...</option>
@@ -908,14 +978,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="Manquant" ${details.reappro_status === 'Manquant' ? 'selected' : ''}>Manquant (à commander)</option>
                             <option value="Pas besoin" ${details.reappro_status === 'Pas besoin' ? 'selected' : ''}>Pas besoin de réappro.</option>
                         </select>
-                        <input type="number" class="missing-qty-input ${details.reappro_status === 'Manquant' ? 'visible' : ''}" placeholder="Qté manquante" value="${details.quantity_missing || details.quantity_used || 1}" min="1">
+                        <div class="quantity-input-group missing-qty-input ${details.reappro_status === 'Manquant' ? 'visible' : ''}" style="margin-top: 0.5rem;">
+                            <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="decrement">-</button>
+                            <input type="number" class="missing-qty-value" placeholder="Qté manquante" value="${details.quantity_missing || qtyUsedOriginal}" min="1">
+                            <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="increment">+</button>
+                        </div>
                     </div>
                     <input type="text" class="mat-comment" value="${details.comment || ''}" placeholder="Commentaire (optionnel)...">
                 </div>`;
             } else { 
                  const pompierReapproStatus = details.reappro_status || "Non défini";
                  const pompierMissingQty = details.quantity_missing || 0;
-                 let materialContext = `Utilisé: ${details.quantity_used || 0}. Statut VSAV: ${pompierReapproStatus}`;
+                 let materialContext = `Utilisé: ${qtyUsedOriginal}. Statut VSAV: ${pompierReapproStatus}`;
                  if (pompierReapproStatus === 'Manquant' && pompierMissingQty > 0) {
                      materialContext += ` (Qté manquante VSAV: ${pompierMissingQty})`;
                  }
@@ -932,16 +1006,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
             }
         }).join('');
+
         listContainer.innerHTML = headerHtml + itemsHtml;
         document.getElementById('save-material-btn').onclick = () => saveMaterialData(interId, userType);
+        
         listContainer.querySelectorAll('.mat-reappro-status').forEach(select => {
             select.addEventListener('change', e => {
-                const missingQtyInput = e.target.closest('div').querySelector('.missing-qty-input');
-                missingQtyInput.classList.toggle('visible', e.target.value === 'Manquant');
+                const missingQtyGroup = e.target.closest('div').querySelector('.missing-qty-input'); // This is the div group
+                const missingQtyInput = missingQtyGroup.querySelector('.missing-qty-value');
+                missingQtyGroup.classList.toggle('visible', e.target.value === 'Manquant');
                 if (e.target.value !== 'Manquant') {
                     missingQtyInput.value = ''; 
                 } else {
-                    if(!missingQtyInput.value) {
+                    if(!missingQtyInput.value) { // Set default if empty
                         const qtyUsed = parseInt(e.target.closest('.material-management-item').querySelector('.mat-qty-used').value, 10) || 1;
                         missingQtyInput.value = qtyUsed;
                     }
@@ -967,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const comment = item.querySelector('.mat-comment').value;
                 let quantity_missing = 0;
                 if (reappro_status === 'Manquant') {
-                    const missingInput = item.querySelector('.missing-qty-input');
+                    const missingInput = item.querySelector('.missing-qty-value'); // Adjusted selector
                     quantity_missing = parseInt(missingInput.value, 10);
                     if (isNaN(quantity_missing) || quantity_missing <= 0) {
                         allFirefighterInputsValid = false;
@@ -1034,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else { 
                         database.ref(`stocks/pompier/${matName}`).set({ quantity: qtyToHandlePharmacie, notes: 'Ajout via réappro pharmacie (Inter)' });
                     }
-                    addLogEntry('Stock Pompier (Entrée)', `+${qtyToHandlePharmacie} de '${matName}' via réappro pharmacie (Inter n°${intervention.numero_intervention}) par ${currentUser}`);
+                    addLogEntry('Stock Pompier (Entrée)', `+${qtyToHandlePharmacie} via réappro pharmacie (Inter n°${intervention.numero_intervention}) par ${currentUser}`);
                  }
             }
         });
@@ -1051,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (isPharmacyProcessingAnyItem) { 
                 let allItemsFullyProcessedByPharmacy = true;
-                Object.keys(intervention.materiels).forEach(matKey => {
+                 Object.keys(intervention.materiels).forEach(matKey => {
                     const finalMatStatus = updates[`materiels/${matKey}/pharma_status`] || intervention.materiels[matKey].pharma_status;
                     if(!finalMatStatus || (finalMatStatus !== 'Réapprovisionné' && finalMatStatus !== 'Pas besoin')) {
                        allItemsFullyProcessedByPharmacy = false;
@@ -1077,6 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (addStockBtnContainerDesktop) {
             addStockBtnContainerDesktop.style.display = isPharmacyAuthenticated ? 'flex' : 'none';
         }
+        fabAddStockItem.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'block' : 'none';
         setupStockCardCreation(currentStockSubView, unifiedStockCards);
     }
 
@@ -1106,12 +1184,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
             ` : '';
             const cardHtml = `
-            <div class="stock-card" data-name="${name}">
+            <div class="stock-card" data-name="${name}" data-stock-type="${viewType}">
                 <div class="stock-card-header"><h3>${name}</h3></div>
                 <div class="stock-card-body">
                     <div class="form-group-card">
                         <label>Quantité</label>
-                        <input type="number" class="stock-quantity-input" value="${details.quantity || 0}" ${!isPharmacyAuthenticated ? 'readonly' : ''}>
+                        <div class="quantity-input-group">
+                            ${isPharmacyAuthenticated ? `<button type="button" class="qty-adjust-btn" data-action="decrement">-</button>` : ''}
+                            <input type="number" class="stock-quantity-input" value="${details.quantity || 0}" ${!isPharmacyAuthenticated ? 'readonly' : ''} min="0">
+                            ${isPharmacyAuthenticated ? `<button type="button" class="qty-adjust-btn" data-action="increment">+</button>` : ''}
+                        </div>
                     </div>
                     <div class="form-group-card">
                         <label>Notes</label>
@@ -1127,11 +1209,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cardsContainer.querySelectorAll('.save-stock-btn').forEach(btn => btn.onclick = (e) => {
                 const card = e.currentTarget.closest('.stock-card');
                 const name = card.dataset.name;
+                const stockType = card.dataset.stockType;
                 const quantity = parseInt(card.querySelector('.stock-quantity-input').value, 10);
                 const notes = card.querySelector('.stock-notes-input').value;
                 if (isNaN(quantity) || quantity < 0) return showMessage("Quantité invalide.", "error");
-                database.ref(`stocks/${viewType}/${name}`).update({ quantity, notes });
-                addLogEntry(`Stock ${viewType}`, `Mise à jour de '${name}' (Qté: ${quantity}) par ${currentUser}`);
+                database.ref(`stocks/${stockType}/${name}`).update({ quantity, notes });
+                addLogEntry(`Stock ${stockType}`, `Mise à jour de '${name}' (Qté: ${quantity}) par ${currentUser}`);
                 showMessage(`Article "${name}" sauvegardé.`, 'success');
             });
             cardsContainer.querySelectorAll('.delete-stock-btn').forEach(btn => btn.onclick = async (e) => {
@@ -1249,6 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.display = 'grid'; 
             isArchivedView = false;
             if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = isPharmacyAuthenticated ? 'flex' : 'none';
+            fabAddManualCommand.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'block' : 'none';
 
         } else { 
             container = archivedCommandesCards;
@@ -1256,6 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.display = 'grid';
             isArchivedView = true;
             if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = 'none'; 
+            fabAddManualCommand.style.display = 'none';
         }
         container.innerHTML = ''; 
         const filteredCommands = Object.entries(commandLog)
@@ -1611,39 +1696,55 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortedStockNames = Object.keys(combinedStock)
             .filter(name => name.toLowerCase().includes(lowerSearchTerm))
             .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
         if (sortedStockNames.length === 0 && !searchTerm) {
              materielSelectionList.innerHTML = '<p class="empty-view-message">Aucun article. Ajoutez manuellement.</p>'; return;
         }
         if (sortedStockNames.length === 0 && searchTerm) {
              materielSelectionList.innerHTML = `<p class="empty-view-message">Aucun article pour "${searchTerm}".</p>`; return;
         }
+
         sortedStockNames.forEach(name => {
             const itemDetailsPompier = pompierStock[name] || { quantity: 0 };
             const itemDetailsPharma = pharmaStock[name] || { quantity: 0 };
             const existingSelection = tempSelectedMaterielsModal.find(m => m.name === name);
             const currentQtyInModal = existingSelection ? existingSelection.qty : 0;
+            
             const itemDiv = document.createElement('div');
             itemDiv.className = 'materiel-selection-item';
             itemDiv.innerHTML = `
                 <span>${name} <small class="stock-info">(VSAV: ${itemDetailsPompier.quantity}, Pharma: ${itemDetailsPharma.quantity})</small></span>
-                <input type="number" value="${currentQtyInModal}" min="0" data-name="${name}" placeholder="Qté">
+                <div class="quantity-input-group">
+                    <button type="button" class="qty-adjust-btn" data-action="decrement">-</button>
+                    <input type="number" value="${currentQtyInModal}" min="0" data-name="${name}" placeholder="Qté">
+                    <button type="button" class="qty-adjust-btn" data-action="increment">+</button>
+                </div>
             `;
             materielSelectionList.appendChild(itemDiv);
+
             const qtyInput = itemDiv.querySelector('input[type="number"]');
             qtyInput.addEventListener('change', (e) => {
-                const newQty = parseInt(e.target.value, 10);
-                const itemName = e.target.dataset.name;
-                const index = tempSelectedMaterielsModal.findIndex(m => m.name === itemName);
-                if (newQty > 0) {
-                    if (index > -1) tempSelectedMaterielsModal[index].qty = newQty;
-                    else tempSelectedMaterielsModal.push({ name: itemName, qty: newQty });
-                } else { 
-                    if (index > -1) tempSelectedMaterielsModal.splice(index, 1);
-                }
+                updateTempSelectedMateriels(e.target.dataset.name, parseInt(e.target.value, 10));
             });
-             qtyInput.addEventListener('focus', () => qtyInput.select()); 
+            qtyInput.addEventListener('focus', () => qtyInput.select());
         });
     }
+
+    function updateTempSelectedMateriels(itemName, newQty) {
+        const index = tempSelectedMaterielsModal.findIndex(m => m.name === itemName);
+        if (newQty > 0) {
+            if (index > -1) {
+                tempSelectedMaterielsModal[index].qty = newQty;
+            } else {
+                tempSelectedMaterielsModal.push({ name: itemName, qty: newQty });
+            }
+        } else { 
+            if (index > -1) {
+                tempSelectedMaterielsModal.splice(index, 1);
+            }
+        }
+    }
+
 
     openMaterielSelectionModalBtn.addEventListener('click', () => {
         tempSelectedMaterielsModal = [...materiels.map(m => ({ ...m }))]; 
@@ -1687,6 +1788,49 @@ document.addEventListener('DOMContentLoaded', () => {
         tempSelectedMaterielsModal = []; 
     });
 
+    // --- Event Listener for +/- Quantity Buttons (delegated) ---
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('qty-adjust-btn')) {
+            const action = e.target.dataset.action;
+            let inputEl;
+            // Determine the target input based on context
+            if (e.target.dataset.target) { // For modal inputs with specific ID targets
+                inputEl = document.getElementById(e.target.dataset.target);
+            } else if (e.target.dataset.targetClass) { // For modal inputs with specific class targets (like missing-qty-value)
+                 inputEl = e.target.closest('.quantity-input-group').querySelector('.' + e.target.dataset.targetClass);
+            }else { // For inputs within the same parent group (like in materielSelectionList or stock cards)
+                inputEl = e.target.parentElement.querySelector('input[type="number"]');
+            }
+
+            if (inputEl) {
+                let currentValue = parseInt(inputEl.value, 10) || 0;
+                const min = parseInt(inputEl.min, 10);
+
+                if (action === 'increment') {
+                    currentValue++;
+                } else if (action === 'decrement') {
+                    currentValue--;
+                }
+
+                if (!isNaN(min) && currentValue < min) {
+                    currentValue = min;
+                } else if (currentValue < 0 && isNaN(min)) { // Default min 0 if not specified
+                    currentValue = 0;
+                }
+                
+                inputEl.value = currentValue;
+
+                // If in materielSelectionModal, also update tempSelectedMaterielsModal
+                if (e.target.closest('#materielSelectionList') && inputEl.dataset.name) {
+                    updateTempSelectedMateriels(inputEl.dataset.name, currentValue);
+                }
+                // Trigger change event for inputs that rely on it
+                const changeEvent = new Event('change', { bubbles: true });
+                inputEl.dispatchEvent(changeEvent);
+            }
+        }
+    });
+
 
     // --- Initialisation ---
     function initializeApp() {
@@ -1706,15 +1850,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setupNavEventListeners(pharmacyNavUl);
         
         const initialActiveTab = isPharmacyAuthenticated 
-            ? (pharmacyNavUl.querySelector('.list.active') || pharmacyNavUl.querySelector('.list'))
-            : (mainNavUl.querySelector('.list.active') || mainNavUl.querySelector('.list')); 
+            ? pharmacyNavUl.querySelector('.list.active') || pharmacyNavUl.querySelector('.list[data-view="reappro-view"]') // Default to reappro for pharma
+            : mainNavUl.querySelector('.list.active') || mainNavUl.querySelector('.list[data-view="current-view"]');  // Default to current for pompier
         if (initialActiveTab) {
             const parentNav = initialActiveTab.closest('ul');
-            if (parentNav) setActiveTab(initialActiveTab, parentNav); 
-        } else { // Fallback if no tab is active or found (e.g. first load)
-            const defaultNav = isPharmacyAuthenticated ? pharmacyNavUl : mainNavUl;
-            const firstItem = defaultNav.querySelector('.list');
-            if (firstItem) setActiveTab(firstItem, defaultNav);
+            setActiveTab(initialActiveTab, parentNav); 
+        } else { // Fallback if no active tab found somehow
+             const firstTab = isPharmacyAuthenticated ? pharmacyNavUl.querySelector('.list') : mainNavUl.querySelector('.list');
+             if (firstTab) setActiveTab(firstTab, firstTab.closest('ul'));
         }
 
 
@@ -1724,8 +1867,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         currentSearchInput.addEventListener('input', () => { currentPage_current = 1; displayInterventions(); });
         archiveSearchInput.addEventListener('input', () => { currentPage_archive = 1; displayInterventions(); });
-        
-        // pharmacySearchInput est l'unique input pour les recherches en mode pharmacie
         pharmacySearchInput.addEventListener('input', () => {
             const activeViewId = document.querySelector('.view-container.visible')?.id;
             if (activeViewId === 'commandes-view') { displayCommandes(); } 
@@ -1735,16 +1876,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  currentPage_pharmacy = 1; currentPage_pharmacy_archive = 1; displayInterventions();
             }
         });
-        
-        if (mobileSearchIcon && pharmacySearchBox) {
-            mobileSearchIcon.addEventListener('click', () => {
-                pharmacySearchBox.classList.toggle('mobile-visible');
-                if (pharmacySearchBox.classList.contains('mobile-visible')) {
-                    pharmacySearchInput.focus();
-                }
-            });
-        }
-
 
         document.querySelectorAll('.modal .close-button, .modal .modal-close-btn').forEach(btn => {
             btn.addEventListener('click', (e) => e.currentTarget.closest('.modal').classList.remove('visible'));
@@ -1763,58 +1894,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clearJournalBtn.addEventListener('click', handleClearJournal);
 
+        // Listeners for DESKTOP sub-navs (will be hidden by CSS if header sub-nav is active)
         document.querySelectorAll('#commandes-view .desktop-sub-nav .sub-nav-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                if (globalHeader.classList.contains('pharmacy-mode') && pharmacyHeaderSubnavContainer.style.display === 'flex' && document.querySelector('#pharmacy-header-subnav-container button[data-command-view]')) return; // Prevent if header nav is controlling
+
                 document.querySelectorAll('#commandes-view .desktop-sub-nav .sub-nav-btn').forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
                 currentCommandView = e.currentTarget.dataset.commandView;
                 displayCommandes();
-                // Si la subnav du header est visible, la mettre à jour aussi
-                if(pharmacyHeaderSubnavContainer.style.display === 'flex') updatePharmacyHeaderSubNav('commandes-view');
             });
         });
         document.querySelectorAll('#stock-unified-view .desktop-sub-nav .sub-nav-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                 if (globalHeader.classList.contains('pharmacy-mode') && pharmacyHeaderSubnavContainer.style.display === 'flex' && document.querySelector('#pharmacy-header-subnav-container button[data-stock-type]')) return; // Prevent if header nav is controlling
+
                 document.querySelectorAll('#stock-unified-view .desktop-sub-nav .sub-nav-btn').forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
                 currentStockSubView = e.currentTarget.dataset.stockType;
                 displayUnifiedStockView();
-                if(pharmacyHeaderSubnavContainer.style.display === 'flex') updatePharmacyHeaderSubNav('stock-unified-view');
             });
         });
 
         window.addEventListener('resize', () => {
             const activeViewId = document.querySelector('.view-container.visible')?.id;
-            if (activeViewId) {
-                updateHeaderControls(activeViewId); // Réévaluer les contrôles du header
-                updatePharmacyHeaderSubNav(activeViewId); // Réévaluer la subnav du header
-            }
-
-
             if (isPharmacyAuthenticated) {
                 fabAddManualCommand.style.display = (activeViewId === 'commandes-view' && window.innerWidth <= 768) ? 'block' : 'none';
                 fabAddStockItem.style.display = (activeViewId === 'stock-unified-view' && window.innerWidth <= 768) ? 'block' : 'none';
-                
-                // Gérer la visibilité de la search-box pharmacie au redimensionnement
-                if (window.innerWidth > 768) {
-                    if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible'); // Cacher si on passe en desktop
-                    if (mobileSearchIcon) mobileSearchIcon.style.display = 'none'; // Cacher l'icône
-                    // S'assurer que la barre de recherche normale est visible si applicable
-                    if (document.getElementById('header-controls-pharmacy')?.classList.contains('visible')) {
-                         if(pharmacySearchBox) pharmacySearchBox.style.display = 'flex';
-                    }
-                } else {
-                    // La logique dans updateHeaderControls gère l'affichage de l'icône
-                     if (pharmacySearchBox && !pharmacySearchBox.classList.contains('mobile-visible')) {
-                        // pharmacySearchBox.style.display = 'none'; // S'assurer qu'elle est cachée si pas active
-                    }
-                }
-
             } else {
                 fabAddManualCommand.style.display = 'none';
                 fabAddStockItem.style.display = 'none';
-                if (pharmacySearchBox) pharmacySearchBox.classList.remove('mobile-visible');
             }
+            // Re-evaluate header subnav visibility on resize
+            if(activeViewId) updatePharmacyHeaderSubNav(activeViewId);
         });
     }
     initializeApp();
