@@ -132,6 +132,10 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label for="newUnifiedStockItemExpiryModal">Date de péremption (optionnel)</label>
+                    <input type="date" id="newUnifiedStockItemExpiryModal">
+                </div>
+                <div class="form-group">
                     <label for="newUnifiedStockTargetModal">Ajouter à</label>
                     <select id="newUnifiedStockTargetModal">
                         <option value="pompier">Stock VSAV</option>
@@ -142,6 +146,40 @@
             <div class="modal-actions">
                 <button type="button" class="btn-secondary modal-close-btn"><i class="bi bi-x-lg"></i> <span class="btn-text">Annuler</span></button>
                 <button type="button" id="saveNewStockItemBtn" class="btn-primary"><i class="bi bi-plus-circle"></i> <span class="btn-text">Ajouter au stock</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lowStockAlertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="bi bi-exclamation-triangle-fill"></i> Alerte Stock VSAV Bas</h3>
+                <span class="close-button modal-close-btn" id="closeLowStockAlertBtn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Les articles suivants dans le stock VSAV ont une quantité critique (égale ou inférieure au seuil configuré) :</p>
+                <ul id="lowStockAlertList" style="list-style-type: disc; padding-left: 25px; margin-top: 10px;">
+                    </ul>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary modal-close-btn">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expiryAlertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="bi bi-calendar-x-fill"></i> Alerte Dates de Péremption Proches</h3>
+                <span class="close-button modal-close-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Les articles suivants (Stock VSAV et Pharmacie) périment bientôt (dans les 30 prochains jours ou sont déjà périmés) :</p>
+                <ul id="expiryAlertList" style="list-style-type: disc; padding-left: 25px; margin-top: 10px;">
+                    </ul>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary modal-close-btn">Fermer</button>
             </div>
         </div>
     </div>
@@ -187,6 +225,29 @@
         </div>
     </header>
 
+    <div class="view-container" id="dashboard-view">
+        <h2><i class="bi bi-bar-chart-line-fill"></i> Tableau de Bord</h2>
+        <div class="dashboard-grid">
+            <div class="dashboard-stat-card">
+                <h4><i class="bi bi-play-circle-fill"></i> Interventions en Cours</h4>
+                <p id="stat-interventions-en-cours">0</p>
+            </div>
+            <div class="dashboard-stat-card">
+                <h4><i class="bi bi-calendar-month"></i> Interventions (Mois Actuel)</h4>
+                <p id="stat-interventions-mois">0</p>
+            </div>
+            <div class="dashboard-stat-card">
+                <h4><i class="bi bi-box-seam"></i> Stock VSAV Bas</h4>
+                <p id="stat-stock-vsav-bas">0 articles</p>
+                <ul id="list-stock-vsav-bas"></ul>
+            </div>
+            <div class="dashboard-stat-card">
+                <h4><i class="bi bi-cart-plus-fill"></i> Commandes en Attente</h4>
+                <p id="stat-commandes-en-attente">0</p>
+            </div>
+        </div>
+    </div>
+
     <div class="view-container" id="form-view">
         <form id="interventionForm" novalidate>
             <div class="form-grid">
@@ -220,26 +281,17 @@
                 <div class="form-group">
                     <label for="statut"><i class="bi bi-info-circle"></i> Statut</label>
                     <select id="statut">
-                        <option value="En cours" selected>En cours</option>
-                        <option value="Terminé">Terminé</option>
-                    </select>
+                        </select>
                 </div>
                 <div class="form-group">
                     <label for="urgence"><i class="bi bi-exclamation-triangle"></i> Urgence</label>
                     <select id="urgence">
-                        <option value="Normal" selected>Normal</option>
-                        <option value="Urgent">Urgent</option>
-                        <option value="Critique">Critique</option>
-                    </select>
+                        </select>
                 </div>
                 <div class="form-group">
                     <label for="categorie"><i class="bi bi-tags"></i> Catégorie</label>
                     <select id="categorie">
-                        <option value="Incendie">Incendie</option>
-                        <option value="Accident" selected>Accident</option>
-                        <option value="Secours">Secours</option>
-                        <option value="Autre">Autre</option>
-                    </select>
+                        </select>
                 </div>
                 <div class="form-group full-width">
                     <label><i class="bi bi-tools"></i> Matériels utilisés</label>
@@ -349,21 +401,56 @@
         </div>
    </div>
 
+   <div class="view-container" id="admin-config-view">
+        <h2><i class="bi bi-sliders"></i> Configuration Administrateur</h2>
+        <div id="admin-config-content" class="form-grid" style="max-width: 800px; margin: auto; background-color: var(--background-card); padding: 1.5rem; border-radius: 12px;">
+            <div class="form-group full-width">
+                <label for="config-low-stock-threshold"><i class="bi bi-thermometer-low"></i> Seuil d'alerte stock bas VSAV</label>
+                <input type="number" id="config-low-stock-threshold" min="0" value="3">
+            </div>
+            <button type="button" id="save-admin-config-btn" class="btn-primary full-width"><i class="bi bi-save"></i> Enregistrer Seuil</button>
+            <hr class="full-width">
+            
+            <div class="form-group full-width">
+                <h4><i class="bi bi-tags-fill"></i> Gestion des Listes Déroulantes</h4>
+                 <p><small>Modifiez les listes en séparant chaque valeur par une virgule.</small></p>
+            </div>
+
+            <div class="form-group">
+                <label for="admin-intervention-categories">Catégories d'Intervention</label>
+                <textarea id="admin-intervention-categories" rows="3" placeholder="Incendie,Accident,Secours,Autre"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="admin-intervention-statuses">Statuts d'Intervention (Formulaire)</label>
+                <textarea id="admin-intervention-statuses" rows="2" placeholder="En cours,Terminé"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="admin-intervention-urgencies">Niveaux d'Urgence</label>
+                <textarea id="admin-intervention-urgencies" rows="2" placeholder="Normal,Urgent,Critique"></textarea>
+            </div>
+             <button type="button" id="save-dropdown-lists-btn" class="btn-primary full-width"><i class="bi bi-list-check"></i> Enregistrer Listes</button>
+        </div>
+    </div>
+
+
     <nav class="navigation">
         <div class="indicator"><div class="shockwave"></div></div>
 
         <ul id="main-nav-ul">
+            <li class="list" data-view="dashboard-view" title="Tableau de Bord"> <a href="#"> <span class="icon"><ion-icon name="speedometer-outline"></ion-icon></span> <span class="text"><b>Tableau</b></span> </a> </li>
             <li class="list active" data-view="form-view" title="Nouvelle Intervention"> <a href="#"> <span class="icon"><ion-icon name="add-circle-outline"></ion-icon></span> <span class="text"><b>Nouvelle</b></span> </a> </li>
             <li class="list" data-view="current-view" title="Interventions Actives"> <a href="#"> <span class="icon"><ion-icon name="play-circle-outline"></ion-icon></span> <span class="text"><b>Actives</b></span> </a> </li>
             <li class="list" data-view="archive-view" title="Archives Pompier"> <a href="#"> <span class="icon"><ion-icon name="archive-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
         </ul>
 
         <ul id="pharmacy-nav-ul">
+             <li class="list" data-view="dashboard-view" title="Tableau de Bord Pharmacie"> <a href="#"> <span class="icon"><ion-icon name="analytics-outline"></ion-icon></span> <span class="text"><b>Tableau</b></span> </a> </li>
              <li class="list" data-view="reappro-view" title="Interventions à Traiter"> <a href="#"> <span class="icon"><ion-icon name="repeat-outline"></ion-icon></span> <span class="text"><b>À Traiter</b></span> </a> </li>
              <li class="list" data-view="commandes-view" title="Suivi des Commandes"> <a href="#"> <span class="icon"><ion-icon name="cart-outline"></ion-icon></span> <span class="text"><b>Commandes</b></span> </a> </li>
              <li class="list" data-view="stock-unified-view" title="Gestion des Stocks"> <a href="#"> <span class="icon"><ion-icon name="cube-outline"></ion-icon></span> <span class="text"><b>Stocks</b></span> </a> </li>
              <li class="list" data-view="journal-view" title="Journal d'Activité"> <a href="#"> <span class="icon"><ion-icon name="reader-outline"></ion-icon></span> <span class="text"><b>Journal</b></span> </a> </li>
              <li class="list" data-view="pharmacy-archives-view" title="Archives Pharmacie"> <a href="#"> <span class="icon"><ion-icon name="folder-open-outline"></ion-icon></span> <span class="text"><b>Archives</b></span> </a> </li>
+             <li class="list" data-view="admin-config-view" title="Configuration Admin"> <a href="#"> <span class="icon"><ion-icon name="cog-outline"></ion-icon></span> <span class="text"><b>Admin</b></span> </a> </li>
         </ul>
     </nav>
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
@@ -397,20 +484,5 @@
             }
         });
     </script>
-  <div id="lowStockAlertModal" class="modal">
-        <div class="modal-content"> <div class="modal-header">
-                <h3><i class="bi bi-exclamation-triangle-fill"></i> Alerte Stock VSAV Bas</h3>
-                <span class="close-button modal-close-btn" id="closeLowStockAlertBtn">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>Les articles suivants dans le stock VSAV ont une quantité critique (égale ou inférieure à 3) :</p>
-                <ul id="lowStockAlertList" style="list-style-type: disc; padding-left: 25px; margin-top: 10px;">
-                    </ul>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary modal-close-btn">Fermer</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
