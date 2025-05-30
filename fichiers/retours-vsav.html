@@ -151,7 +151,7 @@
     </div>
 
     <div id="lowStockAlertModal" class="modal">
-        <div class="modal-content"> 
+        <div class="modal-content">
             <div class="modal-header">
                 <h3><i class="bi bi-exclamation-triangle-fill"></i> Alerte Stock VSAV Bas</h3>
                 <span class="close-button modal-close-btn" id="closeLowStockAlertBtn">&times;</span>
@@ -159,7 +159,7 @@
             <div class="modal-body">
                 <p>Les articles suivants dans le stock VSAV ont une quantité critique (égale ou inférieure au seuil configuré) :</p>
                 <ul id="lowStockAlertList" style="list-style-type: disc; padding-left: 25px; margin-top: 10px;">
-                </ul>
+                    </ul>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-secondary modal-close-btn">Fermer</button>
@@ -176,7 +176,7 @@
             <div class="modal-body">
                 <p>Les articles suivants (Stock VSAV et Pharmacie) périment bientôt (dans les 30 prochains jours ou sont déjà périmés) :</p>
                 <ul id="expiryAlertList" style="list-style-type: disc; padding-left: 25px; margin-top: 10px;">
-                </ul>
+                    </ul>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-secondary modal-close-btn">Fermer</button>
@@ -227,36 +227,14 @@
 
     <div class="view-container" id="dashboard-view">
         <h2><i class="bi bi-bar-chart-line-fill"></i> Tableau de Bord</h2>
-        
-        <div class="dashboard-filters form-grid" style="margin-bottom: 1.5rem; background-color: var(--background-card-hover); padding: 1rem; border-radius: 8px;">
-            <div class="form-group">
-                <label for="dashboard-month-filter">Mois :</label>
-                <select id="dashboard-month-filter">
-                    <option value="all">Tous les mois</option>
-                    </select>
-            </div>
-            <div class="form-group">
-                <label for="dashboard-year-filter">Année :</label>
-                <select id="dashboard-year-filter">
-                    <option value="all">Toutes les années</option>
-                    </select>
-            </div>
-            <div class="form-group" style="align-self: flex-end;">
-                 <button type="button" id="apply-dashboard-filters-btn" class="btn-primary"><i class="bi bi-funnel-fill"></i> Filtrer</button>
-            </div>
-            <div class="form-group" style="align-self: flex-end;">
-                <button type="button" id="export-dashboard-interventions-csv-btn" class="btn-secondary"><i class="bi bi-download"></i> Exporter Interventions (CSV)</button>
-            </div>
-        </div>
-
         <div class="dashboard-grid">
             <div class="dashboard-stat-card">
-                <h4><i class="bi bi-play-circle-fill"></i> Interventions en Cours (Total)</h4>
+                <h4><i class="bi bi-play-circle-fill"></i> Interventions en Cours</h4>
                 <p id="stat-interventions-en-cours">0</p>
             </div>
             <div class="dashboard-stat-card">
-                <h4><i class="bi bi-calendar-event"></i> Interventions (Période Sélectionnée)</h4>
-                <p id="stat-interventions-periode">0</p>
+                <h4><i class="bi bi-calendar-month"></i> Interventions (Mois Actuel)</h4>
+                <p id="stat-interventions-mois">0</p>
             </div>
             <div class="dashboard-stat-card">
                 <h4><i class="bi bi-box-seam"></i> Stock VSAV Bas</h4>
@@ -264,13 +242,9 @@
                 <ul id="list-stock-vsav-bas"></ul>
             </div>
             <div class="dashboard-stat-card">
-                <h4><i class="bi bi-cart-plus-fill"></i> Commandes en Attente (Total)</h4>
+                <h4><i class="bi bi-cart-plus-fill"></i> Commandes en Attente</h4>
                 <p id="stat-commandes-en-attente">0</p>
             </div>
-        </div>
-        <div id="dashboard-filtered-interventions-list" style="margin-top:1.5rem;">
-             <h4>Détail des interventions pour la période :</h4>
-             <ul id="dashboard-interventions-detail-list" style="font-size:0.9em; max-height: 200px; overflow-y:auto; background-color: var(--background-card); padding:10px; border-radius:5px;"></ul>
         </div>
     </div>
 
@@ -470,6 +444,7 @@
         </ul>
 
         <ul id="pharmacy-nav-ul">
+             <li class="list" data-view="dashboard-view" title="Tableau de Bord Pharmacie"> <a href="#"> <span class="icon"><ion-icon name="analytics-outline"></ion-icon></span> <span class="text"><b>Tableau</b></span> </a> </li>
              <li class="list" data-view="reappro-view" title="Interventions à Traiter"> <a href="#"> <span class="icon"><ion-icon name="repeat-outline"></ion-icon></span> <span class="text"><b>À Traiter</b></span> </a> </li>
              <li class="list" data-view="commandes-view" title="Suivi des Commandes"> <a href="#"> <span class="icon"><ion-icon name="cart-outline"></ion-icon></span> <span class="text"><b>Commandes</b></span> </a> </li>
              <li class="list" data-view="stock-unified-view" title="Gestion des Stocks"> <a href="#"> <span class="icon"><ion-icon name="cube-outline"></ion-icon></span> <span class="text"><b>Stocks</b></span> </a> </li>
