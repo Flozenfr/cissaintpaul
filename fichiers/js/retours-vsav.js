@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const stockDatalist = document.getElementById('stockDatalist');
     const clearJournalBtn = document.getElementById('clearJournalBtn');
 
-    // Modale sélection matériel (formulaire inter)
     const materielSelectionModal = document.getElementById('materielSelectionModal');
     const openMaterielSelectionModalBtn = document.getElementById('openMaterielSelectionModalBtn');
     const materielSearchModalInput = document.getElementById('materielSearchModalInput');
@@ -59,22 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmMaterielSelectionBtn = document.getElementById('confirmMaterielSelectionBtn');
     const cancelMaterielSelectionBtn = document.getElementById('cancelMaterielSelectionBtn');
     
-    // Modale ajout commande manuelle
     const addManualCommandModal = document.getElementById('addManualCommandModal');
-    const openAddManualCommandModalBtn = document.getElementById('openAddManualCommandModalBtn'); // Bouton Desktop
-    const newCommandMaterialNameModalInput = document.getElementById('newCommandMaterialNameModal');
-    const newCommandQuantityModalInput = document.getElementById('newCommandQuantityModal');
+    const openAddManualCommandModalBtn = document.getElementById('openAddManualCommandModalBtn');
+    const manualCommandItemsContainer = document.getElementById('manualCommandItemsContainer');
+    const addAnotherItemToManualCommandBtn = document.getElementById('addAnotherItemToManualCommandBtn');
     const saveNewManualCommandBtn = document.getElementById('saveNewManualCommandBtn');
-    const fabAddManualCommand = document.getElementById('fabAddManualCommand'); // FAB Mobile
+    const fabAddManualCommand = document.getElementById('fabAddManualCommand');
 
-    // Modale ajout article stock
     const addStockItemModal = document.getElementById('addStockItemModal');
-    const openAddStockItemModalBtn = document.getElementById('openAddStockItemModalBtn'); // Bouton Desktop
+    const openAddStockItemModalBtn = document.getElementById('openAddStockItemModalBtn');
     const newUnifiedStockItemNameModalInput = document.getElementById('newUnifiedStockItemNameModal');
     const newUnifiedStockItemQtyModalInput = document.getElementById('newUnifiedStockItemQtyModal');
     const newUnifiedStockTargetModalSelect = document.getElementById('newUnifiedStockTargetModal');
     const saveNewStockItemBtn = document.getElementById('saveNewStockItemBtn');
-    const fabAddStockItem = document.getElementById('fabAddStockItem'); // FAB Mobile
+    const fabAddStockItem = document.getElementById('fabAddStockItem');
     
     const pharmacyHeaderSubnavContainer = document.getElementById('pharmacy-header-subnav-container');
 
@@ -96,8 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCommandView = 'current'; 
     let currentStockSubView = 'pompier';
 
-    const PHARMACY_PASSWORD = "018A";
-    const DELETE_PASSWORD = "Aspf66220*";
+    const PHARMACY_PASSWORD = "018A"; 
+    const DELETE_PASSWORD = "Aspf66220*"; 
     let isPharmacyAuthenticated = false;
     let currentUser = "Anonyme";
 
@@ -117,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Promise(resolve => {
             dialog.resolver = resolve;
             dialog.title.textContent = options.title || 'Confirmation';
-            dialog.message.textContent = options.message || '';
+            dialog.message.innerHTML = options.message || ''; 
             dialog.inputContainer.style.display = options.type === 'prompt' ? 'block' : 'none';
             if (options.type === 'prompt') {
                 dialog.input.type = options.inputType || 'text';
@@ -196,7 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentActiveTab) moveIndicator(currentActiveTab);
             }, 100);
         } else { 
-            const firstTab = isPharmacyAuthenticated ? pharmacyNavUl.querySelector('.list') : mainNavUl.querySelector('.list');
+            const firstTab = isPharmacyAuthenticated 
+                ? pharmacyNavUl.querySelector('.list[data-view="reappro-view"]') || pharmacyNavUl.querySelector('.list')
+                : mainNavUl.querySelector('.list[data-view="form-view"]') || mainNavUl.querySelector('.list');
             if (firstTab) setActiveTab(firstTab, isPharmacyAuthenticated ? pharmacyNavUl : mainNavUl);
         }
     }
@@ -216,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
             const elementWidth = element.offsetWidth;
             const indicatorWidth = indicator.offsetWidth;
-            if (indicatorWidth === 0) return;
+            if (indicatorWidth === 0) return; 
             const newX = (elementWidth / 2 - indicatorWidth / 2) + totalLeft;
     
             navigationContainer.style.setProperty("--indicator-x-pos", `${newX}px`);
@@ -224,14 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
             const shockwave = indicator.querySelector(".shockwave") || document.createElement("div");
             shockwave.className = "shockwave";
-            indicator.innerHTML = "";
+            indicator.innerHTML = ""; 
             indicator.appendChild(shockwave);
             const iconElement = element.querySelector(".icon ion-icon");
             if (iconElement) indicator.appendChild(iconElement.cloneNode(true));
     
             indicator.classList.remove("landed");
-            setTimeout(() => indicator.classList.add("landed"), 50);
-        }, 50);
+            setTimeout(() => indicator.classList.add("landed"), 50); 
+        }, 50); 
     }
     
     function updateActiveView(activeItem, move = true) {
@@ -239,8 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         viewContainers.forEach(v => v.classList.remove('visible'));
         const activeView = document.getElementById(viewId);
     
-        fabAddManualCommand.style.display = 'none';
-        fabAddStockItem.style.display = 'none';
+        fabAddManualCommand.style.display = 'none'; 
+        fabAddStockItem.style.display = 'none'; 
 
         if (activeView) {
             activeView.classList.add('visible');
@@ -259,33 +258,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'stock-unified-view': 
                     displayUnifiedStockView();
-                    if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddStockItem.style.display = 'block';
+                    if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddStockItem.style.display = 'flex';
                     break;
                 case 'commandes-view':
                     displayCommandes();
-                     if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddManualCommand.style.display = 'block'; 
+                     if (isPharmacyAuthenticated && window.innerWidth <= 768) fabAddManualCommand.style.display = 'flex'; 
+                    break;
+                case 'form-view':
+                    if (!interventionIdInput.value) { 
+                        resetForm();
+                    }
                     break;
             }
         }
     
         if (move) {
-            setTimeout(() => moveIndicator(activeItem), 50);
+            setTimeout(() => moveIndicator(activeItem), 50); 
         }
     }
 
     function setActiveTab(tabElement, navContainer) {
         if (!tabElement) return;
         if (tabElement.classList.contains('active') && navContainer.querySelector('.list.active') === tabElement) {
-             setTimeout(() => moveIndicator(tabElement), 50);
+             setTimeout(() => moveIndicator(tabElement), 50); 
             return;
         }
         
         const navigationContainer = tabElement.closest('.navigation');
-        if (navigationContainer) navigationContainer.classList.remove("indicator-ready");
+        if (navigationContainer) navigationContainer.classList.remove("indicator-ready"); 
         
         navContainer.querySelectorAll('.list').forEach(item => item.classList.remove('active'));
         tabElement.classList.add('active');
-        updateActiveView(tabElement, true);
+        updateActiveView(tabElement, true); 
     }
 
     function setupNavEventListeners(navUl) {
@@ -299,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateHeaderControls(activeViewId) {
         headerControlGroups.forEach(group => group.classList.remove('visible'));
-        let targetIdSuffix = activeViewId.replace('-view', '');
+        let targetIdSuffix = activeViewId.replace('-view', ''); 
     
         if (isPharmacyAuthenticated) {
             if (['reappro', 'commandes', 'stock-unified', 'pharmacy-archives', 'journal'].includes(targetIdSuffix)) {
@@ -311,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else { 
             if (!['current', 'archive', 'form'].includes(targetIdSuffix)) {
-                targetIdSuffix = 'none';
+                targetIdSuffix = 'none'; 
             }
              if (targetIdSuffix === 'form') { 
                  targetIdSuffix = 'none'; 
@@ -332,11 +336,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const desktopSubNavStock = document.querySelector('#stock-unified-view .desktop-sub-nav');
 
         if (isPharmacyAuthenticated) {
-            globalHeader.classList.add('pharmacy-mode');
+            globalHeader.classList.add('pharmacy-mode'); 
             let subNavHtml = '';
             if (activeViewId === 'commandes-view') {
                 pharmacyHeaderSubnavContainer.style.display = 'flex';
-                if(desktopSubNavCommandes) desktopSubNavCommandes.classList.add('hidden-by-header'); else if (desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'none';
+                if(desktopSubNavCommandes) desktopSubNavCommandes.classList.add('hidden-by-header');
                 
                 subNavHtml = `
                     <button class="header-sub-nav-btn ${currentCommandView === 'current' ? 'active' : ''}" data-command-view="current">En cours</button>
@@ -348,12 +352,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(b => b.classList.remove('active'));
                         e.currentTarget.classList.add('active');
                         currentCommandView = e.currentTarget.dataset.commandView;
-                        displayCommandes();
+                        displayCommandes(); 
                     });
                 });
             } else if (activeViewId === 'stock-unified-view') {
                 pharmacyHeaderSubnavContainer.style.display = 'flex';
-                 if(desktopSubNavStock) desktopSubNavStock.classList.add('hidden-by-header'); else if (desktopSubNavStock) desktopSubNavStock.style.display = 'none';
+                 if(desktopSubNavStock) desktopSubNavStock.classList.add('hidden-by-header');
 
                 subNavHtml = `
                     <button class="header-sub-nav-btn ${currentStockSubView === 'pompier' ? 'active' : ''}" data-stock-type="pompier">Stock VSAV</button>
@@ -365,18 +369,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         pharmacyHeaderSubnavContainer.querySelectorAll('.header-sub-nav-btn').forEach(b => b.classList.remove('active'));
                         e.currentTarget.classList.add('active');
                         currentStockSubView = e.currentTarget.dataset.stockType;
-                        displayUnifiedStockView();
+                        displayUnifiedStockView(); 
                     });
                 });
             } else {
                 globalHeader.classList.remove('pharmacy-mode');
-                if(desktopSubNavCommandes) desktopSubNavCommandes.classList.remove('hidden-by-header'); else if (desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex';
-                if(desktopSubNavStock) desktopSubNavStock.classList.remove('hidden-by-header'); else if (desktopSubNavStock) desktopSubNavStock.style.display = 'flex';
+                if(desktopSubNavCommandes) desktopSubNavCommandes.classList.remove('hidden-by-header');
+                if(desktopSubNavStock) desktopSubNavStock.classList.remove('hidden-by-header');
             }
-        } else { // Not pharmacy authenticated
+        } else { 
             globalHeader.classList.remove('pharmacy-mode');
-            if(desktopSubNavCommandes) desktopSubNavCommandes.classList.remove('hidden-by-header'); else if (desktopSubNavCommandes) desktopSubNavCommandes.style.display = 'flex';
-            if(desktopSubNavStock) desktopSubNavStock.classList.remove('hidden-by-header'); else if (desktopSubNavStock) desktopSubNavStock.style.display = 'flex';
+            if(desktopSubNavCommandes) desktopSubNavCommandes.classList.remove('hidden-by-header');
+            if(desktopSubNavStock) desktopSubNavStock.classList.remove('hidden-by-header');
+        }
+
+        if (pharmacyHeaderSubnavContainer.style.display === 'flex') {
+            globalHeader.classList.add('pharmacy-mode-subnav-active');
+        } else {
+            globalHeader.classList.remove('pharmacy-mode-subnav-active');
         }
     }
 
@@ -398,25 +408,23 @@ document.addEventListener('DOMContentLoaded', () => {
         fabAddManualCommand.style.display = 'none';
         fabAddStockItem.style.display = 'none';
 
-        viewContainers.forEach(v => v.classList.remove('visible'));
-        // pharmacyHeaderSubnavContainer cleared/hidden by updatePharmacyHeaderSubNav via setActiveTab
+        viewContainers.forEach(v => v.classList.remove('visible')); 
         
         if (isEntering) {
-            currentUser = sessionStorage.getItem('pharmaUserName') || "Pharmacien";
+            currentUser = sessionStorage.getItem('pharmaUserName') || "Pharmacien"; 
             const pharmacyDefaultTab = pharmacyNavUl.querySelector('.list[data-view="reappro-view"]');
             setActiveTab(pharmacyDefaultTab, pharmacyNavUl);
         } else {
-            currentUser = sessionStorage.getItem('userName') || "Pompier";
-            const mainDefaultTab = mainNavUl.querySelector('.list[data-view="current-view"]');
+            currentUser = sessionStorage.getItem('userName') || "Pompier"; 
+            const mainDefaultTab = mainNavUl.querySelector('.list[data-view="form-view"]'); 
             setActiveTab(mainDefaultTab, mainNavUl);
             globalHeader.classList.remove('pharmacy-mode'); 
-            // Ensure desktop subnavs are reset if necessary (handled by updatePharmacyHeaderSubNav)
+             globalHeader.classList.remove('pharmacy-mode-subnav-active');
         }
         
         const activeNav = isEntering ? pharmacyNavUl : mainNavUl;
-        const activeTab = activeNav.querySelector(".list.active");
+        const activeTab = activeNav.querySelector(".list.active"); 
         if (activeTab) {
-             // updateActiveView will call updateHeaderControls and updatePharmacyHeaderSubNav
             updateActiveView(activeTab, false); 
         }
     }
@@ -434,13 +442,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: 'Identification',
                 message: "Veuillez entrer votre nom pour le journal d'activité :",
                 type: 'prompt',
-                placeholder: 'Pharmacien',
+                placeholder: 'Pharmacien', 
             });
-            currentUser = name || "Pharmacien";
+            currentUser = name || "Pharmacien"; 
             sessionStorage.setItem('pharmaUserName', currentUser); 
             showMessage('Accès pharmacie autorisé.', 'success');
             togglePharmacyMode(true);
-        } else if (password !== null) {
+        } else if (password !== null) { 
             showMessage('Mot de passe incorrect.', 'error');
         }
     }
@@ -476,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = { id, ...inter };
             const searchableInterventionText = `${inter.numero_intervention} ${inter.nom || ''} ${inter.lieu || ''} ${inter.date || ''} ${Object.keys(inter.materiels||{}).join(' ')}`.toLowerCase();
     
-            if (inter.archived) { // Intervention clôturée par pompier
+            if (inter.archived) { 
                 if (document.getElementById('archive-view')?.classList.contains('visible') && searchableInterventionText.includes(archiveSearchTerm)) {
                     filteredArchive.push(data);
                 }
@@ -487,35 +495,20 @@ document.addEventListener('DOMContentLoaded', () => {
                      filteredPharmacyArchive.push(data);
                 }
 
-                // Nouvelle logique pour "Réapprovisionnement en Attente"
                 if (document.getElementById('reappro-view')?.classList.contains('visible') &&
                     searchableInterventionText.includes(pharmacyGlobalSearchTerm) &&
-                    inter.pharmacyStatus !== 'Traité') { // Toujours vérifier que la pharmacie n'a pas déjà traité
-
-                    let needsPharmacyAttention = false;
-                    if (inter.materiels && Object.keys(inter.materiels).length > 0) {
-                        for (const matKey in inter.materiels) {
-                            const matDetails = inter.materiels[matKey];
-                            // Si le pompier a indiqué que le matériel est manquant OU qu'il a été réapprovisionné depuis le VSAV
-                            if (matDetails.reappro_status === 'Manquant' || matDetails.reappro_status === 'Réapprovisionné') {
-                                needsPharmacyAttention = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (needsPharmacyAttention) {
-                        if (!filteredPharmacyReappro.find(item => item.id === id)) {
+                    inter.pharmacyStatus !== 'Traité') { 
+                    if (inter.materiels && Object.keys(inter.materiels).length > 0) { 
+                        if (!filteredPharmacyReappro.find(item => item.id === id)) { 
                             filteredPharmacyReappro.push(data);
                         }
                     }
                 }
 
-            } else { // Intervention non archivée (en cours côté pompier)
+            } else { 
                 if (document.getElementById('current-view')?.classList.contains('visible') && searchableInterventionText.includes(currentSearchTerm)) {
                     filteredCurrent.push(data);
                 }
-                // Les interventions non archivées ne vont plus dans "Réapprovisionnement en Attente"
             }
         });
     
@@ -533,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentPage > totalPages && totalPages > 0) {
             effectiveCurrentPage = totalPages;
-        } else if (currentPage <= 0 && totalPages > 0) {
+        } else if (currentPage <= 0 && totalPages > 0) { 
              effectiveCurrentPage = 1;
         } else if (totalPages === 0) { 
             effectiveCurrentPage = 1;
@@ -557,10 +550,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const manageMaterialBtn = statut === 'En cours'
             ? (hasMaterials
-                ? `<button class="btn-primary manage-material-btn" data-id="${id}" title="Gérer le matériel et clôturer l'intervention"><i class="bi bi-box-seam"></i> Gérer & Clôturer</button>`
-                : `<button class="btn-primary close-intervention-btn" data-id="${id}" title="Clôturer l'intervention (sans matériel)"><i class="bi bi-check-circle"></i> Clôturer</button>`
+                ? `<button class="btn-primary manage-material-btn" data-id="${id}" title="Gérer le matériel et clôturer l'intervention"><i class="bi bi-box-seam"></i> <span class="btn-text">Gérer & Clôturer</span></button>`
+                : `<button class="btn-primary close-intervention-btn" data-id="${id}" title="Clôturer l'intervention (sans matériel)"><i class="bi bi-check-circle"></i> <span class="btn-text">Clôturer</span></button>`
               )
-            : '';
+            : ''; 
 
         return `
         <div class="intervention-card" data-id="${id}">
@@ -577,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  <div class="card-footer-actions">
                     <button class="btn-icon-footer view-btn" title="Voir les détails"><i class="bi bi-eye-fill"></i></button>
                     ${statut === 'En cours' ? `<button class="btn-icon-footer edit-btn" title="Modifier"><i class="bi bi-pencil-fill"></i></button>` : ''}
-                 </div>
+                    </div>
             </div>
         </div>`;
     }
@@ -585,40 +578,31 @@ document.addEventListener('DOMContentLoaded', () => {
     function createArchivedInterventionCard(inter) {
         return `
         <div class="intervention-card archived-card" data-id="${inter.id}">
-            <div class="card-header"><h4><i class="bi bi-hash"></i>${inter.numero_intervention}</h4><span class="status-badge badge-termine">Archivé</span></div>
+            <div class="card-header"><h4><i class="bi bi-hash"></i>${inter.numero_intervention}</h4><span class="status-badge badge-termine">Archivé Pompier</span></div>
             <div class="card-body">
                 <div class="card-item"><i class="bi bi-person-fill"></i><span>${inter.nom || 'N/A'}</span></div>
-                <div class="card-item"><i class="bi bi-calendar-x"></i><span>${formatDate(inter.date)} à ${inter.heure}</span></div>
+                <div class="card-item"><i class="bi bi-calendar-x"></i><span>Archivée le ${inter.archivedAt ? new Date(inter.archivedAt).toLocaleDateString('fr-FR') : formatDate(inter.date)}</span></div>
+                <div class="card-item"><i class="bi bi-bandaid"></i><span>Pharmacie: <span class="status-badge badge-${(inter.pharmacyStatus || 'En attente').toLowerCase().replace(/\s/g, '-')}">${inter.pharmacyStatus || 'En attente'}</span></span></div>
             </div>
             <div class="card-footer">
                 <div class="card-footer-actions">
                     <button class="btn-icon-footer view-btn" title="Voir les détails"><i class="bi bi-eye-fill"></i></button>
-                    <button class="btn-icon-footer unarchive-btn" title="Désarchiver"><i class="bi bi-box-arrow-up"></i></button>
-                    <button class="btn-icon-footer delete-btn" title="Supprimer"><ion-icon name="trash-outline"></ion-icon></button>
+                    <button class="btn-icon-footer unarchive-btn" title="Désarchiver (Pompier)"><i class="bi bi-box-arrow-up"></i></button>
+                    <button class="btn-icon-footer delete-btn" title="Supprimer Définitivement"><ion-icon name="trash-outline"></ion-icon></button>
                 </div>
             </div>
         </div>`;
     }
 
-    function createPharmacyCard(inter) { // For "À Traiter" view
-        const { id, numero_intervention, date, pharmacyStatus } = inter;
+    function createPharmacyCard(inter) { 
+        const { id, numero_intervention, date, pharmacyStatus, nom } = inter;
         let statusText, statusClass;
         switch(pharmacyStatus) {
-            case 'En cours de traitement':
-                statusText = 'En cours';
-                statusClass = 'badge-en-cours-de-traitement';
-                break;
-            case 'Traité': 
-                 statusText = 'Traité'; // Should not appear here given new logic, but kept for safety
-                 statusClass = 'badge-traite';
-                 break;
-            case 'En attente': // Explicitly handle "En attente"
-                statusText = 'En attente';
-                statusClass = 'badge-a-traiter'; // Same visual as 'À traiter'
-                break;
-            default: 
-                statusText = 'À traiter'; // Default or specific 'À traiter'
-                statusClass = 'badge-a-traiter';
+            case 'En cours de traitement': statusText = 'En Cours Pharma'; statusClass = 'badge-en-cours-de-traitement'; break;
+            case 'Traité':  statusText = 'Traité'; statusClass = 'badge-traite'; break;
+            case 'En attente': statusText = 'En Attente Traitement'; statusClass = 'badge-en-attente';  break;
+            case 'À vérifier par pharmacie': statusText = 'Vérification Pharmacie'; statusClass = 'badge-a-traiter'; break; // Updated for new status
+            default: statusText = 'À Traiter'; statusClass = 'badge-a-traiter';
         }
 
         return `
@@ -629,10 +613,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="card-body">
                 <div class="card-item"><i class="bi bi-calendar-check"></i> <span>Intervention du ${formatDate(date)}</span></div>
-                 <div class="card-item"><i class="bi bi-person"></i> <span>Par: ${inter.nom || 'N/A'}</span></div>
+                 <div class="card-item"><i class="bi bi-person"></i> <span>Par Pompier: ${nom || 'N/A'}</span></div>
+                 ${inter.archivedAt ? `<div class="card-item"><i class="bi bi-archive"></i> <span>Archivée Pompier le: ${new Date(inter.archivedAt).toLocaleDateString('fr-FR')}</span></div>` : ''}
             </div>
             <div class="card-footer">
-                ${(pharmacyStatus !== 'Traité') ? `<button class="btn-primary process-material-btn" data-id="${id}" title="Traiter le matériel"><i class="bi bi-arrow-repeat"></i> Traiter</button>` : ''}
+                ${(pharmacyStatus !== 'Traité') ? `<button class="btn-primary process-material-btn" data-id="${id}" title="Traiter le matériel de cette intervention"><i class="bi bi-arrow-repeat"></i> <span class="btn-text">Traiter Matériel</span></button>` : ''}
                 <div class="card-footer-actions">
                     <button class="btn-icon-footer view-btn" title="Voir les détails"><i class="bi bi-eye-fill"></i></button>
                 </div>
@@ -640,22 +625,24 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
     }
 
-     function createPharmacyArchiveCard(inter) { // For "Archives Pharmacie" view
-        const { id, numero_intervention, date, pharmacyStatus } = inter;
+     function createPharmacyArchiveCard(inter) { 
+        const { id, numero_intervention, date, nom, pharmacyProcessedAt } = inter;
         return `
         <div class="intervention-card pharmacy-card archived-card" data-id="${id}">
             <div class="card-header">
                 <h4><i class="bi bi-hash"></i>${numero_intervention}</h4>
-                <span class="status-badge badge-traite">Traité et Archivé</span>
+                <span class="status-badge badge-traite">Traité et Archivé (Pharma)</span>
             </div>
             <div class="card-body">
                 <div class="card-item"><i class="bi bi-calendar-check"></i> <span>Intervention du ${formatDate(date)}</span></div>
-                <div class="card-item"><i class="bi bi-person"></i> <span>Par: ${inter.nom || 'N/A'}</span></div>
+                <div class="card-item"><i class="bi bi-person"></i> <span>Par Pompier: ${nom || 'N/A'}</span></div>
+                <div class="card-item"><i class="bi bi-clipboard-check"></i> <span>Traité Pharmacie le: ${pharmacyProcessedAt ? new Date(pharmacyProcessedAt).toLocaleDateString('fr-FR') : 'N/A'}</span></div>
             </div>
             <div class="card-footer">
                 <div class="card-footer-actions">
                     <button class="btn-icon-footer view-btn" title="Voir les détails"><i class="bi bi-eye-fill"></i></button>
-                    <button class="btn-icon-footer pharmacy-unarchive-btn" title="Désarchiver (Pharmacie)"><i class="bi bi-box-arrow-up"></i></button>
+                    <button class="btn-icon-footer pharmacy-unarchive-btn" title="Désarchiver (Pharmacie uniquement)"><i class="bi bi-box-arrow-up"></i></button>
+                    <button class="btn-icon-footer delete-pharmacy-archive-btn" title="Supprimer Définitivement (Admin)"><ion-icon name="trash-outline"></ion-icon></button>
                 </div>
             </div>
         </div>`;
@@ -665,13 +652,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function addCardEventListeners() {
         document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', (e) => showDetailsModal(e.currentTarget.closest('[data-id]').dataset.id)));
         document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => editIntervention(e.currentTarget.closest('[data-id]').dataset.id)));
-        document.querySelectorAll('.unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => unarchiveIntervention(e.currentTarget.closest('[data-id]').dataset.id))); // Pompier unarchive
-        document.querySelectorAll('.pharmacy-unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => handlePharmacyUnarchive(e.currentTarget.closest('[data-id]').dataset.id))); // Pharmacy unarchive
+        document.querySelectorAll('.unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => unarchiveIntervention(e.currentTarget.closest('[data-id]').dataset.id))); 
+        document.querySelectorAll('.pharmacy-unarchive-btn').forEach(btn => btn.addEventListener('click', (e) => handlePharmacyUnarchive(e.currentTarget.closest('[data-id]').dataset.id))); 
         document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteIntervention(e.currentTarget.closest('[data-id]').dataset.id)));
+        document.querySelectorAll('.delete-pharmacy-archive-btn').forEach(btn => btn.addEventListener('click', (e) => deletePharmacyArchivedIntervention(e.currentTarget.closest('[data-id]').dataset.id)));
         document.querySelectorAll('.manage-material-btn').forEach(btn => btn.addEventListener('click', (e) => openMaterialManagementModal(e.currentTarget.dataset.id, 'firefighter')));
         document.querySelectorAll('.close-intervention-btn').forEach(btn => btn.addEventListener('click', (e) => closeInterventionDirectly(e.currentTarget.dataset.id)));
         document.querySelectorAll('.process-material-btn').forEach(btn => btn.addEventListener('click', (e) => openMaterialManagementModal(e.currentTarget.dataset.id, 'pharmacy')));
+    
+        // Event listeners for VSAV stock card editing (dynamically added buttons)
+        unifiedStockCards.addEventListener('click', async (e) => {
+            const editBtn = e.target.closest('.edit-vsav-stock-btn');
+            const saveBtn = e.target.closest('.save-vsav-stock-btn');
+            const cancelBtn = e.target.closest('.cancel-vsav-stock-edit-btn');
+
+            if (editBtn) {
+                await handleEditVSAVStock(editBtn);
+            } else if (saveBtn) {
+                await handleSaveVSAVStockChanges(saveBtn);
+            } else if (cancelBtn) {
+                handleCancelVSAVStockEdit(cancelBtn);
+            }
+        });
     }
+
 
     // --- FORMULAIRE ET MANIPULATION DES DONNÉES ---
     function handleFormSubmit(e) {
@@ -698,22 +702,42 @@ document.addEventListener('DOMContentLoaded', () => {
             categorie: document.getElementById('categorie').value,
             commentaire: document.getElementById('commentaire').value,
             photos: photosBase64,
-            materiels: materiels.reduce((obj, mat) => ({ ...obj, [mat.name]: { quantity_used: mat.qty, status: 'Non défini' } }), {}),
+            materiels: materiels.reduce((obj, mat) => ({ ...obj, [mat.name]: { quantity_used: mat.qty, reappro_status: '', comment: '', pharma_status: '', pharma_comment: '', quantity_missing: 0 } }), {}),
             archived: false, 
             pharmacyStatus: (materiels.length > 0) ? 'En attente' : 'Traité', 
         };
-        if (materiels.length === 0 && interventionData.statut === "Terminé") { // Auto-archive if no materials and form status is Terminé
-            interventionData.archived = true;
+
+        if (interventionData.statut === "Terminé" && materiels.length === 0) {
+            interventionData.archived = true; 
+            interventionData.pharmacyStatus = 'Traité'; 
+            interventionData.archivedAt = firebase.database.ServerValue.TIMESTAMP; 
+            interventionData.pharmacyProcessedAt = firebase.database.ServerValue.TIMESTAMP; 
         }
 
 
         const dbRef = id ? database.ref('interventions/' + id) : database.ref('interventions').push();
         const timestamp = firebase.database.ServerValue.TIMESTAMP;
-        if (id) {
+        if (id) { 
             interventionData.updatedAt = timestamp;
-        } else {
+            const existingInter = allInterventions[id];
+            if (existingInter) {
+                interventionData.createdAt = existingInter.createdAt || timestamp;
+                if(interventionData.archived && !existingInter.archivedAt) { 
+                     interventionData.archivedAt = timestamp;
+                } else if (existingInter.archivedAt) { 
+                    interventionData.archivedAt = existingInter.archivedAt;
+                }
+                if(interventionData.pharmacyStatus === 'Traité' && !existingInter.pharmacyProcessedAt) {
+                     interventionData.pharmacyProcessedAt = timestamp;
+                } else if (existingInter.pharmacyProcessedAt) {
+                    interventionData.pharmacyProcessedAt = existingInter.pharmacyProcessedAt;
+                }
+            }
+        } else { 
             interventionData.createdAt = timestamp;
             interventionData.updatedAt = timestamp;
+             if(interventionData.archived) interventionData.archivedAt = timestamp;
+             if(interventionData.pharmacyStatus === 'Traité') interventionData.pharmacyProcessedAt = timestamp;
         }
         
         dbRef.set(interventionData).then(() => {
@@ -721,7 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage(message, 'success');
             addLogEntry(id ? 'Intervention Modifiée' : 'Intervention Créée', `n°${numero} par ${currentUser}`);
             resetForm();
-             const targetTab = mainNavUl.querySelector('.list[data-view="current-view"]');
+             const targetTab = mainNavUl.querySelector('.list[data-view="current-view"]'); 
              if (targetTab) {
                  setActiveTab(targetTab, mainNavUl);
              }
@@ -733,9 +757,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const inter = allInterventions[id];
         if (!inter) return;
         if (inter.archived && !isPharmacyAuthenticated) { 
-            showMessage("Les interventions archivées ne peuvent pas être modifiées par les pompiers.", "warning");
+            showMessage("Les interventions archivées par les pompiers ne peuvent pas être modifiées par les pompiers. Désarchivez-la d'abord.", "warning");
             return;
         }
+        if (isPharmacyAuthenticated) {
+            showMessage("Le mode pharmacie ne permet pas l'édition directe des fiches d'intervention via ce formulaire.", "info");
+            return;
+        }
+
         resetForm(); 
         Object.keys(inter).forEach(key => {
             const inputElementId = key.replace('_intervention', ''); 
@@ -744,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.value = inter[key];
             }
         });
-        interventionIdInput.value = id;
+        interventionIdInput.value = id; 
         materiels = Object.entries(inter.materiels || {}).map(([name, details]) => ({ name: name, qty: details.quantity_used }));
         updateMaterielsTagDisplay();
         photosBase64 = inter.photos || [];
@@ -755,158 +784,320 @@ document.addEventListener('DOMContentLoaded', () => {
     async function unarchiveIntervention(id) { 
         const inter = allInterventions[id];
         if (!inter) return;
+
+        let pharmacyWarning = "";
+        if (inter.pharmacyStatus === 'Traité' || inter.pharmacyStatus === 'En cours de traitement') {
+            pharmacyWarning = "\nAttention: La pharmacie a déjà traité ou est en train de traiter cette intervention. Désarchiver la remettra 'À traiter' pour la pharmacie et réinitialisera le matériel ainsi que les commandes associées.";
+        }
+
         const confirmed = await showCustomDialog({
             title: "Désarchiver l'intervention (Pompier)",
-            message: `Voulez-vous vraiment désarchiver l'intervention n°${inter.numero_intervention} ? Le statut passera à "En cours". Le stock VSAV utilisé (si réapprovisionné depuis VSAV lors de la clôture) sera restitué.`
+            message: `Voulez-vous vraiment désarchiver l'intervention n°${inter.numero_intervention} ? Le statut pompier passera à "En cours". Le stock VSAV (si du matériel avait été "Réapprovisionné depuis VSAV") sera crédité à nouveau. Les commandes en cours pour cette intervention seront annulées.${pharmacyWarning}`
         });
 
         if (confirmed) {
-            const updates = {
-                archived: false,
-                statut: 'En cours', 
-                pharmacyStatus: (inter.materiels && Object.keys(inter.materiels).length > 0) ? 'À traiter' : 'Traité' 
-            };
-            let stockLogEntries = [];
+            loaderModal.classList.add('visible');
+            let logDetails = `Intervention n°${inter.numero_intervention} désarchivée par Pompier (${currentUser}). Statuts pompier et matériel réinitialisés.`;
+            try {
+                const updates = {
+                    archived: false,
+                    statut: 'En cours', 
+                    archivedAt: null, 
+                };
+                let stockLogEntries = [];
+                let materialResetLog = [];
+                let stockUpdatePromises = [];
 
-            if (inter.materiels) {
-                for (const matName in inter.materiels) {
-                    const details = inter.materiels[matName];
-                    if (details.reappro_status === 'Réapprovisionné') { 
+
+                if (inter.materiels) {
+                    updates.materiels = JSON.parse(JSON.stringify(inter.materiels)); 
+                    for (const matName in updates.materiels) {
+                        const details = updates.materiels[matName];
                         const qtyUsed = details.quantity_used || 0;
-                        if (pompierStock[matName] && qtyUsed > 0) { 
-                            await database.ref(`stocks/pompier/${matName}/quantity`).set(firebase.database.ServerValue.increment(qtyUsed));
-                            stockLogEntries.push(`+${qtyUsed} de '${matName}' (Stock VSAV)`);
+
+                        if (details.reappro_status === 'Réapprovisionné' && qtyUsed > 0) {
+                             const pompierStockRef = database.ref(`stocks/pompier/${matName}`);
+                             stockUpdatePromises.push(
+                                 pompierStockRef.once('value').then(snapshot => {
+                                     if (snapshot.exists()) {
+                                         return pompierStockRef.child('quantity').set(firebase.database.ServerValue.increment(qtyUsed));
+                                     } else {
+                                         return pompierStockRef.set({ quantity: qtyUsed, notes: 'Restitué lors désarchivage pompier' });
+                                     }
+                                 })
+                             );
+                            stockLogEntries.push(`+${qtyUsed} '${matName}' (VSAV)`);
                         }
+                        
+                        details.reappro_status = ""; 
+                        details.comment = ""; 
+                        details.pharma_status = ""; 
+                        details.pharma_comment = ""; 
+                        details.quantity_missing = 0; 
+                        materialResetLog.push(matName);
                     }
-                    updates[`materiels/${matName}/reappro_status`] = ""; 
-                    updates[`materiels/${matName}/comment`] = "";
-                    updates[`materiels/${matName}/pharma_status`] = "";  
-                    updates[`materiels/${matName}/pharma_comment`] = ""; 
-                    updates[`materiels/${matName}/quantity_missing`] = 0; 
                 }
+                
+                if (updates.materiels && Object.keys(updates.materiels).length > 0) {
+                    updates.pharmacyStatus = 'À traiter'; 
+                    updates.pharmacyProcessedAt = null;
+                } else {
+                    updates.pharmacyStatus = 'Traité';
+                     if (!inter.pharmacyProcessedAt) { 
+                        updates.pharmacyProcessedAt = firebase.database.ServerValue.TIMESTAMP;
+                    } else {
+                         updates.pharmacyProcessedAt = inter.pharmacyProcessedAt; 
+                    }
+                }
+                
+                await Promise.all(stockUpdatePromises); 
+                await database.ref(`interventions/${id}`).update(updates);
+                
+                if (stockLogEntries.length > 0) logDetails += ` Stock VSAV restitué: ${stockLogEntries.join(', ')}.`;
+                if (materialResetLog.length > 0) logDetails += ` Matériel réinitialisé: ${materialResetLog.join(', ')}.`;
+
+                const commandsToCancelPromises = [];
+                let cancelledCmdMsgs = [];
+                const currentCommandLog = await database.ref('commandes').once('value').then(snap => snap.val() || {});
+
+                for (const cmdId in currentCommandLog) { 
+                    const command = currentCommandLog[cmdId];
+                    if (command.interventionId === id && !command.archived && command.status !== 'Annulée' && command.status !== 'Rangé et Archivé') {
+                        const cmdUpdate = {
+                            status: 'Annulée',
+                            archived: true, 
+                            cancelledAt: firebase.database.ServerValue.TIMESTAMP,
+                            cancelledBy: `${currentUser} (Désarchivage Inter Pompier)`,
+                            updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                            updatedBy: currentUser,
+                            archivedAt: firebase.database.ServerValue.TIMESTAMP,
+                            archivedBy: currentUser 
+                        };
+                        commandsToCancelPromises.push(database.ref(`commandes/${cmdId}`).update(cmdUpdate));
+                        cancelledCmdMsgs.push(`Cmd ID ${cmdId} (${command.materialName})`);
+                    }
+                }
+                await Promise.all(commandsToCancelPromises);
+                if(cancelledCmdMsgs.length > 0) {
+                    logDetails += ` Commandes associées annulées: ${cancelledCmdMsgs.join(', ')}.`;
+                }
+                
+                addLogEntry('Désarchivage Pompier', logDetails);
+                showMessage('Intervention désarchivée. Statuts, matériel et commandes associées réinitialisés/annulées. Stock VSAV (si applicable) restitué.', 'success');
+                
+            } catch (error) {
+                console.error("Erreur désarchivage pompier:", error);
+                showMessage(`Erreur lors du désarchivage pompier: ${error.message}`, 'error');
+                addLogEntry('Erreur Désarchivage Pompier', `Inter n°${inter.numero_intervention}, Erreur: ${error.message}. ${logDetails}`);
+            } finally {
+                loaderModal.classList.remove('visible');
             }
-            await database.ref(`interventions/${id}`).update(updates);
-            let logDetails = `Intervention n°${inter.numero_intervention} (Pompier)`;
-            if(stockLogEntries.length > 0) {
-                logDetails += `. Stock VSAV restitué: ${stockLogEntries.join(', ')}`;
-            }
-            addLogEntry('Désarchivage Pompier', `${logDetails} par ${currentUser}`);
-            showMessage('Intervention désarchivée. Statut pompier "En cours". Stock VSAV (si applicable) restitué.', 'success');
         }
     }
     
     async function handlePharmacyUnarchive(id) {
         const inter = allInterventions[id];
-        if (!inter || !inter.archived || inter.pharmacyStatus !== 'Traité') {
-            showMessage("Cette intervention ne peut pas être désarchivée par la pharmacie dans son état actuel.", "warning");
+        if (!inter) return;
+
+        if (!inter.archived || inter.pharmacyStatus !== 'Traité') {
+            showMessage("Cette intervention ne peut pas être désarchivée par la pharmacie dans son état actuel. Elle doit être archivée par le pompier et marquée comme 'Traité' par la pharmacie.", "warning");
             return;
         }
 
         const confirmed = await showCustomDialog({
-            title: "Désarchiver l'Intervention (Pharmacie)",
-            message: `Désarchiver l'intervention n°${inter.numero_intervention} ?\nCela la remettra "En cours" pour les pompiers et "À traiter" pour la pharmacie.\nLe stock VSAV initialement utilisé (si réapprovisionné depuis VSAV) sera restitué.\nToutes les informations de traitement matériel (statuts, commentaires pharmacie/pompier) seront réinitialisées.`
+            title: "Remettre l'Intervention 'À Traiter' (Pharmacie)",
+            message: `Remettre l'intervention n°${inter.numero_intervention} au statut "À traiter" pour la pharmacie ?\nCela annulera le statut 'Traité' de la pharmacie, retirera l'intervention des archives pharmacie, inversera les mouvements de stock Pharmacie -> VSAV et annulera les commandes associées.\nLe statut d'archivage pompier reste inchangé.`
         });
 
         if (confirmed) {
             loaderModal.classList.add('visible');
+            let logMessage = `Intervention n°${inter.numero_intervention} remise 'À traiter' par Pharmacie (${currentUser}).`;
+            let allDBPromises = []; // Combined promises for all DB operations
+            let stockReversalLogEntries = [];
+            let materialResetLog = [];
+            let cancelledCmdMsgs = [];
+
             try {
-                const updates = {
-                    archived: false,
-                    statut: 'En cours', 
-                    pharmacyStatus: 'À traiter' 
-                };
-
-                let stockLogEntries = [];
+                // 1. Reverse stock movements
                 if (inter.materiels) {
-                    const materialUpdates = {};
-                    for (const matName in inter.materiels) {
-                        const details = inter.materiels[matName];
-                        const qtyUsed = details.quantity_used || 0;
+                    for (const matKey in inter.materiels) {
+                        const materialDetail = inter.materiels[matKey];
+                        if (materialDetail.pharma_status === 'Réapprovisionné') { 
+                            const qtyReversed = (materialDetail.reappro_status === 'Manquant' && materialDetail.quantity_missing > 0)
+                                                ? materialDetail.quantity_missing
+                                                : (materialDetail.quantity_used || 0);
 
-                        if (details.reappro_status === 'Réapprovisionné' && qtyUsed > 0) {
-                            if (pompierStock.hasOwnProperty(matName)) {
-                                await database.ref(`stocks/pompier/${matName}/quantity`).set(firebase.database.ServerValue.increment(qtyUsed));
-                                stockLogEntries.push(`+${qtyUsed} '${matName}' (VSAV)`);
-                            } else {
-                                await database.ref(`stocks/pompier/${matName}`).set({ quantity: qtyUsed, notes: 'Restitué lors désarchivage pharmacie' });
-                                stockLogEntries.push(`+${qtyUsed} '${matName}' (VSAV - créé)`);
+                            if (qtyReversed > 0) {
+                                const pharmaStockRef = database.ref(`stocks/pharmacie/${matKey}`);
+                                allDBPromises.push(
+                                    pharmaStockRef.once('value').then(snapshot => {
+                                        if (snapshot.exists()) {
+                                            return pharmaStockRef.child('quantity').set(firebase.database.ServerValue.increment(qtyReversed));
+                                        } else { 
+                                            return pharmaStockRef.set({ quantity: qtyReversed, notes: 'Restitué lors réouverture traitement pharma' });
+                                        }
+                                    })
+                                );
+
+                                const pompierStockRef = database.ref(`stocks/pompier/${matKey}/quantity`);
+                                allDBPromises.push(
+                                    pompierStockRef.once('value').then(snapshot => {
+                                        if (snapshot.exists() && snapshot.val() >= qtyReversed) {
+                                            return pompierStockRef.set(firebase.database.ServerValue.increment(-qtyReversed));
+                                        } else if (snapshot.exists()) {
+                                            stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' (${snapshot.val()}) insuffisant pour retrait de ${qtyReversed}. Mis à 0.`);
+                                            return pompierStockRef.set(0);
+                                        } else {
+                                            stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' non trouvé pour retrait de ${qtyReversed}.`);
+                                            // Avoid creating negative stock if it doesn't exist, log it.
+                                            // If it must be set to negative, this line would do it:
+                                            // return pompierStockRef.set(firebase.database.ServerValue.increment(-qtyReversed));
+                                            return Promise.resolve(); // Or handle as error if critical
+                                        }
+                                    })
+                                );
+                                stockReversalLogEntries.push(`Stock inversé pour '${matKey}': +${qtyReversed} Pharmacie, -${qtyReversed} VSAV (ou ajusté si stock VSAV bas/inexistant)`);
                             }
                         }
-                        
-                        materialUpdates[`${matName}/reappro_status`] = "";
-                        materialUpdates[`${matName}/comment`] = "";
-                        materialUpdates[`${matName}/pharma_status`] = "";
-                        materialUpdates[`${matName}/pharma_comment`] = "";
-                        materialUpdates[`${matName}/quantity_missing`] = 0;
-                    }
-                    updates.materiels = { ...inter.materiels }; 
-                    for(const matName in materialUpdates) { 
-                        const parts = matName.split('/');
-                        if (updates.materiels[parts[0]]) {
-                             updates.materiels[parts[0]][parts[1]] = materialUpdates[matName];
-                        }
                     }
                 }
 
-                await database.ref(`interventions/${id}`).update(updates);
-                
-                let logMessage = `Intervention n°${inter.numero_intervention} désarchivée par Pharmacie (${currentUser}). Statuts réinitialisés.`;
-                if (stockLogEntries.length > 0) {
-                    logMessage += ` Stock VSAV restitué: ${stockLogEntries.join(', ')}.`;
+                // 2. Cancel associated commands
+                const currentCommandLogData = await database.ref('commandes').once('value').then(snap => snap.val() || {});
+                for (const cmdId in currentCommandLogData) {
+                    const command = currentCommandLogData[cmdId];
+                    if (command.interventionId === id && !command.archived && command.status !== 'Annulée' && command.status !== 'Rangé et Archivé') {
+                        const cmdUpdate = {
+                            status: 'Annulée',
+                            archived: true,
+                            cancelledAt: firebase.database.ServerValue.TIMESTAMP,
+                            cancelledBy: `${currentUser} (Réouverture Traitement Pharma Inter n°${inter.numero_intervention})`,
+                            archivedAt: firebase.database.ServerValue.TIMESTAMP, 
+                            archivedBy: currentUser,
+                            updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                            updatedBy: currentUser
+                        };
+                        allDBPromises.push(database.ref(`commandes/${cmdId}`).update(cmdUpdate));
+                        cancelledCmdMsgs.push(`Cmd ID ${cmdId} (${command.materialName})`);
+                    }
                 }
-                addLogEntry('Désarchivage Pharmacie', logMessage);
-                showMessage('Intervention désarchivée et réinitialisée avec succès.', 'success');
                 
+                // 3. Prepare intervention node updates
+                const interventionNodeUpdates = {
+                    pharmacyStatus: 'À traiter',
+                    pharmacyProcessedAt: null,
+                    materiels: JSON.parse(JSON.stringify(inter.materiels || {})) 
+                };
+
+                if (interventionNodeUpdates.materiels) {
+                    for (const matKey in interventionNodeUpdates.materiels) {
+                        interventionNodeUpdates.materiels[matKey].pharma_status = "";
+                        interventionNodeUpdates.materiels[matKey].pharma_comment = "";
+                        materialResetLog.push(matKey);
+                    }
+                }
+                allDBPromises.push(database.ref(`interventions/${id}`).update(interventionNodeUpdates));
+                
+                await Promise.all(allDBPromises); 
+
+                if (materialResetLog.length > 0) logMessage += ` Statuts matériel pharmacie réinitialisés pour: ${materialResetLog.join(', ')}.`;
+                if (stockReversalLogEntries.length > 0) logMessage += ` ${stockReversalLogEntries.join('. ')}.`;
+                if (cancelledCmdMsgs.length > 0) logMessage += ` Commandes associées annulées: ${cancelledCmdMsgs.join(', ')}.`;
+                
+                addLogEntry('Réouverture Traitement Pharmacie (Stock & Cmds)', logMessage);
+                showMessage("Intervention remise 'À traiter'. Mouvements de stock inversés et commandes associées annulées.", 'success');
+
             } catch (error) {
-                console.error("Erreur désarchivage pharmacie:", error);
-                showMessage(`Erreur lors du désarchivage: ${error.message}`, 'error');
-                addLogEntry('Erreur Désarchivage Pharmacie', `Inter n°${inter.numero_intervention}, Erreur: ${error.message}`);
+                console.error("Erreur réouverture traitement pharmacie:", error);
+                showMessage(`Erreur lors de la réouverture du traitement: ${error.message}`, 'error');
+                addLogEntry('Erreur Réouverture Traitement Pharmacie', `Inter n°${inter.numero_intervention}, Erreur: ${error.message}. Détails: ${logMessage}`);
             } finally {
                 loaderModal.classList.remove('visible');
-                displayInterventions(); 
             }
         }
     }
 
 
-    async function deleteIntervention(id) {
+    async function deleteIntervention(id) { 
+        const inter = allInterventions[id];
+        if (!inter) return;
         const password = await showCustomDialog({
-            title: 'Suppression Définitive',
-            message: 'Entrez le mot de passe administrateur.',
+            title: 'Suppression Définitive (Pompier Archive)',
+            message: `Entrez le mot de passe administrateur pour supprimer définitivement l'intervention n°${inter.numero_intervention}. Cette action est irréversible et n'impacte pas les stocks (faites-le manuellement si besoin).`,
             type: 'prompt', inputType: 'password'
         });
         if (password === DELETE_PASSWORD) {
-            const interNum = allInterventions[id]?.numero_intervention || id;
-            database.ref('interventions/' + id).remove();
-            addLogEntry('Suppression Interv.', `Intervention n°${interNum} par ${currentUser}`);
-            showMessage('Intervention supprimée.', 'success');
+            const interNum = inter.numero_intervention || id;
+            await database.ref('interventions/' + id).remove();
+            addLogEntry('Suppression Définitive Interv. (Archive Pompier)', `Intervention n°${interNum} par ${currentUser} (Admin)`);
+            showMessage('Intervention supprimée définitivement des archives pompier.', 'success');
         } else if (password !== null) {
-            showMessage('Mot de passe incorrect.', 'error');
+            showMessage('Mot de passe administrateur incorrect.', 'error');
+        }
+    }
+
+    async function deletePharmacyArchivedIntervention(id) {
+        const inter = allInterventions[id];
+        if (!inter) return;
+
+        const password = await showCustomDialog({
+            title: 'Suppression Définitive (Archive Pharmacie)',
+            message: `Entrez le mot de passe administrateur pour supprimer définitivement l'intervention n°${inter.numero_intervention} du système. Cette action est irréversible.`,
+            type: 'prompt', inputType: 'password'
+        });
+
+        if (password === DELETE_PASSWORD) {
+            const interNum = inter.numero_intervention || id;
+            try {
+                await database.ref('interventions/' + id).remove();
+                addLogEntry('Suppression Définitive Interv. (Archive Pharmacie)', `Intervention n°${interNum} supprimée par ${currentUser} (Admin) depuis archive pharmacie.`);
+                showMessage(`Intervention n°${interNum} supprimée définitivement du système.`, 'success');
+            } catch (error) {
+                showMessage(`Erreur lors de la suppression de l'intervention: ${error.message}`, 'error');
+                addLogEntry('Erreur Suppression Interv. (Archive Pharmacie)', `Inter n°${interNum}, Erreur: ${error.message}`);
+            }
+        } else if (password !== null) {
+            showMessage('Mot de passe administrateur incorrect. Suppression annulée.', 'error');
         }
     }
     
-    async function closeInterventionDirectly(id) {
+    async function closeInterventionDirectly(id) { 
         const inter = allInterventions[id];
         if (!inter) return;
         const confirmed = await showCustomDialog({
-            title: "Clôturer l'intervention",
-            message: `Aucun matériel n'est associé à cette intervention ou ils ont été gérés. Clôturer et archiver l'intervention n°${inter.numero_intervention} ?`
+            title: "Clôturer l'intervention (sans matériel)",
+            message: `Aucun matériel n'est associé à cette intervention ou le matériel a déjà été géré. Clôturer et archiver l'intervention n°${inter.numero_intervention} ?`
         });
         if (confirmed) {
             const updates = {
-                archived: true,
-                statut: 'Terminé',
-                pharmacyStatus: 'Traité' 
+                archived: true, 
+                statut: 'Terminé', 
+                pharmacyStatus: 'Traité', 
+                archivedAt: firebase.database.ServerValue.TIMESTAMP, 
+                pharmacyProcessedAt: firebase.database.ServerValue.TIMESTAMP 
             };
             await database.ref(`interventions/${id}`).update(updates);
-            addLogEntry('Intervention Clôturée', `n°${inter.numero_intervention} archivée directement par ${currentUser}.`);
-            showMessage('Intervention clôturée et archivée.', 'success');
+            addLogEntry('Intervention Clôturée (Sans Matériel)', `n°${inter.numero_intervention} archivée directement par ${currentUser}.`);
+            showMessage('Intervention clôturée et archivée (aucun matériel à traiter).', 'success');
         }
     }
 
     // --- LOGIQUE DES MODALS ---
     function showDetailsModal(id) {
         const inter = allInterventions[id]; if (!inter) return;
+        const isArchivedByPompier = inter.archived;
+        const pompierStatusText = isArchivedByPompier ? 'Archivé Pompier' : (inter.statut || 'En cours');
+        const pompierStatusClass = isArchivedByPompier ? 'badge-termine' : `badge-${(inter.statut || 'en-cours').toLowerCase().replace(/\s/g, '-')}`;
+
+        let pharmaStatusText, pharmaStatusClass;
+        switch(inter.pharmacyStatus) {
+            case 'Traité': pharmaStatusText = 'Traité Pharmacie'; pharmaStatusClass = 'badge-traite'; break;
+            case 'En cours de traitement': pharmaStatusText = 'En Cours (Pharma)'; pharmaStatusClass = 'badge-en-cours-de-traitement'; break;
+            case 'En attente': pharmaStatusText = 'En Attente (Pharma)'; pharmaStatusClass = 'badge-en-attente'; break;
+            case 'À vérifier par pharmacie': pharmaStatusText = 'Vérification Pharmacie Requise'; pharmaStatusClass = 'badge-warning-light'; break; // Custom class needed for warning
+            default: pharmaStatusText = 'À Traiter (Pharma)'; pharmaStatusClass = 'badge-a-traiter';
+        }
+
         detailsModal.innerHTML = `
         <div class="modal-content large">
             <div id="modalHeader" class="modal-header">
@@ -922,21 +1113,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="detail-item"><i class="bi bi-exclamation-triangle"></i><strong>Urgence:</strong> <span>${inter.urgence || 'N/A'}</span></p>
                 </div>
                 <div class="detail-section"><h4><i class="bi bi-clipboard-check-fill"></i> Statut & Suivi</h4>
-                     <p class="detail-item"><i class="bi bi-activity"></i><strong>Statut Pompier:</strong> <span><span class="status-badge badge-${inter.archived ? 'termine' : (inter.statut || 'en-cours').toLowerCase().replace(/\s/g, '-')}">${inter.archived ? 'Archivé' : inter.statut}</span></span></p>
-                     <p class="detail-item"><i class="bi bi-bandaid"></i><strong>Statut Pharmacie:</strong> <span><span class="status-badge badge-${(inter.pharmacyStatus || 'En attente').toLowerCase().replace(/\s/g, '-')}">${inter.pharmacyStatus || 'En attente'}</span></span></p>
+                     <p class="detail-item"><i class="bi bi-activity"></i><strong>Statut Pompier:</strong> <span><span class="status-badge ${pompierStatusClass}">${pompierStatusText}</span></span></p>
+                     ${inter.archivedAt ? `<p class="detail-item"><i class="bi bi-archive-fill"></i><strong>Archivée Pompier le:</strong> <span>${new Date(inter.archivedAt).toLocaleString('fr-FR')}</span></p>` : ''}
+                     <p class="detail-item"><i class="bi bi-bandaid"></i><strong>Statut Pharmacie:</strong> <span><span class="status-badge ${pharmaStatusClass}">${pharmaStatusText}</span></span></p>
+                     ${inter.pharmacyProcessedAt ? `<p class="detail-item"><i class="bi bi-check-circle-fill"></i><strong>Traité Pharmacie le:</strong> <span>${new Date(inter.pharmacyProcessedAt).toLocaleString('fr-FR')}</span></p>` : ''}
                 </div>
-                 <div class="detail-section full-width"><h4><i class="bi bi-card-text"></i> Commentaire Intervention</h4>
+                 <div class="detail-section full-width"><h4><i class="bi bi-card-text"></i> Commentaire Intervention (Pompier)</h4>
                     <p>${inter.commentaire || 'Aucun commentaire.'}</p>
                 </div>
-                <div class="detail-section full-width"><h4><i class="bi bi-tools"></i> Matériels Utilisés</h4> 
-                        <div>${Object.entries(inter.materiels || {}).map(([name, d]) => `
+                <div class="detail-section full-width"><h4><i class="bi bi-tools"></i> Matériels Utilisés et Suivi Réapprovisionnement</h4> 
+                        <div>${Object.entries(inter.materiels || {}).map(([name, d]) => {
+                            let reapproStatusDisplay = d.reappro_status || 'Non défini';
+                            if (d.reappro_status === 'Manquant') {
+                                reapproStatusDisplay += ` (Qté Manquante VSAV: ${d.quantity_missing || d.quantity_used || 'N/A'})`;
+                            }
+                            let pharmaStatusDisplay = d.pharma_status || 'Non traité par pharmacie';
+                            if (d.pharma_status === 'En commande') {
+                                pharmaStatusDisplay += ` (Commande pour ${d.quantity_missing > 0 ? d.quantity_missing : d.quantity_used})`;
+                            } else if (d.pharma_status === 'Réapprovisionné') {
+                                pharmaStatusDisplay += ` (Stock Pharmacie -> VSAV)`;
+                            } else if (d.pharma_status === 'À vérifier par pharmacie') {
+                                pharmaStatusDisplay = 'À vérifier par pharmacie pour commande/réappro.';
+                            }
+
+
+                            return `
                             <div class="detail-material-item">
-                                <strong>${name} (Qté: ${d.quantity_used || 'N/A'})</strong><br>
-                                <small>Statut Pompier (Réappro VSAV): ${d.reappro_status || 'Non défini'}${d.reappro_status === 'Manquant' ? ` (Manquant: ${d.quantity_missing || 'N/A'})` : ''}</small><br>
-                                <small>Statut Pharmacie (Traitement): ${d.pharma_status || 'Non traité'}</small><br>
-                                <small><i>Commentaire Pompier: ${d.comment || 'Aucun'}</i></small><br>
-                                <small><i>Commentaire Pharmacie: ${d.pharma_comment || 'Aucun'}</i></small>
-                            </div>`).join('') || '<p>Aucun matériel utilisé.</p>'}
+                                <strong>${name} (Qté Utilisée: ${d.quantity_used || 'N/A'})</strong><br>
+                                <small><u>Pompier (Réappro VSAV):</u> ${reapproStatusDisplay}</small><br>
+                                <small><em>Commentaire Pompier: ${d.comment || 'Aucun'}</em></small><br>
+                                <small><u>Pharmacie (Traitement):</u> ${pharmaStatusDisplay}</small><br>
+                                <small><em>Commentaire Pharmacie: ${d.pharma_comment || 'Aucun'}</em></small>
+                            </div>`;
+                        }).join('') || '<p>Aucun matériel utilisé.</p>'}
                         </div>
                 </div>
                 <div class="detail-section full-width">
@@ -956,27 +1165,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const inter = allInterventions[interId];
         if (!inter) return;
         const hasMaterials = inter.materiels && Object.keys(inter.materiels).length > 0;
+
         if (!hasMaterials) {
             if (userType === 'firefighter') {
                 closeInterventionDirectly(interId); 
             } else { 
                 if (inter.pharmacyStatus && inter.pharmacyStatus !== 'Traité') {
-                    database.ref(`interventions/${interId}`).update({ pharmacyStatus: 'Traité' });
-                    addLogEntry('Traitement Pharmacie', `Inter n°${inter.numero_intervention} marquée traitée (aucun matériel) par ${currentUser}.`);
-                    showMessage("Intervention marquée comme traitée (aucun matériel).", 'success');
+                    database.ref(`interventions/${interId}`).update({ 
+                        pharmacyStatus: 'Traité',
+                        pharmacyProcessedAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    addLogEntry('Traitement Pharmacie (Auto)', `Inter n°${inter.numero_intervention} marquée traitée (aucun matériel) par ${currentUser}.`);
+                    showMessage("Intervention marquée comme traitée par la pharmacie (aucun matériel).", 'success');
                 } else {
                     showMessage("Aucun matériel à traiter pour cette intervention.", "info");
                 }
             }
-            return;
+            return; 
         }
+
         const listContainer = document.getElementById('material-management-list');
         document.getElementById('material-modal-inter-num').textContent = `n°${inter.numero_intervention}`;
-        document.getElementById('save-material-btn').textContent = userType === 'firefighter' ? 'Enregistrer et Clôturer Intervention' : 'Enregistrer Traitement Pharmacie';
+        
+        const saveBtnTextSpan = document.getElementById('save-material-btn').querySelector('.btn-text');
+        if(saveBtnTextSpan) {
+            saveBtnTextSpan.textContent = userType === 'firefighter' ? "Enregistrer et Clôturer" : "Enregistrer Traitement";
+        }
         
         const headerHtml = userType === 'firefighter' 
             ? `<div class="material-management-item header firefighter-view"><strong>Matériel</strong><strong>Qté Utilisée</strong><strong>Statut Réappro. VSAV</strong><strong>Commentaire Pompier</strong></div>`
-            : `<div class="material-management-item header pharmacy-view"><strong>Matériel</strong><strong>Statut Traitement Pharmacie</strong><strong>Commentaire Pharmacie</strong></div>`;
+            : `<div class="material-management-item header pharmacy-view"><strong>Matériel & Contexte Pompier</strong><strong>Statut Traitement Pharmacie</strong><strong>Commentaire Pharmacie</strong></div>`;
         
         const itemsHtml = Object.entries(inter.materiels).map(([matName, details]) => {
             const qtyUsedOriginal = details.quantity_used || 1;
@@ -984,39 +1202,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 return `
                 <div class="material-management-item firefighter-view" data-mat-name="${matName}">
                     <span>${matName}</span>
-                    <input type="number" class="mat-qty-used" value="${qtyUsedOriginal}" min="0" readonly title="Quantité utilisée initialement">
+                    <input type="number" class="mat-qty-used" value="${qtyUsedOriginal}" min="0" readonly title="Quantité utilisée initialement (non modifiable ici)">
                     <div>
                         <select class="mat-reappro-status">
                             <option value="">Choisir statut...</option>
                             <option value="Réapprovisionné" ${details.reappro_status === 'Réapprovisionné' ? 'selected' : ''}>Réapprovisionné (depuis VSAV)</option>
-                            <option value="Manquant" ${details.reappro_status === 'Manquant' ? 'selected' : ''}>Manquant (à commander)</option>
+                            <option value="Manquant" ${details.reappro_status === 'Manquant' ? 'selected' : ''}>Manquant (vérif. pharmacie)</option>
                             <option value="Pas besoin" ${details.reappro_status === 'Pas besoin' ? 'selected' : ''}>Pas besoin de réappro.</option>
                         </select>
                         <div class="quantity-input-group missing-qty-input ${details.reappro_status === 'Manquant' ? 'visible' : ''}" style="margin-top: 0.5rem;">
+                            <label style="font-size:0.8em; margin-right:5px;">Qté manquante:</label>
                             <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="decrement">-</button>
-                            <input type="number" class="missing-qty-value" placeholder="Qté manquante" value="${details.quantity_missing || qtyUsedOriginal}" min="1">
+                            <input type="number" class="missing-qty-value" placeholder="Qté manquante" value="${details.quantity_missing || qtyUsedOriginal}" min="1" step="1">
                             <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="increment">+</button>
                         </div>
                     </div>
-                    <input type="text" class="mat-comment" value="${details.comment || ''}" placeholder="Commentaire (optionnel)...">
+                    <input type="text" class="mat-comment" value="${details.comment || ''}" placeholder="Commentaire pompier (optionnel)...">
                 </div>`;
             } else { 
-                 const pompierReapproStatus = details.reappro_status || "Non défini";
+                 const pompierReapproStatus = details.reappro_status || "Non défini par pompier";
                  const pompierMissingQty = details.quantity_missing || 0;
-                 let materialContext = `Utilisé: ${qtyUsedOriginal}. Statut VSAV: ${pompierReapproStatus}`;
+                 let materialContext = `Utilisé: ${qtyUsedOriginal}. Demande Pompier (VSAV): ${pompierReapproStatus}`;
                  if (pompierReapproStatus === 'Manquant' && pompierMissingQty > 0) {
-                     materialContext += ` (Qté manquante VSAV: ${pompierMissingQty})`;
+                     materialContext += ` (Qté demandée: ${pompierMissingQty})`;
+                 } else if (pompierReapproStatus === 'Manquant' && pompierMissingQty === 0) {
+                     materialContext += ` (Qté demandée: ${qtyUsedOriginal})`; 
                  }
+                 if (details.pharma_status === 'À vérifier par pharmacie') {
+                    materialContext += `. Statut actuel pharmacie: À vérifier.`;
+                 }
+
+
                 return `
                 <div class="material-management-item pharmacy-view" data-mat-name="${matName}">
-                    <span>${matName} <small>(${materialContext})</small></span>
+                    <span>${matName} <small style="display:block; color: var(--text-secondary-color);"><i>${materialContext}</i></small></span>
                     <select class="mat-pharma-status">
-                         <option value="">Choisir statut...</option>
+                         <option value="">Choisir statut traitement...</option>
                          <option value="En commande" ${details.pharma_status === 'En commande' ? 'selected' : ''}>En commande (via Pharmacie)</option>
                          <option value="Réapprovisionné" ${details.pharma_status === 'Réapprovisionné' ? 'selected' : ''}>Réapprovisionné (depuis stock Pharmacie vers VSAV)</option>
-                         <option value="Pas besoin" ${details.pharma_status === 'Pas besoin' ? 'selected' : ''}>Pas besoin de traitement/commande</option>
+                         <option value="Pas besoin" ${details.pharma_status === 'Pas besoin' ? 'selected' : ''}>Pas besoin de traitement/commande pharmacie</option>
                     </select>
-                    <input type="text" class="mat-pharma-comment" value="${details.pharma_comment || ''}" placeholder="Commentaire pharmacie...">
+                    <input type="text" class="mat-pharma-comment" value="${details.pharma_comment || ''}" placeholder="Commentaire pharmacie (optionnel)...">
                 </div>`;
             }
         }).join('');
@@ -1026,16 +1252,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         listContainer.querySelectorAll('.mat-reappro-status').forEach(select => {
             select.addEventListener('change', e => {
-                const missingQtyGroup = e.target.closest('div').querySelector('.missing-qty-input'); 
+                const itemRow = e.target.closest('.material-management-item');
+                const missingQtyGroup = itemRow.querySelector('.missing-qty-input'); 
                 const missingQtyInput = missingQtyGroup.querySelector('.missing-qty-value');
                 missingQtyGroup.classList.toggle('visible', e.target.value === 'Manquant');
-                if (e.target.value !== 'Manquant') {
-                    missingQtyInput.value = ''; 
-                } else {
-                    if(!missingQtyInput.value) { 
-                        const qtyUsed = parseInt(e.target.closest('.material-management-item').querySelector('.mat-qty-used').value, 10) || 1;
-                        missingQtyInput.value = qtyUsed;
+                if (e.target.value === 'Manquant') { 
+                    if(!missingQtyInput.value || parseInt(missingQtyInput.value,10) === 0 ) { 
+                        const qtyUsed = parseInt(itemRow.querySelector('.mat-qty-used').value, 10) || 1;
+                        missingQtyInput.value = qtyUsed; 
                     }
+                } else { 
+                    missingQtyInput.value = ''; 
                 }
             });
         });
@@ -1045,66 +1272,81 @@ document.addEventListener('DOMContentLoaded', () => {
     async function saveMaterialData(interId, userType) {
         const updates = {};
         const interRef = database.ref(`interventions/${interId}`);
-        const intervention = allInterventions[interId];
+        const intervention = allInterventions[interId]; 
         let allFirefighterInputsValid = true; 
-        let allPharmacyInputsValid = true; 
         let isPharmacyProcessingAnyItem = false; 
+        let pharmacyActionsLog = [];
+        let pompierActionsLog = [];
+        let dbOperationPromises = []; // Renamed from stockUpdatePromises
+
 
         document.querySelectorAll('#material-management-list .material-management-item:not(.header)').forEach(item => {
             const matName = item.dataset.matName;
             const interventionMaterialDetails = intervention.materiels[matName]; 
+            
             if (userType === 'firefighter') {
                 const reappro_status = item.querySelector('.mat-reappro-status').value;
                 const comment = item.querySelector('.mat-comment').value;
-                let quantity_missing = 0;
+                let quantity_missing = 0; 
+
                 if (reappro_status === 'Manquant') {
                     const missingInput = item.querySelector('.missing-qty-value'); 
                     quantity_missing = parseInt(missingInput.value, 10);
                     if (isNaN(quantity_missing) || quantity_missing <= 0) {
-                        allFirefighterInputsValid = false;
+                        allFirefighterInputsValid = false; 
                         missingInput.style.borderColor = 'red'; 
                     } else {
                         missingInput.style.borderColor = ''; 
                     }
+                    // MODIFICATION: Set pharma_status for pharmacy review, DO NOT create command
+                    updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; 
+                    pompierActionsLog.push(`${quantity_missing} x '${matName}' signalé manquant (vérification pharmacie requise) pour inter n°${intervention.numero_intervention}`);
+                } else {
+                     updates[`materiels/${matName}/pharma_status`] = interventionMaterialDetails.pharma_status || ''; // Preserve if already set, or clear
                 }
+
+
                 updates[`materiels/${matName}/reappro_status`] = reappro_status;
                 updates[`materiels/${matName}/quantity_missing`] = quantity_missing; 
                 updates[`materiels/${matName}/comment`] = comment;
-                if (!reappro_status) allFirefighterInputsValid = false; 
+
+                if (!reappro_status && Object.keys(intervention.materiels || {}).length > 0) { 
+                    allFirefighterInputsValid = false; 
+                    item.querySelector('.mat-reappro-status').style.borderColor = 'red';
+                } else if (reappro_status) {
+                     item.querySelector('.mat-reappro-status').style.borderColor = '';
+                }
+
+
                 const qtyUsedOriginal = interventionMaterialDetails?.quantity_used || 0;
+
                 if (reappro_status === 'Réapprovisionné') { 
                     if (pompierStock[matName] && qtyUsedOriginal > 0) {
-                        database.ref(`stocks/pompier/${matName}/quantity`).set(firebase.database.ServerValue.increment(-qtyUsedOriginal));
-                        addLogEntry('Stock Pompier (Sortie)', `-${qtyUsedOriginal} de '${matName}' (Réappro VSAV pour inter n°${intervention.numero_intervention}) par ${currentUser}`);
+                        const pompierStockRef = database.ref(`stocks/pompier/${matName}/quantity`);
+                        dbOperationPromises.push(pompierStockRef.set(firebase.database.ServerValue.increment(-qtyUsedOriginal)));
+                        pompierActionsLog.push(`-${qtyUsedOriginal} '${matName}' (Stock VSAV) pour réappro inter n°${intervention.numero_intervention}`);
+                    } else if (qtyUsedOriginal > 0) {
+                         pompierActionsLog.push(`Alerte: '${matName}' marqué réapprovisionné VSAV mais stock VSAV inexistant ou à 0. Quantité utilisée: ${qtyUsedOriginal}.`);
                     }
-                } else if (reappro_status === 'Manquant' && quantity_missing > 0) {
-                    database.ref('commandes').push().set({
-                        interventionId: interId,
-                        interventionNum: intervention.numero_intervention,
-                        materialName: matName,
-                        quantityMissing: quantity_missing, 
-                        status: 'À commander', 
-                        createdAt: firebase.database.ServerValue.TIMESTAMP,
-                        requestedBy: currentUser, 
-                        archived: false
-                    });
-                     addLogEntry('Demande Commande (Pompier)', `${quantity_missing} x '${matName}' pour inter n°${intervention.numero_intervention} par ${currentUser}`);
                 }
-            } else { 
+                 // Removed automatic command creation for "Manquant" by firefighter
+            } else { // userType === 'pharmacy'
                  const pharma_status = item.querySelector('.mat-pharma-status').value;
                  const pharma_comment = item.querySelector('.mat-pharma-comment').value;
                  updates[`materiels/${matName}/pharma_status`] = pharma_status;
                  updates[`materiels/${matName}/pharma_comment`] = pharma_comment;
+
                  if (pharma_status) { 
-                    isPharmacyProcessingAnyItem = true;
-                 } else { 
-                    if (interventionMaterialDetails) allPharmacyInputsValid = false; 
+                    isPharmacyProcessingAnyItem = true; 
                  }
+                 
                  const qtyToHandlePharmacie = (interventionMaterialDetails.reappro_status === 'Manquant' && interventionMaterialDetails.quantity_missing > 0)
                                           ? interventionMaterialDetails.quantity_missing 
                                           : (interventionMaterialDetails.quantity_used || 0); 
+
                  if (pharma_status === 'En commande' && qtyToHandlePharmacie > 0) {
-                    database.ref('commandes').push().set({
+                    const newCommandRef = database.ref('commandes').push();
+                    dbOperationPromises.push(newCommandRef.set({ 
                         interventionId: interId,
                         interventionNum: intervention.numero_intervention,
                         materialName: matName,
@@ -1113,53 +1355,144 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: firebase.database.ServerValue.TIMESTAMP,
                         orderedBy: currentUser, 
                         archived: false
-                    });
-                    addLogEntry('Création Commande (Pharma)', `${qtyToHandlePharmacie} x '${matName}' pour inter n°${intervention.numero_intervention} par ${currentUser}`);
+                    }));
+                    pharmacyActionsLog.push(`Commande créée/confirmée: ${qtyToHandlePharmacie} x '${matName}' (Inter n°${intervention.numero_intervention})`);
                  } else if (pharma_status === 'Réapprovisionné' && qtyToHandlePharmacie > 0) {
-                    if (pharmaStock[matName]) { 
-                        database.ref(`stocks/pharmacie/${matName}/quantity`).set(firebase.database.ServerValue.increment(-qtyToHandlePharmacie));
-                        addLogEntry('Stock Pharmacie (Sortie)', `-${qtyToHandlePharmacie} de '${matName}' pour réappro VSAV (Inter n°${intervention.numero_intervention}) par ${currentUser}`);
-                    }
-                    if (pompierStock[matName]) {
-                        database.ref(`stocks/pompier/${matName}/quantity`).set(firebase.database.ServerValue.increment(qtyToHandlePharmacie));
-                    } else { 
-                        database.ref(`stocks/pompier/${matName}`).set({ quantity: qtyToHandlePharmacie, notes: 'Ajout via réappro pharmacie (Inter)' });
-                    }
-                    addLogEntry('Stock Pompier (Entrée)', `+${qtyToHandlePharmacie} via réappro pharmacie (Inter n°${intervention.numero_intervention}) par ${currentUser}`);
+                    
+                    const pharmaStockRef = database.ref(`stocks/pharmacie/${matName}`);
+                    dbOperationPromises.push(
+                        pharmaStockRef.once('value').then(snapshot => {
+                            if (snapshot.exists() && snapshot.child('quantity').val() >= qtyToHandlePharmacie) {
+                                return pharmaStockRef.child('quantity').set(firebase.database.ServerValue.increment(-qtyToHandlePharmacie));
+                            } else {
+                                pharmacyActionsLog.push(`Alerte: Stock Pharmacie pour '${matName}' insuffisant ou inexistant pour réappro. Qté: ${qtyToHandlePharmacie}`);
+                                throw new Error(`Stock Pharmacie insuffisant pour ${matName}`);
+                            }
+                        })
+                    );
+                    pharmacyActionsLog.push(`-${qtyToHandlePharmacie} '${matName}' (Stock Pharmacie) pour réappro VSAV`);
+                    
+                    const pompierStockRef = database.ref(`stocks/pompier/${matName}`);
+                    dbOperationPromises.push(
+                        pompierStockRef.once('value').then(snapshot => {
+                            if (snapshot.exists()) {
+                                return pompierStockRef.child('quantity').set(firebase.database.ServerValue.increment(qtyToHandlePharmacie));
+                            } else { 
+                                return pompierStockRef.set({ quantity: qtyToHandlePharmacie, notes: 'Ajout via réappro pharmacie (Inter)' });
+                            }
+                        })
+                    );
+                    pharmacyActionsLog.push(`+${qtyToHandlePharmacie} '${matName}' (Stock VSAV) via réappro pharmacie`);
                  }
             }
         });
 
-        if (userType === 'firefighter') {
-            if (!allFirefighterInputsValid) return showMessage("Veuillez définir un statut pour tous les matériels et une quantité valide si 'Manquant'.", 'error');
-            updates['statut'] = 'Terminé'; 
-            updates['archived'] = true;   
-            updates['pharmacyStatus'] = 'À traiter'; 
-            addLogEntry('Intervention Clôturée', `n°${intervention.numero_intervention} archivée, matériel géré par ${currentUser}.`);
-        } else { 
-            if (!allPharmacyInputsValid && isPharmacyProcessingAnyItem) { 
-                 return showMessage("Veuillez définir un statut pour tous les matériels listés qui nécessitent un traitement.", 'error');
-            }
-            if (isPharmacyProcessingAnyItem) { 
-                let allItemsFullyProcessedByPharmacy = true;
-                 Object.keys(intervention.materiels).forEach(matKey => {
-                    const finalMatStatus = updates[`materiels/${matKey}/pharma_status`] || intervention.materiels[matKey].pharma_status;
-                    if(!finalMatStatus || (finalMatStatus !== 'Réapprovisionné' && finalMatStatus !== 'Pas besoin')) {
-                       allItemsFullyProcessedByPharmacy = false;
+        try {
+            await Promise.all(dbOperationPromises); 
+
+            if (userType === 'firefighter') {
+                if (!allFirefighterInputsValid) return showMessage("Veuillez définir un statut de réapprovisionnement pour tous les matériels. Si 'Manquant', une quantité valide est requise.", 'error');
+                
+                updates['statut'] = 'Terminé'; 
+                updates['archived'] = true;   
+                updates['archivedAt'] = firebase.database.ServerValue.TIMESTAMP;
+                
+                let needsPharmacyAction = false;
+                if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
+                    for (const matName of Object.keys(intervention.materiels)) {
+                        const matDetails = updates[`materiels/${matName}/pharma_status`] ? { pharma_status: updates[`materiels/${matName}/pharma_status`] } : intervention.materiels[matName];
+                         // Check if this material, after firefighter processing, requires pharmacy attention
+                        if (updates[`materiels/${matName}/reappro_status`] === 'Manquant') { // Firefighter explicitly marked as missing
+                            needsPharmacyAction = true;
+                            updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; // Ensure this is set
+                            break; 
+                        }
+                        // If not "Manquant", but other conditions might imply pharmacy check (e.g. default state if reappro_status is empty)
+                        // However, the logic now is: if "Manquant", flag for pharma. Otherwise, assume handled or no action by pharma based on initial state.
                     }
-                });
-                 if (allItemsFullyProcessedByPharmacy) {
-                    updates['pharmacyStatus'] = 'Traité';
-                } else {
-                    updates['pharmacyStatus'] = 'En cours de traitement';
                 }
+
+
+                if (needsPharmacyAction) {
+                    updates['pharmacyStatus'] = 'À traiter';
+                    updates['pharmacyProcessedAt'] = null;
+                } else {
+                    // If no material is explicitly marked "Manquant" by firefighter,
+                    // and thus pharma_status isn't set to 'À vérifier par pharmacie',
+                    // we assume pharmacy doesn't need to act further based on firefighter's input.
+                    // It could be already 'Traité' or remains 'En attente' if it was so.
+                    // This part might need refinement if default state for pharmacy should be 'Traité' if no items are 'Manquant'.
+                    // For now, keep existing pharmacyStatus unless explicitly needs action.
+                    if (!intervention.pharmacyStatus || intervention.pharmacyStatus === 'En attente' && !needsPharmacyAction) {
+                         // If materials exist but none require pharmacy action from this firefighter update
+                         // And initial pharmacy status was 'En attente', it could be considered 'Traité' IF no items are 'Manquant'
+                         let allNotManquant = true;
+                         if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
+                             for (const matName of Object.keys(intervention.materiels)) {
+                                 if (updates[`materiels/${matName}/reappro_status`] === 'Manquant') {
+                                     allNotManquant = false;
+                                     break;
+                                 }
+                             }
+                             if (allNotManquant && Object.keys(intervention.materiels).length > 0) {
+                                 updates['pharmacyStatus'] = 'Traité';
+                                 if (!intervention.pharmacyProcessedAt) {
+                                     updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
+                                 }
+                             } else if (!needsPharmacyAction) { // If not needing action but also not all "not manquant"
+                                updates['pharmacyStatus'] = intervention.pharmacyStatus || 'En attente'; // Keep existing or default
+                             }
+
+                         } else { // No materials, so pharmacy is 'Traité'
+                            updates['pharmacyStatus'] = 'Traité';
+                            if (!intervention.pharmacyProcessedAt) {
+                                updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
+                            }
+                         }
+                    } else if (needsPharmacyAction) {
+                        updates['pharmacyStatus'] = 'À traiter';
+                        updates['pharmacyProcessedAt'] = null;
+                    }
+                    // If it was already 'Traité' by pharmacy, don't change it unless firefighter input forces re-evaluation.
+                     if(intervention.pharmacyStatus === 'Traité' && !needsPharmacyAction){
+                        updates['pharmacyStatus'] = 'Traité';
+                        updates['pharmacyProcessedAt'] = intervention.pharmacyProcessedAt || firebase.database.ServerValue.TIMESTAMP;
+                    }
+
+
+                }
+                addLogEntry('Intervention Clôturée (Pompier)', `n°${intervention.numero_intervention} archivée, matériel géré par ${currentUser}. ${pompierActionsLog.join('. ')}`);
+            } else { // userType === 'pharmacy'
+                let allItemsHavePharmaStatusSelected = true;
+                if (Object.keys(intervention.materiels || {}).length > 0) {
+                     document.querySelectorAll('#material-management-list .material-management-item:not(.header)').forEach(item => {
+                        const pharma_status_select = item.querySelector('.mat-pharma-status');
+                        if (!pharma_status_select.value) {
+                            allItemsHavePharmaStatusSelected = false;
+                            pharma_status_select.style.borderColor = 'red';
+                        } else {
+                            pharma_status_select.style.borderColor = '';
+                        }
+                     });
+                }
+
+                if (!allItemsHavePharmaStatusSelected) {
+                     return showMessage("Veuillez définir un statut de traitement pour tous les matériels listés.", 'error');
+                }
+
+                updates['pharmacyStatus'] = 'Traité';
+                updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
+                addLogEntry('Traitement Matériel Pharmacie', `Intervention n°${intervention.numero_intervention} traitée par ${currentUser}. Actions: ${pharmacyActionsLog.join('. ')}`);
             }
-            addLogEntry('Traitement Pharmacie', `Mise à jour matériel pour inter n°${intervention.numero_intervention} par ${currentUser}`);
+            
+            await interRef.update(updates); 
+            showMessage("Données du matériel enregistrées avec succès.", 'success');
+            materialManagementModal.classList.remove('visible');
+
+        } catch (error) {
+            showMessage(`Erreur lors de l'enregistrement des données matériel: ${error.message}`, 'error');
+            addLogEntry('Erreur Enregistrement Matériel', `Inter n°${intervention.numero_intervention}, Erreur: ${error.message}. Pharmacie Actions: ${pharmacyActionsLog.join('. ')}, Pompier Actions: ${pompierActionsLog.join('. ')}`);
         }
-        
-        await interRef.update(updates);
-        showMessage("Données du matériel enregistrées.", 'success');
-        materialManagementModal.classList.remove('visible');
     }
     
     // --- GESTION DES STOCKS UNIFIÉE ---
@@ -1168,7 +1501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (addStockBtnContainerDesktop) {
             addStockBtnContainerDesktop.style.display = isPharmacyAuthenticated ? 'flex' : 'none';
         }
-        fabAddStockItem.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'block' : 'none';
+        fabAddStockItem.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'flex' : 'none';
         setupStockCardCreation(currentStockSubView, unifiedStockCards);
     }
 
@@ -1178,103 +1511,239 @@ document.addEventListener('DOMContentLoaded', () => {
         cardsContainer.innerHTML = '';
         const filteredStock = Object.entries(stockData)
             .filter(([name]) => name.toLowerCase().includes(searchTerm))
-            .sort(([a], [b]) => a.localeCompare(b));
+            .sort(([a], [b]) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
         if (filteredStock.length === 0) {
             cardsContainer.innerHTML = `<p class="empty-view-message">Le stock ${viewType === 'pompier' ? 'VSAV' : 'Pharmacie'} est vide ${searchTerm ? 'pour cette recherche' : ''}.</p>`;
         }
 
         filteredStock.forEach(([name, details]) => {
-            const transferBtnHtml = viewType === 'pharmacie' && isPharmacyAuthenticated ? `
-                <button class="btn-icon-card transfer-stock-btn" data-name="${name}" title="Transférer vers Stock VSAV">
-                    <ion-icon name="swap-horizontal-outline"></ion-icon>
-                </button>` : '';
-            const editControls = isPharmacyAuthenticated ? `
-                <button class="btn-icon-card save-stock-btn" title="Sauvegarder les modifications">
-                    <ion-icon name="checkmark-circle-outline"></ion-icon>
-                </button>
-                <button class="btn-icon-card delete-stock-btn" title="Supprimer l'article des deux stocks">
-                    <ion-icon name="trash-outline"></ion-icon>
-                </button>
-            ` : '';
+            const isVSAVStockViewByPharmacie = isPharmacyAuthenticated && viewType === 'pompier';
+            const canEditPharmacieStock = isPharmacyAuthenticated && viewType === 'pharmacie';
+            
+            let footerHtml = '';
+            if (isPharmacyAuthenticated) {
+                if (viewType === 'pharmacie') { // Pharma stock view, by Pharmacie
+                    footerHtml = `
+                        <div class="stock-card-footer">
+                            <button class="btn-icon-card transfer-stock-btn" data-name="${name}" title="Transférer vers Stock VSAV">
+                                <ion-icon name="swap-horizontal-outline"></ion-icon>
+                            </button>
+                            <button class="btn-icon-card save-stock-btn" title="Sauvegarder les modifications">
+                                <ion-icon name="checkmark-circle-outline"></ion-icon>
+                            </button>
+                            <button class="btn-icon-card delete-stock-btn" title="Supprimer l'article des deux stocks">
+                                <ion-icon name="trash-outline"></ion-icon>
+                            </button>
+                        </div>`;
+                } else { // VSAV stock view, by Pharmacie
+                    footerHtml = `
+                        <div class="stock-card-footer">
+                            <button class="btn-icon-card edit-vsav-stock-btn" data-name="${name}" title="Modifier Stock VSAV (Admin Pharmacie)">
+                                <ion-icon name="create-outline"></ion-icon>
+                            </button>
+                            <button class="btn-icon-card save-vsav-stock-btn" data-name="${name}" title="Sauvegarder Stock VSAV" style="display:none;">
+                                <ion-icon name="save-outline"></ion-icon>
+                            </button>
+                            <button class="btn-icon-card cancel-vsav-stock-edit-btn" data-name="${name}" title="Annuler Modification VSAV" style="display:none;">
+                                <ion-icon name="close-circle-outline"></ion-icon>
+                            </button>
+                            <button class="btn-icon-card delete-stock-btn" title="Supprimer l'article des deux stocks">
+                                <ion-icon name="trash-outline"></ion-icon>
+                            </button>
+                        </div>`;
+                }
+            }
+
             const cardHtml = `
-            <div class="stock-card" data-name="${name}" data-stock-type="${viewType}">
+            <div class="stock-card" data-name="${name}" data-stock-type="${viewType}" data-original-quantity="${details.quantity || 0}" data-original-notes="${details.notes || ''}">
                 <div class="stock-card-header"><h3>${name}</h3></div>
                 <div class="stock-card-body">
                     <div class="form-group-card">
                         <label>Quantité</label>
-                        <div class="quantity-input-group">
-                            ${isPharmacyAuthenticated ? `<button type="button" class="qty-adjust-btn" data-action="decrement">-</button>` : ''}
-                            <input type="number" class="stock-quantity-input" value="${details.quantity || 0}" ${!isPharmacyAuthenticated ? 'readonly' : ''} min="0">
-                            ${isPharmacyAuthenticated ? `<button type="button" class="qty-adjust-btn" data-action="increment">+</button>` : ''}
+                        <div class="quantity-input-group stock-qty-group">
+                            ${canEditPharmacieStock ? `<button type="button" class="qty-adjust-btn stock-card-qty-adjust" data-action="decrement">-</button>` : ''}
+                            <input type="number" class="stock-quantity-input" value="${details.quantity || 0}" ${!canEditPharmacieStock && viewType === 'pharmacie' || viewType === 'pompier' ? 'readonly' : ''} min="0" step="1">
+                            ${canEditPharmacieStock ? `<button type="button" class="qty-adjust-btn stock-card-qty-adjust" data-action="increment">+</button>` : ''}
                         </div>
                     </div>
                     <div class="form-group-card">
                         <label>Notes</label>
-                        <input type="text" class="stock-notes-input" value="${details.notes || ''}" placeholder="Aucune note..." ${!isPharmacyAuthenticated ? 'readonly' : ''}>
+                        <input type="text" class="stock-notes-input" value="${details.notes || ''}" placeholder="Aucune note..." ${!canEditPharmacieStock && viewType === 'pharmacie' || viewType === 'pompier' ? 'readonly' : ''}>
                     </div>
                 </div>
-                ${isPharmacyAuthenticated ? `<div class="stock-card-footer">${transferBtnHtml}${editControls}</div>` : ''}
+                ${footerHtml}
             </div>`;
             cardsContainer.innerHTML += cardHtml;
         });
 
         if(isPharmacyAuthenticated) {
-            cardsContainer.querySelectorAll('.save-stock-btn').forEach(btn => btn.onclick = (e) => {
+            cardsContainer.querySelectorAll('.save-stock-btn').forEach(btn => btn.onclick = (e) => { // For Pharmacie stock
                 const card = e.currentTarget.closest('.stock-card');
                 const name = card.dataset.name;
-                const stockType = card.dataset.stockType;
+                const stockType = card.dataset.stockType; 
+                if (stockType !== 'pharmacie') return; 
+
                 const quantity = parseInt(card.querySelector('.stock-quantity-input').value, 10);
                 const notes = card.querySelector('.stock-notes-input').value;
                 if (isNaN(quantity) || quantity < 0) return showMessage("Quantité invalide.", "error");
+
                 database.ref(`stocks/${stockType}/${name}`).update({ quantity, notes });
-                addLogEntry(`Stock ${stockType}`, `Mise à jour de '${name}' (Qté: ${quantity}) par ${currentUser}`);
-                showMessage(`Article "${name}" sauvegardé.`, 'success');
+                addLogEntry(`Mise à jour Stock Pharmacie`, `Article '${name}' (Qté: ${quantity}, Notes: ${notes || 'aucune'}) par ${currentUser}`);
+                showMessage(`Article "${name}" dans le stock Pharmacie sauvegardé.`, 'success');
             });
+
             cardsContainer.querySelectorAll('.delete-stock-btn').forEach(btn => btn.onclick = async (e) => {
                 const name = e.currentTarget.closest('.stock-card').dataset.name;
-                if (await showCustomDialog({ title: 'Supprimer article', message: `Supprimer "${name}" définitivement des deux stocks (VSAV et Pharmacie) ? Cette action est irréversible.` })) {
+                if (await showCustomDialog({ title: 'Supprimer article des DEUX stocks', message: `Supprimer "${name}" définitivement des stocks VSAV ET Pharmacie ? Cette action est irréversible.` })) {
                     await database.ref(`stocks/pompier/${name}`).remove();
                     await database.ref(`stocks/pharmacie/${name}`).remove();
-                    addLogEntry(`Stock Général`, `Suppression de '${name}' des deux stocks par ${currentUser}`);
-                    showMessage(`Article "${name}" supprimé des deux stocks.`, 'success');
+                    addLogEntry(`Suppression Article Stock (Global)`, `Suppression de '${name}' des stocks VSAV et Pharmacie par ${currentUser}`);
+                    showMessage(`Article "${name}" supprimé des deux stocks (VSAV et Pharmacie).`, 'success');
                 }
             });
-            if (viewType === 'pharmacie') {
-                cardsContainer.querySelectorAll('.transfer-stock-btn').forEach(btn => btn.onclick = (e) => {
-                    const name = e.currentTarget.closest('.stock-card').dataset.name;
-                    handleStockTransfer(name);
-                });
-            }
+           
+            cardsContainer.querySelectorAll('.transfer-stock-btn').forEach(btn => btn.onclick = (e) => { 
+                const name = e.currentTarget.closest('.stock-card').dataset.name;
+                handleStockTransfer(name);
+            });
         }
     }
+
+    async function handleEditVSAVStock(editButton) {
+        const card = editButton.closest('.stock-card');
+        const itemName = card.dataset.name;
+        
+        const password = await showCustomDialog({
+            title: 'Modifier Stock VSAV',
+            message: `Entrez le mot de passe pharmacie (${PHARMACY_PASSWORD}) pour modifier le stock VSAV de "${itemName}".`,
+            type: 'prompt',
+            inputType: 'password'
+        });
+
+        if (password === PHARMACY_PASSWORD) {
+            card.querySelector('.stock-quantity-input').readOnly = false;
+            card.querySelector('.stock-notes-input').readOnly = false;
+
+            const qtyGroup = card.querySelector('.stock-qty-group');
+            // Add +/- buttons if not already there
+            if (!qtyGroup.querySelector('.stock-card-qty-adjust')) {
+                const decrementBtn = document.createElement('button');
+                decrementBtn.type = 'button';
+                decrementBtn.className = 'qty-adjust-btn stock-card-qty-adjust';
+                decrementBtn.dataset.action = 'decrement';
+                decrementBtn.textContent = '-';
+                qtyGroup.insertBefore(decrementBtn, qtyGroup.firstChild);
+
+                const incrementBtn = document.createElement('button');
+                incrementBtn.type = 'button';
+                incrementBtn.className = 'qty-adjust-btn stock-card-qty-adjust';
+                incrementBtn.dataset.action = 'increment';
+                incrementBtn.textContent = '+';
+                qtyGroup.appendChild(incrementBtn);
+            }
+
+
+            card.querySelector('.edit-vsav-stock-btn').style.display = 'none';
+            card.querySelector('.save-vsav-stock-btn').style.display = 'inline-flex';
+            card.querySelector('.cancel-vsav-stock-edit-btn').style.display = 'inline-flex';
+        } else if (password !== null) {
+            showMessage('Mot de passe incorrect.', 'error');
+        }
+    }
+
+    async function handleSaveVSAVStockChanges(saveButton) {
+        const card = saveButton.closest('.stock-card');
+        const itemName = card.dataset.name;
+        const newQuantity = parseInt(card.querySelector('.stock-quantity-input').value, 10);
+        const newNotes = card.querySelector('.stock-notes-input').value;
+
+        if (isNaN(newQuantity) || newQuantity < 0) {
+            showMessage('Quantité invalide pour le stock VSAV.', 'error');
+            return;
+        }
+
+        try {
+            await database.ref(`stocks/pompier/${itemName}`).update({ quantity: newQuantity, notes: newNotes });
+            addLogEntry('Modification Stock VSAV (Admin Pharmacie)', `Article '${itemName}' stock VSAV modifié (Qté: ${newQuantity}, Notes: ${newNotes || 'aucune'}) par ${currentUser}.`);
+            showMessage(`Stock VSAV pour "${itemName}" sauvegardé avec succès.`, 'success');
+            
+            card.dataset.originalQuantity = newQuantity; // Update original for subsequent cancels
+            card.dataset.originalNotes = newNotes;
+
+            // Revert to read-only state
+            card.querySelector('.stock-quantity-input').readOnly = true;
+            card.querySelector('.stock-notes-input').readOnly = true;
+            
+            card.querySelectorAll('.stock-card-qty-adjust').forEach(btn => btn.remove());
+
+
+            card.querySelector('.edit-vsav-stock-btn').style.display = 'inline-flex';
+            card.querySelector('.save-vsav-stock-btn').style.display = 'none';
+            card.querySelector('.cancel-vsav-stock-edit-btn').style.display = 'none';
+
+        } catch (error) {
+            showMessage(`Erreur lors de la sauvegarde du stock VSAV: ${error.message}`, 'error');
+        }
+    }
+
+    function handleCancelVSAVStockEdit(cancelButton) {
+        const card = cancelButton.closest('.stock-card');
+        const originalQuantity = card.dataset.originalQuantity;
+        const originalNotes = card.dataset.originalNotes;
+
+        card.querySelector('.stock-quantity-input').value = originalQuantity;
+        card.querySelector('.stock-notes-input').value = originalNotes;
+
+        card.querySelector('.stock-quantity-input').readOnly = true;
+        card.querySelector('.stock-notes-input').readOnly = true;
+        
+        card.querySelectorAll('.stock-card-qty-adjust').forEach(btn => btn.remove());
+
+
+        card.querySelector('.edit-vsav-stock-btn').style.display = 'inline-flex';
+        card.querySelector('.save-vsav-stock-btn').style.display = 'none';
+        card.querySelector('.cancel-vsav-stock-edit-btn').style.display = 'none';
+        showMessage('Modification du stock VSAV annulée.', 'info');
+    }
+
     
-    async function handleStockTransfer(itemName) {
+    async function handleStockTransfer(itemName) { 
         const currentPharmaQty = pharmaStock[itemName]?.quantity || 0;
-        if (currentPharmaQty <= 0) return showMessage(`Le stock de "${itemName}" dans la pharmacie est vide.`, 'error');
+        if (currentPharmaQty <= 0) return showMessage(`Le stock de "${itemName}" dans la pharmacie est vide. Transfert impossible.`, 'error');
+        
         const qtyToTransferStr = await showCustomDialog({
-            title: `Transfert de "${itemName}"`,
-            message: `Stock Pharmacie actuel: ${currentPharmaQty}. Entrez la quantité à transférer vers le stock VSAV.`,
+            title: `Transfert de "${itemName}" (Pharma vers VSAV)`,
+            message: `Stock Pharmacie actuel pour "${itemName}": ${currentPharmaQty}.\nEntrez la quantité à transférer vers le stock VSAV.`,
             type: 'prompt', inputType: 'number', defaultValue: '1'
         });
+
         if (qtyToTransferStr === null) return; 
         const qty = parseInt(qtyToTransferStr, 10);
-        if (isNaN(qty) || qty <= 0) return showMessage('Quantité invalide.', 'error');
+
+        if (isNaN(qty) || qty <= 0) return showMessage('Quantité de transfert invalide.', 'error');
         if (qty > currentPharmaQty) return showMessage('La quantité à transférer ne peut pas dépasser le stock pharmacie actuel.', 'error');
+
+        loaderModal.classList.add('visible');
         try {
+            
             await database.ref(`stocks/pharmacie/${itemName}/quantity`).set(firebase.database.ServerValue.increment(-qty));
+            
+            
             const pompierItemRef = database.ref(`stocks/pompier/${itemName}`);
             const pompierItemSnapshot = await pompierItemRef.once('value');
-            if (pompierItemSnapshot.exists()) {
+            if (pompierItemSnapshot.exists()) { 
                 await pompierItemRef.child('quantity').set(firebase.database.ServerValue.increment(qty));
-            } else {
-                await pompierItemRef.set({ quantity: qty, notes: 'Transféré depuis pharmacie' });
+            } else { 
+                await pompierItemRef.set({ quantity: qty, notes: 'Transféré depuis stock pharmacie' });
             }
-            addLogEntry('Transfert Stock', `${qty} x '${itemName}' de Pharmacie vers VSAV par ${currentUser}.`);
-            showMessage(`Transfert de ${qty} x "${itemName}" effectué.`, 'success');
+            addLogEntry('Transfert Stock (Pharma->VSAV)', `${qty} x '${itemName}' transféré de Pharmacie vers VSAV par ${currentUser}.`);
+            showMessage(`Transfert de ${qty} x "${itemName}" de la Pharmacie vers le VSAV effectué.`, 'success');
         } catch (error) {
-            showMessage(`Erreur lors du transfert : ${error.message}`, 'error');
-            addLogEntry('Erreur Transfert Stock', `Échec transfert ${itemName}: ${error.message}`);
+            showMessage(`Erreur lors du transfert de stock : ${error.message}`, 'error');
+            addLogEntry('Erreur Transfert Stock', `Échec transfert ${itemName} (Pharma->VSAV): ${error.message}`);
+        } finally {
+            loaderModal.classList.remove('visible');
         }
     }
 
@@ -1282,30 +1751,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = newUnifiedStockItemNameModalInput.value.trim();
         const quantity = parseInt(newUnifiedStockItemQtyModalInput.value, 10);
         const targetStock = newUnifiedStockTargetModalSelect.value; 
+        
         if (!name) return showMessage("Le nom de l'article ne peut pas être vide.", "error");
-        if (isNaN(quantity) || quantity < 0) return showMessage("La quantité ne peut pas être négative.", "error");
-        const combinedStock = { ...pompierStock, ...pharmaStock };
-        if (Object.keys(combinedStock).some(existingName => existingName.toLowerCase() === name.toLowerCase())) {
-             return showMessage(`L'article "${name}" (ou une forme similaire) existe déjà. Modifiez l'existant.`, "error");
+        if (isNaN(quantity) || quantity < 0) return showMessage("La quantité initiale ne peut pas être négative.", "error");
+
+        const combinedStockKeys = [...new Set([...Object.keys(pompierStock), ...Object.keys(pharmaStock)])];
+        if (combinedStockKeys.some(existingName => existingName.toLowerCase() === name.toLowerCase())) {
+             return showMessage(`L'article "${name}" (ou une variation de casse) existe déjà dans l'un des stocks. Veuillez modifier l'article existant ou choisir un autre nom.`, "error");
         }
-        const updatePompier = {};
-        const updatePharmacie = {};
+
+        const updates = {};
+        const notes = 'Nouvel article ajouté via modal';
+
         if (targetStock === 'pompier') {
-            updatePompier[`stocks/pompier/${name}`] = { quantity: quantity, notes: 'Nouvel article' };
-            updatePharmacie[`stocks/pharmacie/${name}`] = { quantity: 0, notes: 'Nouvel article (via ajout VSAV)' };
+            updates[`stocks/pompier/${name}`] = { quantity: quantity, notes: notes };
+            updates[`stocks/pharmacie/${name}`] = { quantity: 0, notes: `${notes} (créé car ajouté au VSAV)` };
         } else { 
-            updatePharmacie[`stocks/pharmacie/${name}`] = { quantity: quantity, notes: 'Nouvel article' };
-            updatePompier[`stocks/pompier/${name}`] = { quantity: 0, notes: 'Nouvel article (via ajout Pharmacie)' };
+            updates[`stocks/pharmacie/${name}`] = { quantity: quantity, notes: notes };
+            updates[`stocks/pompier/${name}`] = { quantity: 0, notes: `${notes} (créé car ajouté à la Pharmacie)` };
         }
-        database.ref().update({ ...updatePompier, ...updatePharmacie })
+
+        database.ref().update(updates) 
             .then(() => {
-                addLogEntry(`Stock Général`, `Création de '${name}' (Initial: ${quantity} dans ${targetStock}) par ${currentUser}`);
-                showMessage(`'${name}' ajouté avec ${quantity} unité(s) au stock ${targetStock}.`, 'success');
+                addLogEntry(`Création Article Stock (Global)`, `Création de '${name}' (Initial: ${quantity} dans ${targetStock}, 0 dans l'autre) par ${currentUser}`);
+                showMessage(`L'article '${name}' a été ajouté avec ${quantity} unité(s) au stock ${targetStock === 'pompier' ? 'VSAV' : 'Pharmacie'} (et initialisé à 0 dans l'autre stock).`, 'success');
                 newUnifiedStockItemNameModalInput.value = '';
-                newUnifiedStockItemQtyModalInput.value = '0';
+                newUnifiedStockItemQtyModalInput.value = '0'; 
                 addStockItemModal.classList.remove('visible');
             })
-            .catch(error => showMessage(`Erreur lors de l'ajout: ${error.message}`, 'error'));
+            .catch(error => showMessage(`Erreur lors de l'ajout de l'article: ${error.message}`, 'error'));
     }
 
     function displayJournal() {
@@ -1319,21 +1793,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return true;
             })
-            .sort(([, a], [, b]) => b.timestamp - a.timestamp);
+            .sort(([, a], [, b]) => b.timestamp - a.timestamp); 
+
         if (filteredLog.length === 0) {
-            journalTableBody.innerHTML = `<tr><td colspan="4" class="empty-view-message">Aucune entrée ${searchTerm ? 'pour cette recherche' : ''}.</td></tr>`;
+            journalTableBody.innerHTML = `<tr><td colspan="4" class="empty-view-message">Aucune entrée dans le journal ${searchTerm ? 'pour cette recherche' : ''}.</td></tr>`;
             return;
         }
         journalTableBody.innerHTML = filteredLog.map(([, log]) => `
                 <tr>
                     <td>${new Date(log.timestamp).toLocaleString('fr-FR', {dateStyle: 'short', timeStyle: 'medium'})}</td>
-                    <td>${log.user}</td>
-                    <td>${log.action}</td>
-                    <td>${log.details}</td>
+                    <td>${log.user || 'N/A'}</td>
+                    <td>${log.action || 'N/A'}</td>
+                    <td>${log.details || 'N/A'}</td>
                 </tr>
             `).join('');
     }
 
+    function addManualCommandItemRow(item = { name: '', quantity: 1 }) {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('manual-command-item-row'); 
+        itemDiv.innerHTML = `
+            <div class="form-group"> <label>Nom du matériel</label>
+                <input type="text" class="manual-command-item-name" list="stockDatalist" placeholder="Nom du matériel..." value="${item.name}">
+            </div>
+            <div class="form-group"> <label>Quantité</label>
+                <div class="quantity-input-group">
+                    <button type="button" class="qty-adjust-btn" data-action="decrement">-</button>
+                    <input type="number" class="manual-command-item-qty" placeholder="Qté" min="1" value="${item.quantity}" step="1">
+                    <button type="button" class="qty-adjust-btn" data-action="increment">+</button>
+                </div>
+            </div>
+            <button type="button" class="btn-icon-action icon-danger remove-manual-command-item-btn" title="Supprimer cet article">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        manualCommandItemsContainer.appendChild(itemDiv);
+        itemDiv.querySelector('.remove-manual-command-item-btn').addEventListener('click', () => {
+            itemDiv.remove();
+            if (manualCommandItemsContainer.children.length === 0) {
+                addManualCommandItemRow();
+            }
+        });
+    }
+    
     function displayCommandes() {
         const searchTerm = (pharmacySearchInput.value || '').toLowerCase();
         let container;
@@ -1346,83 +1848,136 @@ document.addEventListener('DOMContentLoaded', () => {
             container.style.display = 'grid'; 
             isArchivedView = false;
             if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = isPharmacyAuthenticated ? 'flex' : 'none';
-            fabAddManualCommand.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'block' : 'none';
-
+            fabAddManualCommand.style.display = (isPharmacyAuthenticated && window.innerWidth <= 768) ? 'flex' : 'none';
         } else { 
             container = archivedCommandesCards;
             if (currentCommandesCards) currentCommandesCards.style.display = 'none';
             container.style.display = 'grid';
             isArchivedView = true;
             if (addCmdBtnContainerDesktop) addCmdBtnContainerDesktop.style.display = 'none'; 
-            fabAddManualCommand.style.display = 'none';
+            fabAddManualCommand.style.display = 'none'; 
         }
         container.innerHTML = ''; 
+
         const filteredCommands = Object.entries(commandLog)
             .filter(([id, cmd]) => {
                 const matchesArchiveStatus = isArchivedView ? cmd.archived === true : !cmd.archived;
                 if (!matchesArchiveStatus) return false;
-                if (searchTerm) {
+                if (searchTerm) { 
                     return (cmd.materialName?.toLowerCase().includes(searchTerm) ||
                             cmd.interventionNum?.toLowerCase().includes(searchTerm) ||
                             cmd.status?.toLowerCase().includes(searchTerm) ||
-                            cmd.orderedBy?.toLowerCase().includes(searchTerm) ||
-                            cmd.receivedBy?.toLowerCase().includes(searchTerm) ||
-                            cmd.stockedBy?.toLowerCase().includes(searchTerm) );
+                            (cmd.requestedBy && cmd.requestedBy.toLowerCase().includes(searchTerm)) ||
+                            (cmd.orderedBy && cmd.orderedBy.toLowerCase().includes(searchTerm)) ||
+                            (cmd.receivedBy && cmd.receivedBy.toLowerCase().includes(searchTerm)) ||
+                            (cmd.stockedBy && cmd.stockedBy.toLowerCase().includes(searchTerm)) ||
+                            (cmd.cancelledBy && cmd.cancelledBy.toLowerCase().includes(searchTerm)) );
                 }
                 return true;
             })
             .sort(([, a], [, b]) => b.createdAt - a.createdAt);
+
         if (filteredCommands.length === 0) {
             container.innerHTML = `<p class="empty-view-message">Aucune commande ${isArchivedView ? 'archivée' : 'en cours'} ${searchTerm ? 'pour cette recherche' : ''}.</p>`;
             return;
         }
+
         filteredCommands.forEach(([id, cmd]) => {
             let cardHtml;
-            if (isArchivedView) {
+            const isCancelled = cmd.status === 'Annulée';
+            const cardClass = isCancelled ? 'command-card cancelled-command' : 'command-card';
+
+            const interventionLink = cmd.interventionId && cmd.interventionId !== 'MANUEL' && cmd.interventionNum !== 'Commande Manuelle'
+                ? `<a href="#" data-inter-id="${cmd.interventionId}">${cmd.interventionNum}</a>`
+                : cmd.interventionNum; 
+
+            if (isArchivedView) { 
+                let statusBadgeClass = 'badge-termine'; 
+                if (isCancelled) statusBadgeClass = 'badge-annulee';
+
                 cardHtml = `
-                <div class="command-card archived" data-cmd-id="${id}">
-                    <div class="command-card-header"><h3>${cmd.materialName}</h3><span class="command-quantity">Qté: ${cmd.quantityMissing}</span></div>
-                    <div class="command-card-body">
-                        <p class="command-inter-link"><ion-icon name="document-text-outline"></ion-icon>Intervention: ${cmd.interventionNum === 'Commande Manuelle' ? cmd.interventionNum : `<a href="#" data-inter-id="${cmd.interventionId}">${cmd.interventionNum}</a>`}</p>
-                        <p>Statut: <span class="status-badge badge-termine">${cmd.status || 'Rangé et Archivé'}</span></p>
-                        <div class="command-actors-readonly">
-                            <small>Demandé/Commandé par: ${cmd.requestedBy || cmd.orderedBy || 'N/A'}</small>
-                            <small>Reçu par: ${cmd.receivedBy || 'N/A'}</small>
-                            <small>Rangé par: ${cmd.stockedBy || 'N/A'}</small>
-                            <small>Archivé le: ${cmd.archivedAt ? new Date(cmd.archivedAt).toLocaleString('fr-FR') : 'N/A'}</small>
-                        </div>
+                <div class="${cardClass}" data-cmd-id="${id}">
+                    <div class="command-card-header">
+                        <h3>${cmd.materialName}</h3>
+                        <span class="command-quantity">Qté: ${cmd.quantityMissing}</span>
                     </div>
-                </div>`;
-            } else { 
-                cardHtml = `
-                <div class="command-card" data-cmd-id="${id}">
-                    <div class="command-card-header"><h3>${cmd.materialName}</h3><span class="command-quantity">Qté: ${cmd.quantityMissing}</span></div>
                     <div class="command-card-body">
-                        <p class="command-inter-link"><ion-icon name="document-text-outline"></ion-icon>Intervention: ${cmd.interventionNum === 'Commande Manuelle' ? cmd.interventionNum : `<a href="#" data-inter-id="${cmd.interventionId}">${cmd.interventionNum}</a>`}</p>
-                        <div class="form-group-card">
-                            <label for="cmd-status-${id}">Statut de la commande</label>
-                            <select id="cmd-status-${id}" class="cmd-status-select">
-                                <option value="À commander" ${cmd.status === 'À commander' ? 'selected' : ''}>À commander</option>
-                                <option value="En commande" ${cmd.status === 'En commande' ? 'selected' : ''}>En commande</option>
-                                <option value="Reçu" ${cmd.status === 'Reçu' ? 'selected' : ''}>Reçu</option>
-                            </select>
-                        </div>
-                        <div class="command-actors">
-                             <input type="text" class="cmd-user-input" data-field="orderedBy" placeholder="Commandé par..." value="${cmd.orderedBy || (cmd.status === 'À commander' && cmd.requestedBy ? cmd.requestedBy : '')}">
-                             <input type="text" class="cmd-user-input" data-field="receivedBy" placeholder="Reçu par..." value="${cmd.receivedBy || ''}">
-                             <input type="text" class="cmd-user-input" data-field="stockedBy" placeholder="Rangé par..." value="${cmd.stockedBy || ''}">
+                        <p class="command-inter-link"><ion-icon name="document-text-outline"></ion-icon>Intervention: ${interventionLink}</p>
+                        <p>Statut: <span class="status-badge ${statusBadgeClass}">${cmd.status || 'Archivé'}</span></p>
+                        <div class="command-actors-readonly">
+                            ${cmd.requestedBy ? `<small>Demandé par: ${cmd.requestedBy}</small>`:''}
+                            ${cmd.orderedBy ? `<small>Commandé par: ${cmd.orderedBy}</small>`:''}
+                            ${cmd.receivedBy ? `<small>Reçu par: ${cmd.receivedBy}</small>`:''}
+                            ${cmd.stockedBy ? `<small>Rangé par: ${cmd.stockedBy}</small>`:''}
+                            ${cmd.cancelledBy ? `<small>Annulé par: ${cmd.cancelledBy} le ${cmd.cancelledAt ? new Date(cmd.cancelledAt).toLocaleDateString('fr-FR') : 'N/A'}</small>`:''}
+                            <small>Archivé le: ${cmd.archivedAt ? new Date(cmd.archivedAt).toLocaleDateString('fr-FR') : 'N/A'}</small>
                         </div>
                     </div>
                     <div class="command-card-footer">
-                        <button class="btn-secondary save-cmd-btn" title="Enregistrer les modifications"><ion-icon name="save-outline"></ion-icon> Enregistrer</button>
-                        <button class="btn-primary archive-range-cmd-btn" title="Ranger en stock et archiver"><ion-icon name="archive-outline"></ion-icon> Ranger & Archiver</button>
+                        <button class="btn-secondary unarchive-cmd-btn"><ion-icon name="arrow-undo-outline"></ion-icon> <span class="btn-text">Désarchiver</span></button>
+                        <button class="btn-danger delete-cmd-btn"><ion-icon name="trash-outline"></ion-icon> <span class="btn-text">Supprimer</span></button>
                     </div>
                 </div>`;
+            } else { 
+                if (isCancelled) { 
+                    cardHtml = ` 
+                    <div class="${cardClass}" data-cmd-id="${id}">
+                        <div class="command-card-header"><h3>${cmd.materialName}</h3><span class="command-quantity">Qté: ${cmd.quantityMissing}</span></div>
+                        <div class="command-card-body">
+                            <p class="command-inter-link"><ion-icon name="document-text-outline"></ion-icon>Intervention: ${interventionLink}</p>
+                            <p>Statut: <span class="status-badge badge-annulee">${cmd.status}</span></p>
+                            <small>Annulé par: ${cmd.cancelledBy || 'N/A'} le ${cmd.cancelledAt ? new Date(cmd.cancelledAt).toLocaleDateString('fr-FR') : 'N/A'}</small>
+                        </div>
+                        ${ isPharmacyAuthenticated ? `
+                        <div class="command-card-footer">
+                             <button class="btn-danger delete-cmd-btn"><ion-icon name="trash-outline"></ion-icon> <span class="btn-text">Supprimer</span></button>
+                        </div>` : ''}
+                    </div>`;
+                } else {
+                    cardHtml = `
+                    <div class="${cardClass}" data-cmd-id="${id}">
+                        <div class="command-card-header">
+                            <h3>${cmd.materialName}</h3>
+                             <div class="quantity-input-group" style="max-width: 120px;">
+                                <button type="button" class="qty-adjust-btn" data-action="decrement">-</button>
+                                <input type="number" class="command-quantity-input" value="${cmd.quantityMissing}" min="1" step="1" style="font-size:0.9em; padding:0.4rem;">
+                                <button type="button" class="qty-adjust-btn" data-action="increment">+</button>
+                            </div>
+                        </div>
+                        <div class="command-card-body">
+                            <p class="command-inter-link"><ion-icon name="document-text-outline"></ion-icon>Intervention: ${interventionLink}</p>
+                            <div class="form-group-card">
+                                <label for="cmd-status-${id}">Statut de la commande</label>
+                                <select id="cmd-status-${id}" class="cmd-status-select">
+                                    <option value="À commander" ${cmd.status === 'À commander' ? 'selected' : ''}>À commander</option>
+                                    <option value="En commande" ${cmd.status === 'En commande' ? 'selected' : ''}>En commande</option>
+                                    <option value="Reçu" ${cmd.status === 'Reçu' ? 'selected' : ''}>Reçu</option>
+                                    </select>
+                            </div>
+                            <div class="command-actors">
+                                 <input type="text" class="cmd-user-input" data-field="requestedBy" placeholder="Demandé par..." value="${cmd.requestedBy || ''}" title="Demandé par">
+                                 <input type="text" class="cmd-user-input" data-field="orderedBy" placeholder="Commandé par..." value="${cmd.orderedBy || ''}" title="Commandé par">
+                                 <input type="text" class="cmd-user-input" data-field="receivedBy" placeholder="Reçu par..." value="${cmd.receivedBy || ''}" title="Reçu par">
+                                 <input type="text" class="cmd-user-input" data-field="stockedBy" placeholder="Rangé par..." value="${cmd.stockedBy || ''}" title="Rangé par (avant archivage)">
+                            </div>
+                        </div>
+                        <div class="command-card-footer">
+                            <button class="btn-secondary save-cmd-btn" title="Enregistrer les modifications de cette commande"><ion-icon name="save-outline"></ion-icon> <span class="btn-text">Enregistrer</span></button>
+                            <button class="btn-primary archive-range-cmd-btn" title="Ranger en stock Pharmacie et archiver la commande"><ion-icon name="archive-outline"></ion-icon> <span class="btn-text">Ranger & Archiver</span></button>
+                            <button class="btn-danger cancel-cmd-btn" title="Annuler cette commande"><ion-icon name="close-circle-outline"></ion-icon> <span class="btn-text">Annuler Commande</span></button>
+                        </div>
+                    </div>`;
+                }
             }
             container.innerHTML += cardHtml;
         });
+
         container.querySelectorAll('.save-cmd-btn').forEach(btn => btn.addEventListener('click', handleSaveCommand));
         container.querySelectorAll('.archive-range-cmd-btn').forEach(btn => btn.addEventListener('click', handleArchiveAndStockCommand));
+        container.querySelectorAll('.cancel-cmd-btn').forEach(btn => btn.addEventListener('click', handleCancelCommand)); 
+        container.querySelectorAll('.unarchive-cmd-btn').forEach(btn => btn.addEventListener('click', handleUnarchiveCommand));
+        container.querySelectorAll('.delete-cmd-btn').forEach(btn => btn.addEventListener('click', handleDeleteCommand));
+        
         container.querySelectorAll('.command-inter-link a').forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
@@ -1437,8 +1992,16 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleSaveCommand(e) {
         const card = e.currentTarget.closest('.command-card');
         const cmdId = card.dataset.cmdId;
+        const newQuantity = parseInt(card.querySelector('.command-quantity-input')?.value, 10); 
+
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            return showMessage("La quantité de la commande doit être d'au moins 1.", "error");
+        }
+
         const updates = {
             status: card.querySelector('.cmd-status-select').value,
+            quantityMissing: newQuantity, 
+            requestedBy: card.querySelector('[data-field="requestedBy"]').value || '',
             orderedBy: card.querySelector('[data-field="orderedBy"]').value || '',
             receivedBy: card.querySelector('[data-field="receivedBy"]').value || '',
             stockedBy: card.querySelector('[data-field="stockedBy"]').value || '',
@@ -1446,89 +2009,263 @@ document.addEventListener('DOMContentLoaded', () => {
             updatedBy: currentUser
         };
         await database.ref(`commandes/${cmdId}`).update(updates);
-        addLogEntry('Mise à jour Commande', `Cmd ID: ${cmdId}, Statut: ${updates.status}, par ${currentUser}`);
+        addLogEntry('Mise à jour Commande', `Cmd ID: ${cmdId}, Mat: ${commandLog[cmdId]?.materialName}, Qté: ${updates.quantityMissing}, Statut: ${updates.status}, par ${currentUser}`);
         showMessage("Modifications de la commande enregistrées.", "success");
     }
     
     async function handleArchiveAndStockCommand(e) {
         const card = e.currentTarget.closest('.command-card');
         const cmdId = card.dataset.cmdId;
-        const cmdData = commandLog[cmdId];
+        const cmdData = commandLog[cmdId]; 
+
         if (!cmdData) return showMessage("Données de commande introuvables.", "error");
+
+        const currentQuantityOnCard = parseInt(card.querySelector('.command-quantity-input')?.value, 10);
+        if (isNaN(currentQuantityOnCard) || currentQuantityOnCard < 1) {
+            return showMessage("Quantité invalide sur la carte. Enregistrez d'abord la quantité.", "error");
+        }
+
         const confirmed = await showCustomDialog({
             title: "Archiver et Ranger la Commande",
-            message: `Confirmez-vous que la commande pour ${cmdData.quantityMissing} x "${cmdData.materialName}" a été reçue et rangée ? Le stock pharmacie sera mis à jour.`
+            message: `Confirmez-vous que la commande pour ${currentQuantityOnCard} x "${cmdData.materialName}" a été reçue et rangée ? Le stock pharmacie sera mis à jour avec cette quantité.`
         });
+
         if (confirmed) {
             const updates = {
                 status: 'Rangé et Archivé',
+                quantityMissing: currentQuantityOnCard, 
                 archived: true,
                 archivedAt: firebase.database.ServerValue.TIMESTAMP,
                 archivedBy: currentUser,
+                requestedBy: card.querySelector('[data-field="requestedBy"]').value || cmdData.requestedBy || '',
                 orderedBy: card.querySelector('[data-field="orderedBy"]').value || cmdData.orderedBy || '',
                 receivedBy: card.querySelector('[data-field="receivedBy"]').value || cmdData.receivedBy || currentUser, 
                 stockedBy: card.querySelector('[data-field="stockedBy"]').value || currentUser 
             };
             try {
                 await database.ref(`commandes/${cmdId}`).update(updates);
+                
                 const pharmaItemRef = database.ref(`stocks/pharmacie/${cmdData.materialName}`);
                 const pharmaItemSnapshot = await pharmaItemRef.once('value');
                 if (pharmaItemSnapshot.exists()) {
-                    await pharmaItemRef.child('quantity').set(firebase.database.ServerValue.increment(cmdData.quantityMissing));
-                } else {
-                    await pharmaItemRef.set({ quantity: cmdData.quantityMissing, notes: 'Ajout via commande' });
+                    await pharmaItemRef.child('quantity').set(firebase.database.ServerValue.increment(currentQuantityOnCard));
+                } else { 
+                    await pharmaItemRef.set({ quantity: currentQuantityOnCard, notes: 'Ajouté via commande rangée et archivée' });
                 }
-                addLogEntry('Stock Pharmacie & Archivage Cmd', `+${cmdData.quantityMissing} de '${cmdData.materialName}'. Cmd ID: ${cmdId} archivée par ${currentUser}`);
+                addLogEntry('Stock Pharmacie & Archivage Cmd', `+${currentQuantityOnCard} de '${cmdData.materialName}' au stock pharmacie. Cmd ID: ${cmdId} archivée par ${currentUser}`);
                 showMessage(`Commande archivée. Stock pharmacie pour "${cmdData.materialName}" mis à jour.`, 'success');
             } catch (error) {
-                 showMessage(`Erreur archivage/mise à jour stock: ${error.message}`, 'error');
-                 addLogEntry('Erreur Archivage Cmd', `Cmd ID: ${cmdId}, Erreur: ${error.message}`);
+                 showMessage(`Erreur lors de l'archivage et de la mise à jour du stock: ${error.message}`, 'error');
+                 addLogEntry('Erreur Archivage Cmd & Stock', `Cmd ID: ${cmdId}, Erreur: ${error.message}`);
+            }
+        }
+    }
+
+    async function handleCancelCommand(e) {
+        const card = e.currentTarget.closest('.command-card');
+        const cmdId = card.dataset.cmdId;
+        const cmdData = commandLog[cmdId];
+
+        if (!cmdData) return showMessage("Données de commande introuvables.", "error");
+        if (cmdData.archived || cmdData.status === 'Annulée') { 
+            return showMessage("Cette commande est déjà archivée ou annulée.", "info");
+        }
+
+        const confirmed = await showCustomDialog({
+            title: "Annuler la Commande",
+            message: `Voulez-vous vraiment annuler la commande pour ${cmdData.quantityMissing} x "${cmdData.materialName}" ?\nSi cette commande provient d'une intervention, le statut du matériel concerné dans l'intervention sera réinitialisé.`
+        });
+
+        if (confirmed) {
+            loaderModal.classList.add('visible');
+            try {
+                const updates = {
+                    status: 'Annulée',
+                    archived: true, 
+                    cancelledAt: firebase.database.ServerValue.TIMESTAMP,
+                    cancelledBy: currentUser,
+                    archivedAt: firebase.database.ServerValue.TIMESTAMP, 
+                    archivedBy: currentUser,
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                    updatedBy: currentUser
+                };
+                await database.ref(`commandes/${cmdId}`).update(updates);
+                let logDetails = `Commande ID: ${cmdId} (${cmdData.materialName}) annulée par ${currentUser}.`;
+
+                if (cmdData.interventionId && cmdData.interventionId !== 'MANUEL' && cmdData.materialName) {
+                    const interSnapshot = await database.ref(`interventions/${cmdData.interventionId}`).once('value');
+                    const inter = interSnapshot.val();
+                    if (inter && inter.materiels && inter.materiels[cmdData.materialName]) {
+                        const materialUpdates = {};
+                        // When a command is cancelled, the material status in intervention should reflect it needs re-evaluation
+                        materialUpdates[`interventions/${cmdData.interventionId}/materiels/${cmdData.materialName}/pharma_status`] = 'À vérifier par pharmacie'; 
+                        // We don't necessarily reset reappro_status here, as the firefighter's assessment of need might still be valid.
+                        // The pharmacy will see "À vérifier par pharmacie" and can decide the next step.
+                        await database.ref().update(materialUpdates);
+                        logDetails += ` Statut matériel pharmacie pour '${cmdData.materialName}' réinitialisé à 'À vérifier par pharmacie' pour inter n°${cmdData.interventionNum}.`;
+                    }
+                }
+                addLogEntry('Annulation Commande', logDetails);
+                showMessage("Commande annulée et archivée.", "success");
+            } catch (error) {
+                showMessage(`Erreur lors de l'annulation de la commande: ${error.message}`, 'error');
+                addLogEntry('Erreur Annulation Commande', `Cmd ID: ${cmdId}, Erreur: ${error.message}`);
+            } finally {
+                loaderModal.classList.remove('visible');
+            }
+        }
+    }
+
+    async function handleUnarchiveCommand(e) {
+        const card = e.target.closest('.command-card');
+        const cmdId = card.dataset.cmdId;
+        const cmdData = commandLog[cmdId];
+
+        if (!cmdData) return showMessage("Données de commande introuvables.", "error");
+        if (!cmdData.archived) return showMessage("Cette commande n'est pas archivée.", "info");
+
+
+        const confirmed = await showCustomDialog({
+            title: "Désarchiver la Commande",
+            message: `Voulez-vous vraiment désarchiver la commande pour "${cmdData.materialName}" ?`
+        });
+
+        if (confirmed) {
+            const updates = {
+                archived: false,
+                archivedAt: null,
+                archivedBy: null,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                updatedBy: currentUser
+            };
+
+            if (cmdData.status === 'Rangé et Archivé') {
+                updates.status = 'Reçu'; 
+            } 
+            
+            await database.ref(`commandes/${cmdId}`).update(updates);
+            addLogEntry('Désarchivage Commande', `Cmd ID: ${cmdId} (${cmdData.materialName}) désarchivée par ${currentUser}.`);
+            showMessage("Commande désarchivée.", "success");
+        }
+    }
+
+    async function handleDeleteCommand(e) {
+        const card = e.target.closest('.command-card');
+        const cmdId = card.dataset.cmdId;
+        const cmdData = commandLog[cmdId];
+
+        if (!cmdData) return showMessage("Données de commande introuvables.", "error");
+
+        const confirmed = await showCustomDialog({
+            title: 'Suppression Définitive de Commande',
+            message: `Supprimer définitivement la commande pour "${cmdData.materialName}" ? Cette action est irréversible.`,
+        });
+
+        if (confirmed) {
+            const password = await showCustomDialog({
+                title: 'Accès Sécurisé (Admin)',
+                message: 'Entrez le mot de passe administrateur pour confirmer la suppression de la commande.',
+                type: 'prompt', inputType: 'password'
+            });
+
+            if (password === DELETE_PASSWORD) {
+                await database.ref(`commandes/${cmdId}`).remove();
+                addLogEntry('Suppression Définitive Cmd', `Commande ID: ${cmdId} (${cmdData.materialName}) supprimée par ${currentUser} (Admin)`);
+                showMessage('Commande supprimée définitivement.', 'success');
+            } else if (password !== null) {
+                showMessage('Mot de passe administrateur incorrect. La commande n\'a pas été supprimée.', 'error');
             }
         }
     }
     
-    function handleManualCommandViaModal() {
-        const materialName = newCommandMaterialNameModalInput.value.trim();
-        const quantity = parseInt(newCommandQuantityModalInput.value, 10);
-        if (!materialName || !quantity || quantity < 1) {
-            return showMessage("Veuillez entrer un nom de matériel et une quantité valide (> 0).", "error");
+    async function handleManualCommandViaModal() {
+        const itemRows = manualCommandItemsContainer.querySelectorAll('.manual-command-item-row');
+        if (itemRows.length === 0) {
+            return showMessage("Veuillez ajouter au moins un article à la commande.", "error");
         }
-        database.ref('commandes').push().set({
-            interventionId: 'MANUEL', 
-            interventionNum: 'Commande Manuelle',
-            materialName: materialName,
-            quantityMissing: quantity,
-            status: 'À commander', 
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            requestedBy: currentUser, 
-            orderedBy: currentUser, 
-            archived: false
-        }).then(() => {
-            showMessage("Commande manuelle créée.", "success");
-            addLogEntry('Création Commande Manuelle', `${quantity} x '${materialName}' par ${currentUser}`);
-            newCommandMaterialNameModalInput.value = '';
-            newCommandQuantityModalInput.value = '1';
+
+        loaderModal.classList.add('visible');
+        let commandsCreatedCount = 0;
+        let errorsEncountered = 0;
+        const commandPromises = [];
+
+        for (const row of itemRows) {
+            const materialNameInput = row.querySelector('.manual-command-item-name');
+            const quantityInput = row.querySelector('.manual-command-item-qty');
+            const materialName = materialNameInput.value.trim();
+            const quantity = parseInt(quantityInput.value, 10);
+
+            if (!materialName || !quantity || quantity < 1) {
+                materialNameInput.style.borderColor = !materialName ? 'red' : '';
+                quantityInput.style.borderColor = (!quantity || quantity < 1) ? 'red' : '';
+                errorsEncountered++;
+                continue; 
+            }
+            materialNameInput.style.borderColor = '';
+            quantityInput.style.borderColor = '';
+
+            const commandData = {
+                interventionId: 'MANUEL', 
+                interventionNum: 'Commande Manuelle',
+                materialName: materialName,
+                quantityMissing: quantity,
+                status: 'À commander', 
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                requestedBy: currentUser, 
+                orderedBy: currentUser, 
+                archived: false
+            };
+            commandPromises.push(
+                database.ref('commandes').push().set(commandData)
+                    .then(() => {
+                        commandsCreatedCount++;
+                        addLogEntry('Création Commande Manuelle', `${quantity} x '${materialName}' par ${currentUser}`);
+                    })
+                    .catch(err => {
+                        errorsEncountered++;
+                        console.error("Erreur création commande manuelle pour", materialName, err);
+                        showMessage(`Erreur création commande pour ${materialName}: ${err.message}`, "error");
+                    })
+            );
+        }
+
+        await Promise.all(commandPromises);
+        loaderModal.classList.remove('visible');
+
+        if (commandsCreatedCount > 0) {
+            showMessage(`${commandsCreatedCount} commande(s) manuelle(s) créée(s) avec succès.`, 'success');
+        }
+        if (errorsEncountered > 0) {
+            showMessage(`${errorsEncountered} erreur(s) lors de la création de certaines commandes. Vérifiez la console.`, 'error');
+        } else if (commandsCreatedCount === 0 && itemRows.length > 0) {
+             showMessage("Veuillez corriger les erreurs dans les articles de la commande.", "error");
+        }
+
+
+        if (errorsEncountered === 0 && commandsCreatedCount > 0) {
+            manualCommandItemsContainer.innerHTML = ''; 
+            addManualCommandItemRow(); 
             addManualCommandModal.classList.remove('visible');
-        }).catch(err => showMessage("Erreur création commande: " + err.message, "error"));
+        }
     }
     
     async function handleClearJournal() {
         const confirmed = await showCustomDialog({
-            title: "Effacer le Journal",
-            message: "Cette action est irréversible et supprimera toutes les entrées du journal. Continuer ?"
+            title: "Effacer le Journal d'Activité",
+            message: "Cette action est irréversible et supprimera toutes les entrées du journal. Voulez-vous continuer ?"
         });
         if (confirmed) {
             const password = await showCustomDialog({
-                title: 'Accès Sécurisé',
-                message: 'Entrez le mot de passe administrateur pour confirmer.',
+                title: 'Accès Sécurisé (Admin)',
+                message: 'Entrez le mot de passe administrateur pour confirmer la suppression du journal.',
                 type: 'prompt', inputType: 'password'
             });
             if (password === DELETE_PASSWORD) {
                 await database.ref('log').remove();
-                showMessage("Journal d'activité effacé.", 'success');
-                console.log(`Journal effacé par ${currentUser} le ${new Date().toLocaleString()}`);
-            } else if (password !== null) {
-                showMessage('Mot de passe incorrect. Journal non effacé.', 'error');
+                showMessage("Journal d'activité effacé avec succès.", 'success');
+                addLogEntry('Journal Effacé', `Journal d'activité effacé par ${currentUser} (Admin)`);
+            } else if (password !== null) { 
+                showMessage('Mot de passe administrateur incorrect. Le journal n\'a pas été effacé.', 'error');
             }
         }
     }
@@ -1554,41 +2291,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateStockDatalist() {
-        const combinedStock = { ...pompierStock, ...pharmaStock }; 
-        const sortedStockNames = Object.keys(combinedStock).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-        stockDatalist.innerHTML = sortedStockNames.map(item => `<option value="${item}"></option>`).join('');
+        const combinedStockNames = [...new Set([...Object.keys(pompierStock), ...Object.keys(pharmaStock)])]
+            .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        
+        stockDatalist.innerHTML = combinedStockNames.map(item => `<option value="${item}"></option>`).join('');
     }
 
     function updateMaterielsTagDisplay() {
         materielsList.innerHTML = materiels.map(mat => 
-            `<span class="tag-item">${mat.name} (x${mat.qty})<button type="button" class="close-tag" data-materiel-name="${mat.name}" title="Retirer">&times;</button></span>`
+            `<span class="tag-item">${mat.name} (x${mat.qty})<button type="button" class="close-tag" data-materiel-name="${mat.name}" title="Retirer ce matériel">&times;</button></span>`
         ).join('');
         materielsList.querySelectorAll('.close-tag').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const materialNameToRemove = e.target.dataset.materielName;
                 materiels = materiels.filter(m => m.name !== materialNameToRemove);
-                updateMaterielsTagDisplay();
+                updateMaterielsTagDisplay(); 
             });
         });
     }
     
     function handlePhotoUpload(e) {
         const files = Array.from(e.target.files);
-        if (photosBase64.length + files.length > 5) { 
-            showMessage("Maximum 5 photos.", "error");
+        const maxPhotos = 5;
+        const maxSizeMB = 2; 
+
+        if (photosBase64.length + files.length > maxPhotos) { 
+            showMessage(`Vous ne pouvez télécharger qu'un maximum de ${maxPhotos} photos. Vous en avez déjà ${photosBase64.length}.`, "error");
+            e.target.value = null; 
             return;
         }
+
         files.forEach(file => {
-            if (file.size > 2 * 1024 * 1024) { 
-                showMessage(`Fichier ${file.name} trop volumineux (max 2MB).`, "error");
-                return;
+            if (file.size > maxSizeMB * 1024 * 1024) { 
+                showMessage(`Le fichier ${file.name} est trop volumineux (max ${maxSizeMB}MB). Il ne sera pas ajouté.`, "error");
+                return; 
             }
+            if (!file.type.startsWith('image/')) {
+                showMessage(`Le fichier ${file.name} n'est pas une image valide. Il ne sera pas ajouté.`, "error");
+                return; 
+            }
+
             const reader = new FileReader();
             reader.onload = (event) => {
-                photosBase64.push(event.target.result);
-                updatePhotosDisplay();
+                if (photosBase64.length < maxPhotos) { 
+                    photosBase64.push(event.target.result);
+                    updatePhotosDisplay();
+                }
             };
-            reader.onerror = () => showMessage(`Erreur lecture fichier ${file.name}.`, "error");
+            reader.onerror = () => showMessage(`Erreur lors de la lecture du fichier ${file.name}.`, "error");
             reader.readAsDataURL(file);
         });
         e.target.value = null; 
@@ -1597,47 +2347,61 @@ document.addEventListener('DOMContentLoaded', () => {
     function updatePhotosDisplay() {
         photoPreview.innerHTML = photosBase64.map((photo, index) => 
             `<div class="photo-thumb-wrapper">
-                <img src="${photo}" class="photo-thumb" alt="Aperçu ${index + 1}">
-                <button type="button" class="remove-photo-btn" data-index="${index}" title="Supprimer">&times;</button>
+                <img src="${photo}" class="photo-thumb" alt="Aperçu photo ${index + 1}" data-index="${index}">
+                <button type="button" class="remove-photo-btn" data-index="${index}" title="Supprimer cette photo">&times;</button>
             </div>`
         ).join('');
+
         document.querySelectorAll('.remove-photo-btn').forEach(btn => {
             btn.addEventListener('click', (e) => { 
                 e.stopPropagation(); 
-                photosBase64.splice(e.target.dataset.index, 1); 
+                const indexToRemove = parseInt(e.target.dataset.index, 10);
+                photosBase64.splice(indexToRemove, 1); 
                 updatePhotosDisplay(); 
             });
         });
-        document.querySelectorAll('.photo-thumb').forEach((thumb, index) => {
-            thumb.addEventListener('click', () => showFullImage(photosBase64[index]));
+        document.querySelectorAll('.photo-thumb').forEach(thumb => { 
+            thumb.addEventListener('click', (e) => showFullImage(photosBase64[parseInt(e.target.dataset.index, 10)]));
         });
     }
 
     function showFullImage(src) {
+        if (!src) return;
         fullImagePreview.src = src;
         imagePreviewModal.classList.add('visible');
     }
 
-    function showMessage(message, type) {
+    function showMessage(message, type = 'info') { 
         const container = document.createElement('div');
-        container.className = `message-container ${type}`;
-        container.innerHTML = `<p>${message}</p><button class="close-message">&times;</button>`;
+        container.className = `message-container ${type}`; 
+        container.innerHTML = `<p>${message}</p><button class="close-message" title="Fermer">&times;</button>`;
         document.body.appendChild(container);
+        
         const closeMsgBtn = container.querySelector('.close-message');
+        
         const autoCloseTimeout = setTimeout(() => {
-            if (document.body.contains(container)) document.body.removeChild(container);
+            if (document.body.contains(container)) {
+                container.style.opacity = '0'; 
+                setTimeout(() => document.body.removeChild(container), 300); 
+            }
         }, 4000);
+
         closeMsgBtn.addEventListener('click', () => {
-            clearTimeout(autoCloseTimeout);
-            if (document.body.contains(container)) document.body.removeChild(container);
+            clearTimeout(autoCloseTimeout); 
+            if (document.body.contains(container)) {
+                container.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(container), 300);
+            }
         });
     }
 
-    function formatDate(dateStr) {
+    function formatDate(dateStr) { 
         if (!dateStr) return 'N/A';
-        if (dateStr.includes('-')) {
-            const [year, month, day] = dateStr.split('-');
-            return `${day}/${month}/${year}`;
+        if (dateStr.includes('-')) { 
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
         }
         return dateStr; 
     }
@@ -1655,43 +2419,53 @@ document.addEventListener('DOMContentLoaded', () => {
         const paginationUl = document.getElementById(elementId);
         if (!paginationUl) return;
         paginationUl.innerHTML = ''; 
+        
         if (totalPages <= 1) return; 
+        
         const createPageLink = (page, content, isDisabled = false, isActive = false) => {
             const li = document.createElement('li');
             li.className = `page-item ${isDisabled ? 'disabled' : ''} ${isActive ? 'active' : ''}`;
             const a = document.createElement('a');
             a.className = 'page-link';
-            a.href = '#';
+            a.href = '#'; 
             a.innerHTML = content; 
-            a.dataset.page = page;
+            if (!isDisabled) a.dataset.page = page; 
             li.appendChild(a);
             return li;
         };
+
         paginationUl.appendChild(createPageLink(currentPage - 1, '<i class="bi bi-chevron-left"></i>', currentPage === 1));
-        const MAX_PAGES_SHOWN = 5;
+
+        const MAX_PAGES_SHOWN = 5; 
         let startPage = Math.max(1, currentPage - Math.floor(MAX_PAGES_SHOWN / 2));
         let endPage = Math.min(totalPages, startPage + MAX_PAGES_SHOWN - 1);
-        if (endPage - startPage + 1 < MAX_PAGES_SHOWN) {
+
+        if (endPage - startPage + 1 < MAX_PAGES_SHOWN && totalPages >= MAX_PAGES_SHOWN) {
             startPage = Math.max(1, endPage - MAX_PAGES_SHOWN + 1);
         }
+        
         if (startPage > 1) {
-            paginationUl.appendChild(createPageLink(1, '1'));
-            if (startPage > 2) {
+            paginationUl.appendChild(createPageLink(1, '1')); 
+            if (startPage > 2) { 
                  const li = document.createElement('li'); li.className = 'page-item disabled';
                  li.innerHTML = `<span class="page-link">...</span>`; paginationUl.appendChild(li);
             }
         }
+
         for (let i = startPage; i <= endPage; i++) {
             paginationUl.appendChild(createPageLink(i, i, false, i === currentPage));
         }
+
         if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
+            if (endPage < totalPages - 1) { 
                 const li = document.createElement('li'); li.className = 'page-item disabled';
                 li.innerHTML = `<span class="page-link">...</span>`; paginationUl.appendChild(li);
             }
-            paginationUl.appendChild(createPageLink(totalPages, totalPages));
+            paginationUl.appendChild(createPageLink(totalPages, totalPages)); 
         }
+
         paginationUl.appendChild(createPageLink(currentPage + 1, '<i class="bi bi-chevron-right"></i>', currentPage === totalPages));
+        
         paginationUl.querySelectorAll('a.page-link').forEach(link => {
             if (!link.closest('.disabled') && !link.closest('.active')) { 
                 link.addEventListener('click', (e) => {
@@ -1702,20 +2476,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- MODAL DE SÉLECTION DE MATÉRIEL ---
+    // --- MODAL DE SÉLECTION DE MATÉRIEL (pour formulaire intervention) ---
     function populateMaterielSelectionModal(searchTerm = '') {
         materielSelectionList.innerHTML = ''; 
-        const combinedStock = { ...pompierStock, ...pharmaStock };
+        const combinedStock = { ...pompierStock, ...pharmaStock }; 
         const lowerSearchTerm = searchTerm.toLowerCase();
+        
         const sortedStockNames = Object.keys(combinedStock)
             .filter(name => name.toLowerCase().includes(lowerSearchTerm))
             .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
-        if (sortedStockNames.length === 0 && !searchTerm) {
-             materielSelectionList.innerHTML = '<p class="empty-view-message">Aucun article. Ajoutez manuellement.</p>'; return;
+        if (sortedStockNames.length === 0 && !searchTerm) { 
+             materielSelectionList.innerHTML = '<p class="empty-view-message">Aucun article en stock. Vous pouvez ajouter un matériel non listé ci-dessous.</p>'; return;
         }
-        if (sortedStockNames.length === 0 && searchTerm) {
-             materielSelectionList.innerHTML = `<p class="empty-view-message">Aucun article pour "${searchTerm}".</p>`; return;
+        if (sortedStockNames.length === 0 && searchTerm) { 
+             materielSelectionList.innerHTML = `<p class="empty-view-message">Aucun article trouvé pour "${searchTerm}". Ajoutez-le manuellement si besoin.</p>`; return;
         }
 
         sortedStockNames.forEach(name => {
@@ -1727,10 +2502,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'materiel-selection-item';
             itemDiv.innerHTML = `
-                <span>${name} <small class="stock-info">(VSAV: ${itemDetailsPompier.quantity}, Pharma: ${itemDetailsPharma.quantity})</small></span>
+                <span>${name} <small class="stock-info">(Stock VSAV: ${itemDetailsPompier.quantity}, Stock Pharmacie: ${itemDetailsPharma.quantity})</small></span>
                 <div class="quantity-input-group">
                     <button type="button" class="qty-adjust-btn" data-action="decrement">-</button>
-                    <input type="number" value="${currentQtyInModal}" min="0" data-name="${name}" placeholder="Qté">
+                    <input type="number" value="${currentQtyInModal}" min="0" data-name="${name}" placeholder="Qté" class="materiel-selection-qty-input" step="1">
                     <button type="button" class="qty-adjust-btn" data-action="increment">+</button>
                 </div>
             `;
@@ -1738,22 +2513,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const qtyInput = itemDiv.querySelector('input[type="number"]');
             qtyInput.addEventListener('change', (e) => {
-                updateTempSelectedMateriels(e.target.dataset.name, parseInt(e.target.value, 10));
+                updateTempSelectedMateriels(e.target.dataset.name, parseInt(e.target.value, 10) || 0);
             });
-            qtyInput.addEventListener('focus', () => qtyInput.select());
+            qtyInput.addEventListener('input', (e) => { 
+                 updateTempSelectedMateriels(e.target.dataset.name, parseInt(e.target.value, 10) || 0);
+            });
+            qtyInput.addEventListener('focus', () => qtyInput.select()); 
         });
     }
 
     function updateTempSelectedMateriels(itemName, newQty) {
         const index = tempSelectedMaterielsModal.findIndex(m => m.name === itemName);
-        if (newQty > 0) {
-            if (index > -1) {
+        if (newQty > 0) { 
+            if (index > -1) { 
                 tempSelectedMaterielsModal[index].qty = newQty;
-            } else {
+            } else { 
                 tempSelectedMaterielsModal.push({ name: itemName, qty: newQty });
             }
         } else { 
-            if (index > -1) {
+            if (index > -1) { 
                 tempSelectedMaterielsModal.splice(index, 1);
             }
         }
@@ -1761,10 +2539,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     openMaterielSelectionModalBtn.addEventListener('click', () => {
-        tempSelectedMaterielsModal = [...materiels.map(m => ({ ...m }))]; 
-        populateMaterielSelectionModal();
+        tempSelectedMaterielsModal = JSON.parse(JSON.stringify(materiels)); 
+        populateMaterielSelectionModal(); 
         materielSearchModalInput.value = ''; 
+        manualMaterielNameModalInput.value = ''; 
+        manualMaterielQtyModalInput.value = '1';
         materielSelectionModal.classList.add('visible');
+        materielSearchModalInput.focus();
     });
 
     materielSearchModalInput.addEventListener('input', (e) => {
@@ -1776,23 +2557,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const qty = parseInt(manualMaterielQtyModalInput.value, 10);
         if (name && qty > 0) {
             const existingIndex = tempSelectedMaterielsModal.findIndex(m => m.name.toLowerCase() === name.toLowerCase());
-            if (existingIndex > -1) {
+            if (existingIndex > -1) { 
                 tempSelectedMaterielsModal[existingIndex].qty += qty; 
-            } else {
+                showMessage(`Quantité pour "${tempSelectedMaterielsModal[existingIndex].name}" mise à jour (total: ${tempSelectedMaterielsModal[existingIndex].qty}).`, 'info');
+            } else { 
                 tempSelectedMaterielsModal.push({ name, qty });
+                showMessage(`"${name}" (x${qty}) ajouté à la sélection.`, 'info');
             }
-            showMessage(`"${name}" (x${qty}) ajouté/mis à jour.`, 'info');
             manualMaterielNameModalInput.value = '';
             manualMaterielQtyModalInput.value = '1';
             populateMaterielSelectionModal(materielSearchModalInput.value); 
+            manualMaterielNameModalInput.focus();
         } else {
-            showMessage("Nom et quantité valide requis.", "error");
+            showMessage("Nom de matériel et quantité valide (>0) requis pour l'ajout manuel.", "error");
         }
     });
 
     confirmMaterielSelectionBtn.addEventListener('click', () => {
         materiels = tempSelectedMaterielsModal.filter(m => m.qty > 0);
-        updateMaterielsTagDisplay();
+        updateMaterielsTagDisplay(); 
         materielSelectionModal.classList.remove('visible');
         tempSelectedMaterielsModal = []; 
     });
@@ -1803,40 +2586,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.body.addEventListener('click', function(e) {
-        if (e.target.classList.contains('qty-adjust-btn')) {
-            const action = e.target.dataset.action;
+        const targetButton = e.target.closest('.qty-adjust-btn');
+        if (targetButton) {
+            const action = targetButton.dataset.action;
             let inputEl;
-            if (e.target.dataset.target) { 
-                inputEl = document.getElementById(e.target.dataset.target);
-            } else if (e.target.dataset.targetClass) { 
-                 inputEl = e.target.closest('.quantity-input-group').querySelector('.' + e.target.dataset.targetClass);
-            }else { 
-                inputEl = e.target.parentElement.querySelector('input[type="number"]');
+            const card = targetButton.closest('.stock-card');
+            const isVSAVStockCardByPharmacie = card && card.dataset.stockType === 'pompier' && isPharmacyAuthenticated;
+
+
+            if (targetButton.dataset.target) { 
+                inputEl = document.getElementById(targetButton.dataset.target);
+            } else if (targetButton.dataset.targetClass) { 
+                 inputEl = targetButton.closest('.quantity-input-group').querySelector('.' + targetButton.dataset.targetClass);
+            } else { 
+                inputEl = targetButton.parentElement.querySelector('input[type="number"]');
             }
 
             if (inputEl) {
-                let currentValue = parseInt(inputEl.value, 10) || 0;
-                const min = parseInt(inputEl.min, 10);
+                // Prevent action if input is readonly (e.g. for locked VSAV stock quantity by pharmacie)
+                 if (inputEl.readOnly && (inputEl.classList.contains('mat-qty-used') || (isVSAVStockCardByPharmacie && !card.classList.contains('editing-vsav-stock')) )) {
+                    return;
+                }
+
+
+                let currentValue = parseInt(inputEl.value, 10) || 0; 
+                const min = parseInt(inputEl.min, 10); 
+                const step = parseInt(inputEl.step, 10) || 1; 
 
                 if (action === 'increment') {
-                    currentValue++;
+                    currentValue += step;
                 } else if (action === 'decrement') {
-                    currentValue--;
+                    currentValue -= step;
                 }
 
                 if (!isNaN(min) && currentValue < min) {
                     currentValue = min;
-                } else if (currentValue < 0 && isNaN(min)) { 
+                } else if (currentValue < 0 && isNaN(min) && min !== 0) { 
                     currentValue = 0;
                 }
                 
                 inputEl.value = currentValue;
 
-                if (e.target.closest('#materielSelectionList') && inputEl.dataset.name) {
+                if (targetButton.closest('#materielSelectionList') && inputEl.dataset.name) {
                     updateTempSelectedMateriels(inputEl.dataset.name, currentValue);
                 }
                 const changeEvent = new Event('change', { bubbles: true });
                 inputEl.dispatchEvent(changeEvent);
+                 const inputEvent = new Event('input', { bubbles: true }); 
+                inputEl.dispatchEvent(inputEvent);
             }
         }
     });
@@ -1844,40 +2641,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialisation ---
     function initializeApp() {
-        currentUser = sessionStorage.getItem('userName');
-        if (!currentUser && !sessionStorage.getItem('pharmaUserName')) { 
-            currentUser = prompt("Votre nom ou matricule pour suivi :", "Pompier");
+        currentUser = sessionStorage.getItem('userName'); 
+        const pharmaUser = sessionStorage.getItem('pharmaUserName'); 
+        if (pharmaUser) { 
+            currentUser = pharmaUser;
+            isPharmacyAuthenticated = true; 
+        } else if (!currentUser) { 
+            currentUser = prompt("Votre nom ou matricule pour suivi (Pompier) :", "Pompier");
             sessionStorage.setItem('userName', currentUser || "Pompier");
-        } else if (sessionStorage.getItem('pharmaUserName')) {
-            currentUser = sessionStorage.getItem('pharmaUserName'); 
-        } else {
-            currentUser = currentUser || "Pompier"; 
         }
+        currentUser = currentUser || (isPharmacyAuthenticated ? "Pharmacien" : "Pompier");
         
-        fetchData();
-        setDefaultDateTime();
+        fetchData(); 
+        setDefaultDateTime(); 
+
         setupNavEventListeners(mainNavUl);
         setupNavEventListeners(pharmacyNavUl);
         
-        const initialActiveTab = isPharmacyAuthenticated 
-            ? pharmacyNavUl.querySelector('.list.active') || pharmacyNavUl.querySelector('.list[data-view="reappro-view"]') 
-            : mainNavUl.querySelector('.list.active') || mainNavUl.querySelector('.list[data-view="current-view"]');  
-        if (initialActiveTab) {
-            const parentNav = initialActiveTab.closest('ul');
-            setActiveTab(initialActiveTab, parentNav); 
-        } else { 
-             const firstTab = isPharmacyAuthenticated ? pharmacyNavUl.querySelector('.list') : mainNavUl.querySelector('.list');
-             if (firstTab) setActiveTab(firstTab, firstTab.closest('ul'));
-        }
-
-
+        togglePharmacyMode(isPharmacyAuthenticated); 
+                                                  
         interventionForm.addEventListener('submit', handleFormSubmit);
         document.getElementById('photo').addEventListener('change', handlePhotoUpload);
         document.getElementById('resetForm').addEventListener('click', resetForm);
         
         currentSearchInput.addEventListener('input', () => { currentPage_current = 1; displayInterventions(); });
         archiveSearchInput.addEventListener('input', () => { currentPage_archive = 1; displayInterventions(); });
-        pharmacySearchInput.addEventListener('input', () => {
+        pharmacySearchInput.addEventListener('input', () => { 
             const activeViewId = document.querySelector('.view-container.visible')?.id;
             if (activeViewId === 'commandes-view') { displayCommandes(); } 
             else if (activeViewId === 'stock-unified-view') { displayUnifiedStockView(); } 
@@ -1894,9 +2683,19 @@ document.addEventListener('DOMContentLoaded', () => {
         topLoginBtn.addEventListener('click', handlePharmacyLogin);
         headerLogoutBtn.addEventListener('click', handlePharmacyLogout);
         
-        openAddManualCommandModalBtn.addEventListener('click', () => addManualCommandModal.classList.add('visible'));
-        fabAddManualCommand.addEventListener('click', () => addManualCommandModal.classList.add('visible'));
+        openAddManualCommandModalBtn.addEventListener('click', () => {
+            manualCommandItemsContainer.innerHTML = ''; 
+            addManualCommandItemRow(); 
+            addManualCommandModal.classList.add('visible');
+        });
+        fabAddManualCommand.addEventListener('click', () => {
+            manualCommandItemsContainer.innerHTML = '';
+            addManualCommandItemRow();
+            addManualCommandModal.classList.add('visible');
+        });
+        addAnotherItemToManualCommandBtn.addEventListener('click', () => addManualCommandItemRow());
         saveNewManualCommandBtn.addEventListener('click', handleManualCommandViaModal);
+
 
         openAddStockItemModalBtn.addEventListener('click', () => addStockItemModal.classList.add('visible'));
         fabAddStockItem.addEventListener('click', () => addStockItemModal.classList.add('visible'));
@@ -1906,7 +2705,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('#commandes-view .desktop-sub-nav .sub-nav-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                if (globalHeader.classList.contains('pharmacy-mode') && pharmacyHeaderSubnavContainer.style.display === 'flex' && document.querySelector('#pharmacy-header-subnav-container button[data-command-view]')) return; 
+                if (globalHeader.classList.contains('pharmacy-mode-subnav-active') && pharmacyHeaderSubnavContainer.querySelector('[data-command-view]')) return; 
 
                 document.querySelectorAll('#commandes-view .desktop-sub-nav .sub-nav-btn').forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
@@ -1916,7 +2715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.querySelectorAll('#stock-unified-view .desktop-sub-nav .sub-nav-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                 if (globalHeader.classList.contains('pharmacy-mode') && pharmacyHeaderSubnavContainer.style.display === 'flex' && document.querySelector('#pharmacy-header-subnav-container button[data-stock-type]')) return;
+                if (globalHeader.classList.contains('pharmacy-mode-subnav-active') && pharmacyHeaderSubnavContainer.querySelector('[data-stock-type]')) return;
 
                 document.querySelectorAll('#stock-unified-view .desktop-sub-nav .sub-nav-btn').forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
@@ -1925,10 +2724,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // MODIFICATION: Search icon click to focus input
         document.querySelectorAll('#header-controls .search-box i.bi-search').forEach(icon => {
             icon.addEventListener('click', () => {
-                const input = icon.nextElementSibling; // Assumes input is the immediate next sibling that is an input
+                const input = icon.nextElementSibling; 
                 if (input && input.tagName === 'INPUT' && typeof input.focus === 'function') {
                     input.focus();
                 }
@@ -1938,14 +2736,15 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', () => {
             const activeViewId = document.querySelector('.view-container.visible')?.id;
             if (isPharmacyAuthenticated) {
-                fabAddManualCommand.style.display = (activeViewId === 'commandes-view' && window.innerWidth <= 768) ? 'block' : 'none';
-                fabAddStockItem.style.display = (activeViewId === 'stock-unified-view' && window.innerWidth <= 768) ? 'block' : 'none';
-            } else {
+                fabAddManualCommand.style.display = (activeViewId === 'commandes-view' && window.innerWidth <= 768) ? 'flex' : 'none';
+                fabAddStockItem.style.display = (activeViewId === 'stock-unified-view' && window.innerWidth <= 768) ? 'flex' : 'none';
+            } else { 
                 fabAddManualCommand.style.display = 'none';
                 fabAddStockItem.style.display = 'none';
             }
             if(activeViewId) updatePharmacyHeaderSubNav(activeViewId);
         });
     }
+
     initializeApp();
 });
