@@ -381,11 +381,9 @@ select {
     padding: 0.8rem 1rem; 
     font-size: 1rem; 
     font-weight: 500;
-    /* display: flex; align-items: center; justify-content: center; gap: 0.5rem; */ /* Déjà géré par .btn-primary */
 }
 #openMaterielSelectionModalBtn.btn-block-level i {
     font-size: 1.2rem; 
-    /* margin-right: 0.5rem; */ /* Géré par le gap de .btn-primary */
 }
 
 
@@ -409,17 +407,16 @@ select {
     cursor: pointer; 
     text-transform: uppercase; 
     font-weight: 600; 
-    display: inline-flex; /* MODIFICATION: Pour aligner icône et texte */
-    align-items: center; /* MODIFICATION: Pour aligner icône et texte */
-    justify-content: center; /* MODIFICATION: Pour centrer contenu */
-    gap: 0.5rem; /* MODIFICATION: Espace entre icône et texte */
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 0.5rem; 
     transition: all 0.2s ease; 
 }
 .btn-primary i, .btn-secondary i, .btn-danger i,
 .btn-primary ion-icon, .btn-secondary ion-icon, .btn-danger ion-icon {
-    /* margin-right: 0.5rem; */ /* Remplacé par gap sur le parent */
-    font-size: 1.1em; /* Ajuster si besoin */
-    line-height: 1; /* Pour un meilleur alignement vertical de l'icône */
+    font-size: 1.1em; 
+    line-height: 1; 
 }
 
 .btn-primary { background-color: var(--fire-red); color: white; }
@@ -452,7 +449,7 @@ select {
 .card-footer-actions { display: flex; justify-content: flex-end; gap: 0.5rem;}
 .card-footer .btn-icon-footer { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-secondary-color); width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; }
 .card-footer .btn-icon-footer:hover { background-color: var(--ember-orange); color: var(--charcoal); border-color: var(--ember-orange); transform: scale(1.1); }
-.card-footer .btn-primary { flex-grow: 1; } /* S'assure que le bouton principal prend de la place */
+.card-footer .btn-primary { flex-grow: 1; } 
 
 /* --- PAGINATION --- */
 .pagination-container { display: flex; justify-content: center; margin-top: 1.5rem; }
@@ -501,7 +498,7 @@ select {
 }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background-color: rgba(0,0,0,0.1); }
-#custom-dialog-modal .modal-actions { padding: 0; background-color: transparent; border-top: none; } /* Dialog a des actions inline */
+#custom-dialog-modal .modal-actions { padding: 0; background-color: transparent; border-top: none; } 
 
 #detailsModal .modal-content { padding: 0; }
 #detailsModal #modalHeader { background-color: var(--charcoal); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); border-top-left-radius: 10px; border-top-right-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -534,8 +531,8 @@ select {
 .material-management-item.firefighter-view { grid-template-columns: 1.5fr 0.5fr 1fr 1.5fr; }
 .material-management-item.pharmacy-view { grid-template-columns: 2fr 1fr 2fr; }
 .material-management-item input[type="number"], .material-management-item input[type="text"], .material-management-item select { padding: 0.5rem; font-size: 0.9em; }
-.missing-qty-input { display: none; } /* Caché par défaut */
-.missing-qty-input.visible { display: flex; align-items: center; margin-top: 0.5rem;} /* Affiché par JS */
+.missing-qty-input { display: none; } 
+.missing-qty-input.visible { display: flex; align-items: center; margin-top: 0.5rem;} 
 
 .modal-content-dialog { background-color: var(--background-card); padding: 1.5rem; border-top: 5px solid var(--fire-red); width: 90%; max-width: 450px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6); animation: slideIn 0.3s ease-out; }
 .dialog-title { color: var(--ember-orange); font-size: 1.4rem; margin-top: 0; margin-bottom: 0.75rem; }
@@ -599,11 +596,11 @@ select {
     border-radius: 0 !important; 
     padding: 0.6rem 0.2rem; 
     font-size: 0.9em; 
-    -moz-appearance: textfield; /* Pour Firefox afin d'afficher les flèches natives si besoin */
+    -moz-appearance: textfield; 
 }
 .quantity-input-group input[type="number"]::-webkit-outer-spin-button,
 .quantity-input-group input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none; /* Cache les flèches natives sur Chrome/Safari */
+  -webkit-appearance: none; 
   margin: 0;
 }
 .qty-adjust-btn {
@@ -615,7 +612,7 @@ select {
     font-size: 1rem;
     line-height: 1;
     transition: background-color 0.2s;
-    height: 100%; /* S'adapte à la hauteur de l'input */
+    height: 100%; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -632,7 +629,7 @@ select {
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
 }
-/* Specific for materiel-selection-item to align buttons with input */
+
 .materiel-selection-item .quantity-input-group {
     margin-left: 1rem;
 }
@@ -643,6 +640,64 @@ select {
 .materiel-selection-item .qty-adjust-btn {
     padding: 0.4rem 0.6rem;
     font-size: 0.9rem;
+}
+
+/* --- STYLES FOR COMBINED ALERT MODAL --- */
+#combinedAlertModal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0rem; /* Reduced gap, separator will handle space */
+}
+
+#combinedAlertModal .alert-section {
+    padding: 0.75rem;
+    /* border: 1px solid var(--border-color); */ /* Removed border for cleaner look */
+    border-radius: 8px;
+    /* background-color: var(--charcoal); */ /* Use modal body background */
+}
+
+#combinedAlertModal .alert-section h4 {
+    color: var(--ember-orange);
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+    /* border-bottom: 1px solid var(--border-color); */ /* Removed border for cleaner look */
+    padding-bottom: 0.25rem; /* Reduced padding */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+#combinedAlertModal .alert-section h4 i { /* Icon for section titles */
+    font-size: 1.3em;
+}
+
+
+#combinedAlertModal .alert-section ul {
+    list-style-type: disc;
+    padding-left: 25px;
+    margin-top: 0;
+    font-size: 0.9em;
+    color: var(--smoke-white);
+    max-height: 150px; /* Limit height if lists are very long */
+    overflow-y: auto;
+}
+
+#combinedAlertModal .alert-section ul li {
+    margin-bottom: 0.4rem;
+}
+
+#combinedAlertModal #alert-separator {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 1rem 0; /* Space around separator */
+}
+
+#combinedAlertModal #no-alerts-message {
+    text-align: center;
+    color: var(--text-secondary-color);
+    font-style: italic;
+    padding: 1rem 0;
 }
 
 
@@ -664,12 +719,11 @@ select {
 .stock-card-header, .command-card-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); }
 .stock-card-header h3, .command-card-header h3 { margin: 0; color: var(--smoke-white); font-size: 1.2rem; }
 .command-quantity { background-color: var(--fire-red); color: white; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.8rem; font-weight: 500; }
-/* MODIFICATION: Style pour quantité éditable sur carte commande */
 .command-card-header .quantity-input-group {
-    margin-left: 1rem; /* Espace par rapport au titre */
+    margin-left: 1rem; 
 }
 .command-card-header .quantity-input-group input.command-quantity-input {
-    width: 55px; /* Taille ajustée */
+    width: 55px; 
     padding: 0.3rem;
     font-size: 0.9em;
 }
@@ -699,14 +753,8 @@ select {
 .command-card-footer .btn-secondary, 
 .command-card-footer .btn-danger { 
     flex-grow: 1; 
-    /* max-width: calc(50% - 0.375rem); */ /* Peut être trop restrictif avec 3 boutons */
-    min-width: 100px; /* Minimum pour que le texte soit lisible, mais sera caché sur mobile */
+    min-width: 100px; 
 }
-/* .command-card-footer .btn-primary ion-icon, 
-.command-card-footer .btn-secondary ion-icon { 
-    margin-right: 0.5rem; 
-    font-size: 1.2em; 
-} */ /* Géré par .btn-primary etc. et gap */
 
 
 /* --- SOUS-NAVIGATION (pour Commandes et Stocks - version DANS la vue) --- */
@@ -775,38 +823,32 @@ th { font-weight: 600; color: var(--ember-orange); }
     border: none;
     border-radius: 50%;
     font-size: 1.8rem; 
-    line-height: 1; /* Ajusté pour centrer l'icône */
+    line-height: 1; 
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     cursor: pointer;
     z-index: 999; 
     transition: transform 0.2s ease-out, background-color 0.2s;
-    display: flex; /* Pour centrer l'icône */
-    align-items: center; /* Pour centrer l'icône */
-    justify-content: center; /* Pour centrer l'icône */
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
 }
 .fab-add-mobile:hover {
     transform: scale(1.1);
-    background-color: #c41e21; /* Foncer un peu au survol */
+    background-color: #c41e21; 
 }
-/* .fab-add-mobile i {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-} */ /* Déjà géré par flex sur le bouton lui-même */
 
 
 /* --- NAVIGATION & RESPONSIVITÉ --- */
 .navigation { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-bar-height); background: var(--smoke-white); backdrop-filter: blur(10px); display: flex; justify-content: center; border-top: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 -8px 32px 0 rgba(0, 0, 0, 0.37); z-index: 100; --indicator-x-pos: 0px; }
 .navigation ul { position: relative; display: flex; width: 100%; max-width: 600px; height: 100%; padding: 0; margin: 0; }
-#pharmacy-nav-ul { display: none; } /* Caché par défaut, affiché par JS */
+#pharmacy-nav-ul { display: none; } 
 .navigation ul li { position: relative; list-style: none; flex: 1; }
 .navigation ul li:not(:last-child) { border-right: 1px solid var(--charcoal); }
 .navigation ul li a { position: relative; display: flex; justify-content: center; align-items: center; flex-direction: column; width: 100%; text-align: center; text-decoration: none; height: 100%; -webkit-tap-highlight-color: transparent; gap: 4px; overflow: hidden; cursor: pointer; }
 .navigation ul li a .icon { font-size: 1.6em; color: var(--charcoal); transition: opacity 0.2s ease, color 0.3s ease; opacity: 1; }
 .navigation ul li a .text { font-weight: 400; font-size: 0.6em; letter-spacing: 0.05em; color: var(--charcoal); transition: color 0.3s ease, font-weight 0.3s ease; text-transform: uppercase; }
-.navigation ul li.active a .icon { opacity: 0; transition: opacity 0.1s ease-in; } /* Cacher l'icône de la liste, elle sera dans l'indicateur */
+.navigation ul li.active a .icon { opacity: 0; transition: opacity 0.1s ease-in; } 
 .navigation ul li.active a .text { color: var(--fire-red); font-weight: 400; }
 .indicator { position: absolute; top: 0; left: 0; width: 70px; height: 70px; background: var(--fire-red); border-radius: 50%; border: 6px solid var(--charcoal); display: flex; align-items: center; justify-content: center; transform: translateX(var(--indicator-x-pos)) translateY(40px) scale(0); opacity: 0; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; z-index: 1; }
 .navigation.indicator-ready .indicator { transform: translateX(var(--indicator-x-pos)) translateY(-50%) scale(1); opacity: 1; }
@@ -816,12 +858,11 @@ th { font-weight: 600; color: var(--ember-orange); }
 @keyframes shockwave-effect { from { transform: scale(1); opacity: 0.7; } to { transform: scale(2.5); opacity: 0; } }
 
 
-/* MODIFICATION: Styles pour le bouton de suppression d'item dans la modale de commande manuelle */
-.manual-command-item-row { /* Structure pour chaque ligne d'item dans la modale */
+.manual-command-item-row { 
     display: grid;
-    grid-template-columns: 1fr auto auto; /* Nom, Quantité, Bouton Suppr */
+    grid-template-columns: 1fr auto auto; 
     gap: 1rem;
-    align-items: flex-end; /* Aligner les bas des éléments */
+    align-items: flex-end; 
     padding-bottom: 1rem;
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
@@ -831,73 +872,67 @@ th { font-weight: 600; color: var(--ember-orange); }
     margin-bottom: 0;
 }
 .manual-command-item-row .form-group {
-    margin-bottom: 0; /* Enlever la marge du .form-group car géré par le gap de .manual-command-item-row */
+    margin-bottom: 0; 
 }
 
-/* MODIFICATION: Nouveau style pour bouton icône action (utilisé pour supprimer item commande) */
 .btn-icon-action {
     background: transparent;
     border: none;
     color: var(--text-secondary-color);
-    font-size: 1.5rem; /* Taille de l'icône */
+    font-size: 1.5rem; 
     cursor: pointer;
-    padding: 0.35rem; /* Un peu de padding pour la zone de clic */
+    padding: 0.35rem; 
     line-height: 1;
-    border-radius: 50%; /* Le rendre rond */
+    border-radius: 50%; 
     transition: color 0.2s, transform 0.2s, background-color 0.2s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px; /* Taille fixe */
-    height: 32px; /* Taille fixe */
+    width: 32px; 
+    height: 32px; 
 }
 .btn-icon-action:hover {
     transform: scale(1.1);
-    background-color: rgba(255,255,255,0.1); /* Léger fond au survol */
+    background-color: rgba(255,255,255,0.1); 
 }
-.btn-icon-action.icon-danger:hover { /* Pour icônes de suppression */
+.btn-icon-action.icon-danger:hover { 
     color: var(--fire-red);
 }
-.btn-icon-action.icon-primary:hover { /* Pour icônes primaires (si besoin) */
+.btn-icon-action.icon-primary:hover { 
     color: var(--ember-orange);
 }
 
 
 /* --- RESPONSIVE ADJUSTMENTS --- */
+.btn-text { }
 
-/* Styles pour masquer le texte des boutons sur petits écrans */
-.btn-text {
-    /* Par défaut, le texte est visible */
-}
-
-@media (max-width: 600px) { /* Seuil pour masquer le texte */
+@media (max-width: 600px) { 
     .btn-text {
-        display: none; /* Cacher le texte */
+        display: none; 
     }
 
     .btn-primary, .btn-secondary, .btn-danger {
-        padding-left: 0.7rem; /* Réduire le padding quand seulement icône */
+        padding-left: 0.7rem; 
         padding-right: 0.7rem;
-        min-width: auto; /* Permettre au bouton de rétrécir */
-        gap: 0; /* Pas de gap si pas de texte */
+        min-width: auto; 
+        gap: 0; 
     }
     .btn-primary i, .btn-secondary i, .btn-danger i,
     .btn-primary ion-icon, .btn-secondary ion-icon, .btn-danger ion-icon {
-        margin-right: 0; /* Enlever la marge de l'icône si texte caché */
-        font-size: 1.2em; /* Ajuster la taille de l'icône si besoin pour équilibre */
+        margin-right: 0; 
+        font-size: 1.2em; 
     }
 
-    /* Ajustement spécifique pour les boutons de footer de carte commande sur mobile */
     .command-card-footer {
-        flex-direction: row; /* Garder en ligne même sur mobile si possible */
-        justify-content: space-around; /* Mieux répartir les boutons */
+        flex-direction: row; 
+        justify-content: space-around; 
     }
     .command-card-footer .btn-primary, 
     .command-card-footer .btn-secondary, 
     .command-card-footer .btn-danger { 
-        flex-grow: 0; /* Ne pas les faire grandir pour remplir l'espace */
-        padding: 0.6rem; /* Padding un peu plus petit */
-        font-size: 0.9em; /* Taille de police un peu plus petite pour l'icône */
+        flex-grow: 0; 
+        padding: 0.6rem; 
+        font-size: 0.9em; 
     }
 }
 
@@ -915,13 +950,13 @@ th { font-weight: 600; color: var(--ember-orange); }
      .app-title i {
         font-size: 1.1rem;
      }
-     .app-title-text { /* Déjà caché par défaut sur mobile, mais confirmé ici */
+     .app-title-text { 
         display: none; 
      }
     
      #pharmacy-header-subnav-container {
         margin: 0 0.1rem;
-        max-width: 180px; /* Réduit un peu pour laisser plus de place à la recherche */
+        max-width: 180px; 
      }
     .header-sub-nav-btn { 
         padding: 0.25rem 0.5rem; 
@@ -932,7 +967,7 @@ th { font-weight: 600; color: var(--ember-orange); }
         flex-grow: 1; 
         min-width: 28px; 
         margin-left: 0.1rem;
-        max-width: calc(100% - 120px); /* Ajusté pour donner un peu plus de place à la recherche */
+        max-width: calc(100% - 120px); 
     }
     #header-controls .search-box input[type="text"] {
         height: 26px; 
@@ -956,39 +991,30 @@ th { font-weight: 600; color: var(--ember-orange); }
         font-size: 1rem;
      }
 
-    .desktop-actions-only { /* Actions spécifiques au desktop cachées */
+    .desktop-actions-only { 
         display: none !important;
     }
     
     .material-management-item.firefighter-view, 
-    .material-management-item.pharmacy-view { /* Passage en une seule colonne pour lisibilité */
+    .material-management-item.pharmacy-view { 
         grid-template-columns: 1fr;
         padding: 1rem 0.5rem;
     }
-    .material-management-item.header { /* Cacher les headers spécifiques sur mobile */
+    .material-management-item.header { 
         display: none;
     }
-    .material-management-item > * { /* S'assurer que les enfants prennent toute la largeur */
+    .material-management-item > * { 
         width: 100%;
     }
-    .material-management-item span:first-child { /* Ajouter un peu de style au nom du matériel */
+    .material-management-item span:first-child { 
         font-weight: 500;
         color: var(--ember-orange);
         margin-bottom: 0.5rem;
-        display: block; /* Pour prendre toute la largeur avant les inputs/selects */
+        display: block; 
     }
 
 
     .journal-header { flex-direction: column; gap: 1rem; }
-    .command-card-footer { 
-        /* flex-direction: column;  Maintenant géré par le media query plus petit (600px) si besoin */
-        /* gap: 0.5rem;  */
-    }
-    /* .command-card-footer .btn-primary, 
-    .command-card-footer .btn-secondary, 
-    .command-card-footer .btn-danger {  */
-        /* max-width: 100%;  */ /* Permet aux boutons de prendre toute la largeur si en colonne */
-    /* } */
 }
 
 
@@ -1000,44 +1026,42 @@ th { font-weight: 600; color: var(--ember-orange); }
         gap: 0.1rem; 
     }
     #pharmacy-header-subnav-container {
-        max-width: 130px; /* Encore plus petit */
+        max-width: 130px; 
     }
     .header-sub-nav-btn {
         font-size: 0.55rem; 
         padding: 0.15rem 0.3rem; 
     }
     
-    /* Comportement de la barre de recherche sur très petits écrans */
     #header-controls .search-box input[type="text"] {
-        width: 28px; /* Taille de l'icône au repos */
-        padding-left: 1.6rem; /* Espace pour l'icône */
-        opacity: 0; /* Caché */
-        pointer-events: none; /* Non cliquable */
+        width: 28px; 
+        padding-left: 1.6rem; 
+        opacity: 0; 
+        pointer-events: none; 
         transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
     }
     #header-controls .search-box input[type="text"]:focus {
-        width: 100%; /* Prend toute la place disponible dans #header-controls */
-        opacity: 1; /* Visible */
-        pointer-events: auto; /* Cliquable */
+        width: 100%; 
+        opacity: 1; 
+        pointer-events: auto; 
     }
 
-    /* Forcer les boutons du footer de carte commande en colonne sur très petits écrans */
     .card-footer {
         flex-direction: column;
-        align-items: stretch; /* Les boutons prennent toute la largeur */
+        align-items: stretch; 
     }
     .card-footer .btn-primary,
     .card-footer .btn-secondary,
     .card-footer .btn-danger,
     .card-footer-actions {
         width: 100%;
-        margin-bottom: 0.5rem; /* Espace entre les boutons empilés */
+        margin-bottom: 0.5rem; 
     }
     .card-footer-actions {
-        justify-content: space-around; /* Répartir les icônes */
+        justify-content: space-around; 
     }
      .card-footer-actions .btn-icon-footer {
-        flex-grow: 1; /* Permettre aux icônes de prendre plus de place */
+        flex-grow: 1; 
      }
 
 }
@@ -1089,13 +1113,15 @@ th { font-weight: 600; color: var(--ember-orange); }
 .dashboard-stat-card ul {
     font-size: 0.85em;
     color: var(--text-secondary-color);
-    padding-left: 20px;
-    max-height: 100px;
-    overflow-y: auto;
+    padding-left: 20px; /* Keep original padding */
+    max-height: 100px; /* Keep original max-height */
+    overflow-y: auto; /* Keep original overflow */
+    list-style-type: disc; /* Ensure disc is visible if not inherited */
 }
 .dashboard-stat-card ul li {
     margin-bottom: 0.3rem;
 }
+
 
 /* Style pour Admin Config Textareas */
 #admin-config-view textarea {
@@ -1107,4 +1133,30 @@ th { font-weight: 600; color: var(--ember-orange); }
     border: none;
     border-top: 1px solid var(--border-color);
     margin: 1rem 0;
+}
+
+/* Dashboard Filters Specifics */
+.dashboard-filters {
+    background-color: var(--background-card-hover);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-filters .form-group {
+    margin-bottom: 0; 
+}
+
+#dashboard-interventions-detail-list {
+    font-size:0.9em; 
+    max-height: 200px; 
+    overflow-y:auto; 
+    background-color: var(--background-card); 
+    padding:10px; 
+    border-radius:5px;
+    list-style-type: disc;
+    padding-left: 30px; /* Indent list items */
+}
+#dashboard-interventions-detail-list li {
+    margin-bottom: 0.3rem;
 }
