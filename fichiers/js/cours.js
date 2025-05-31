@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
     const dragDropArea = document.getElementById('drag-drop-area');
     const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-    
+
     const searchFileInput = document.getElementById('searchFileInput');
     const searchGlobalCheckbox = document.getElementById('searchGlobalCheckbox');
 
@@ -27,8 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentModalFileDataForActions = null;
     let currentImageZoomLevel = 1;
-    const MAX_ZOOM = 3; const MIN_ZOOM = 0.5; const ZOOM_STEP = 0.2;
+    const MAX_ZOOM = 3; const MIN_ZOOM = 0.3; const ZOOM_STEP = 0.2; // Adjusted MIN_ZOOM for better usability
     let zoomedImageElement = null;
+    let initialPinchDistance = null; // For pinch-zoom
 
     const backBtn = document.getElementById('backBtn');
     const forwardBtn = document.getElementById('forwardBtn');
@@ -41,9 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let navigationHistory = [];
     let currentHistoryIndex = -1;
-    let allItemsCache = []; 
-    let allDataForGlobalSearch = null; 
-    let globalSearchInProgress = false; 
+    let allItemsCache = [];
+    let allDataForGlobalSearch = null;
+    let globalSearchInProgress = false;
+    const MAX_SIZE_MB = 50; // 🚨 Requested capacity. WARNING: Firebase RTDB has a 10MB write limit per path. Base64 encoding increases size by ~33%. Files > ~7MB raw may fail.
 
     function toggleAdminMode(enable) {
         isAdminLoggedIn = enable;
@@ -163,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateNavigationHistory(path) {
-        if (searchGlobalCheckbox.checked && searchFileInput.value.trim() !== '') return; 
+        if (searchGlobalCheckbox.checked && searchFileInput.value.trim() !== '') return;
         if (navigationHistory[currentHistoryIndex] !== path) {
             navigationHistory = navigationHistory.slice(0, currentHistoryIndex + 1);
             navigationHistory.push(path);
@@ -173,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateHistoryButtons() {
-        if (searchGlobalCheckbox.checked && searchFileInput.value.trim() !== '') { 
+        if (searchGlobalCheckbox.checked && searchFileInput.value.trim() !== '') {
             backBtn.disabled = true;
             forwardBtn.disabled = true;
             return;
@@ -186,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchGlobalCheckbox.checked) return;
         if (currentHistoryIndex > 0) {
             currentHistoryIndex--;
-            searchFileInput.value = ''; 
+            searchFileInput.value = '';
             displayFiles(navigationHistory[currentHistoryIndex], false);
         }
     });
@@ -195,22 +197,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchGlobalCheckbox.checked) return;
         if (currentHistoryIndex < navigationHistory.length - 1) {
             currentHistoryIndex++;
-            searchFileInput.value = ''; 
+            searchFileInput.value = '';
             displayFiles(navigationHistory[currentHistoryIndex], false);
         }
     });
-    
+
     searchFileInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value;
         if (searchGlobalCheckbox.checked) {
-            updateHistoryButtons(); 
+            updateHistoryButtons();
             if (allDataForGlobalSearch) {
                 renderGlobalSearchResults(allDataForGlobalSearch, searchTerm);
-            } else if (!globalSearchInProgress) { 
+            } else if (!globalSearchInProgress) {
                 fileListEl.innerHTML = '<li class="no-search-results-message">Données globales non chargées. Cochez/décochez "Partout" pour réessayer.</li>';
             }
         } else {
-            renderFileList(searchTerm); 
+            renderFileList(searchTerm);
         }
     });
 
@@ -218,9 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
         searchFileInput.value = '';
         fileListEl.innerHTML = '';
 
-        if (e.target.checked) { 
+        if (e.target.checked) {
             currentPathDisplayEl.textContent = "Recherche Globale Active";
-            updateHistoryButtons(); 
+            updateHistoryButtons();
             fileListEl.innerHTML = '<li class="empty-folder-message"><ion-icon name="hourglass-outline" class="spin"></ion-icon> Chargement des données globales...</li>';
             if (!allDataForGlobalSearch && !globalSearchInProgress) {
                 globalSearchInProgress = true;
@@ -229,16 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (allDataForGlobalSearch && allDataForGlobalSearch.length > 0) {
                 fileListEl.innerHTML = '<li class="empty-folder-message">Prêt. Entrez un terme pour la recherche globale.</li>';
-            } else if (!globalSearchInProgress) { 
+            } else if (!globalSearchInProgress) {
                 fileListEl.innerHTML = '<li class="no-search-results-message">Aucune donnée trouvée pour la recherche globale ou une erreur est survenue.</li>';
             }
-        } else { 
-            allDataForGlobalSearch = null; 
+        } else {
+            allDataForGlobalSearch = null;
             const pathToShow = navigationHistory[currentHistoryIndex] || 'files/root';
             displayFiles(pathToShow, false);
         }
     });
-    
+
     async function fetchAllItemsRecursiveForSearch(firebasePath, currentDisplayPath = 'Racine') {
         let itemsList = [];
         try {
@@ -252,13 +254,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         name: name,
                         type: item.type,
                         contentType: item.contentType || null,
-                        firebasePath: `${firebasePath}/${name}`, 
+                        firebasePath: `${firebasePath}/${name}`,
                         displayPath: currentDisplayPath === 'Racine' ? name : `${currentDisplayPath}/${name}`
                     };
                     itemsList.push(itemEntry);
 
                     if (item.type === 'folder') {
                         const subDisplayPath = currentDisplayPath === 'Racine' ? name : `${currentDisplayPath}/${name}`;
+                        // Folders in search results point to the folder node itself, not its "files" child initially
                         const subItems = await fetchAllItemsRecursiveForSearch(`${firebasePath}/${name}/files`, subDisplayPath);
                         itemsList = itemsList.concat(subItems);
                     }
@@ -273,13 +276,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderGlobalSearchResults(fullData, searchTerm) {
         fileListEl.innerHTML = '';
         const normalizedSearchTerm = searchTerm.toLowerCase().trim();
-        updateHistoryButtons(); 
+        updateHistoryButtons();
 
         if (!normalizedSearchTerm) {
             fileListEl.innerHTML = '<li class="empty-folder-message">Entrez un terme pour la recherche globale.</li>';
             return;
         }
-        
+
         const results = fullData.filter(item => item.name.toLowerCase().includes(normalizedSearchTerm));
 
         if (results.length === 0) {
@@ -289,12 +292,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         results.forEach(itemData => {
             const li = document.createElement('li');
-            li.classList.add('global-search-item'); 
+            li.classList.add('global-search-item');
 
             const iconName = itemData.type === 'folder' ? 'folder-outline' :
                 itemData.contentType && itemData.contentType.startsWith('image/') ? 'image-outline' :
                 itemData.contentType === 'application/pdf' ? 'document-attach-outline' : 'document-text-outline';
-            
+
             li.innerHTML = `
                 <span class="item-icon"><ion-icon name="${iconName}"></ion-icon></span>
                 <span class="item-name">${itemData.name}</span>
@@ -305,27 +308,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="delete-btn" title="Supprimer"><ion-icon name="trash-outline"></ion-icon></button>
                 </div>` : ''}
             `;
-            
+
             if (itemData.type === 'folder') li.classList.add('folder-card');
             else li.classList.add('file-item');
 
             li.addEventListener('click', async (e) => {
                 if (e.target.closest('.item-actions')) return;
 
-                searchGlobalCheckbox.checked = false; 
+                searchGlobalCheckbox.checked = false;
                 allDataForGlobalSearch = null;
                 searchFileInput.value = '';
-
+                
+                // itemData.firebasePath from global search for a folder refers to the folder node itself (e.g., .../MyFolder)
+                // For displayFiles, we need the path to its contents (e.g., .../MyFolder/files)
                 if (itemData.type === 'folder') {
-                    displayFiles(itemData.firebasePath + '/files'); 
+                    displayFiles(itemData.firebasePath + '/files');
                 } else {
                     try {
+                        // itemData.firebasePath for a file is correct
                         const fileSnapshot = await firebaseGet(firebaseRef(db, itemData.firebasePath));
                         if (fileSnapshot.exists()) {
                             openFileModal(itemData.name, fileSnapshot.val());
                         } else {
                             alert("Fichier non trouvé.");
-                            displayFiles(navigationHistory[currentHistoryIndex] || 'files/root', false); 
+                            displayFiles(navigationHistory[currentHistoryIndex] || 'files/root', false);
                         }
                     } catch (error) {
                         console.error("Erreur ouverture fichier depuis recherche globale:", error);
@@ -335,9 +341,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+
             if (isAdminLoggedIn) {
                 const deleteBtn = li.querySelector('.delete-btn');
                 const editBtn = li.querySelector('.edit-btn');
+                // itemData.firebasePath for global search already points to the correct node for deletion/renaming
                 if(deleteBtn) deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); deleteItem(itemData.firebasePath, itemData.name, itemData.type);
                 });
@@ -347,12 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             fileListEl.appendChild(li);
         });
-        fileListEl.style.display = 'grid'; 
+        fileListEl.style.display = 'grid';
     }
 
     async function displayFiles(path, updateHistory = true, searchTerm = '') {
-        currentFirebasePath = path;
-        if (updateHistory) { 
+        currentFirebasePath = path; // This path should always be to a "files" directory, e.g., 'files/root' or 'files/root/folderA/files'
+        if (updateHistory) {
             updateNavigationHistory(path);
         }
 
@@ -363,12 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const dbRef = firebaseChild(firebaseRef(db), path);
             const snapshot = await firebaseGet(dbRef);
-            
+
             allItemsCache = [];
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 const items = Object.entries(data).filter(([name]) => name !== '_placeholder');
-                items.sort(([nameA, itemA], [nameB, itemB]) => { 
+                items.sort(([nameA, itemA], [nameB, itemB]) => {
                     const typeA = itemA.type === 'folder' ? 0 : 1;
                     const typeB = itemB.type === 'folder' ? 0 : 1;
                     if (typeA !== typeB) return typeA - typeB;
@@ -376,18 +384,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 allItemsCache = items;
             }
-            renderFileList(searchTerm); 
+            renderFileList(searchTerm);
         } catch (error) {
             console.error("Erreur lecture fichiers:", error);
             fileListEl.innerHTML = '<li class="empty-folder-message">Erreur lors du chargement des fichiers.</li>';
             allItemsCache = [];
         }
-        if (!searchGlobalCheckbox.checked || searchTerm.trim() === '') { 
+        if (!searchGlobalCheckbox.checked || searchTerm.trim() === '') {
             updateHistoryButtons();
         }
     }
 
-    function renderFileList(searchTerm = '') { 
+    function renderFileList(searchTerm = '') {
         fileListEl.innerHTML = '';
         const normalizedSearchTerm = searchTerm.toLowerCase().trim();
         let displayedItems = allItemsCache;
@@ -404,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fileListEl.style.display = 'block';
             return;
         }
-        
+
         let hasFolders = false;
         displayedItems.forEach(([name, item]) => {
             if (item.type === 'folder') hasFolders = true;
@@ -431,43 +439,90 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemNameSpanOrCard = item.type === 'folder' ? li : li.querySelector('.item-name');
             itemNameSpanOrCard.addEventListener('click', (e) => {
                 if (e.target.closest('.item-actions')) return;
-                searchFileInput.value = ''; 
+                searchFileInput.value = '';
+                 // currentFirebasePath is like .../ParentFolder/files. name is FolderName.
+                 // So new path is .../ParentFolder/files/FolderName/files
                 if (item.type === 'folder') displayFiles(`${currentFirebasePath}/${name}/files`);
-                else openFileModal(name, item);
+                else openFileModal(name, item); // item is the file object from Firebase
             });
 
             if (isAdminLoggedIn) {
                 const deleteBtn = li.querySelector('.delete-btn');
                 const editBtn = li.querySelector('.edit-btn');
+                // Item path for delete/rename is currentFirebasePath (which is like .../files) + name
+                const itemFullPath = `${currentFirebasePath}/${name}`;
                 if(deleteBtn) deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); deleteItem(`${currentFirebasePath}/${name}`, name, item.type);
+                    e.stopPropagation(); deleteItem(itemFullPath, name, item.type);
                 });
                 if(editBtn) editBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); renameItem(`${currentFirebasePath}/${name}`, name, item.type);
+                    e.stopPropagation(); renameItem(itemFullPath, name, item.type);
                 });
             }
             fileListEl.appendChild(li);
         });
         fileListEl.style.display = hasFolders || displayedItems.some(entry => entry[1].type === 'folder') ? 'grid' : 'block';
     }
-    
-    function resetImageZoomState() { 
+
+    function resetImageZoomState() {
         currentImageZoomLevel = 1;
         if (zoomedImageElement) {
             zoomedImageElement.style.transform = 'scale(1)';
             zoomedImageElement.style.cursor = 'grab';
+            // Remove existing touch listeners if any to prevent duplicates or issues
+            zoomedImageElement.removeEventListener('touchstart', handleTouchStart);
+            zoomedImageElement.removeEventListener('touchmove', handleTouchMove);
+            zoomedImageElement.removeEventListener('touchend', handleTouchEnd);
         }
         zoomedImageElement = null;
+        initialPinchDistance = null;
         modalZoomInBtn.style.display = 'none';
         modalZoomOutBtn.style.display = 'none';
         modalZoomResetBtn.style.display = 'none';
     }
+    
+    // Pinch Zoom Handlers
+    function getDistance(touches) {
+        return Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
+    }
+
+    function handleTouchStart(event) {
+        if (event.touches.length === 2 && zoomedImageElement) {
+            event.preventDefault();
+            initialPinchDistance = getDistance(event.touches);
+            zoomedImageElement.style.cursor = 'grabbing';
+        }
+    }
+
+    function handleTouchMove(event) {
+        if (event.touches.length === 2 && zoomedImageElement && initialPinchDistance !== null) {
+            event.preventDefault();
+            const currentDistance = getDistance(event.touches);
+            const scaleRatio = currentDistance / initialPinchDistance;
+            let newZoomLevel = currentImageZoomLevel * scaleRatio;
+            newZoomLevel = Math.max(MIN_ZOOM, Math.min(newZoomLevel, MAX_ZOOM));
+            currentImageZoomLevel = parseFloat(newZoomLevel.toFixed(2));
+            applyImageZoom();
+            initialPinchDistance = currentDistance; // Update for continuous zooming
+        }
+    }
+
+    function handleTouchEnd(event) {
+        if (zoomedImageElement) {
+             if (event.touches.length < 2) {
+                initialPinchDistance = null; // Reset pinch distance
+                if (zoomedImageElement.style.cursor === 'grabbing') { // Only reset if it was grabbing
+                    zoomedImageElement.style.cursor = 'grab';
+                }
+            }
+        }
+    }
+
 
     function openFileModal(fileName, fileData) {
         currentModalFileDataForActions = fileData;
         modalFileNameEl.textContent = fileName;
         modalFileContentEl.innerHTML = '';
-        resetImageZoomState(); 
+        resetImageZoomState();
 
         modalControls.style.display = 'flex';
         modalPrintBtn.style.display = 'inline-flex';
@@ -483,10 +538,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = dataUri;
                     img.alt = fileName;
                     modalFileContentEl.appendChild(img);
-                    zoomedImageElement = img; 
+                    zoomedImageElement = img;
                     modalZoomInBtn.style.display = 'inline-flex';
                     modalZoomOutBtn.style.display = 'inline-flex';
                     modalZoomResetBtn.style.display = 'inline-flex';
+
+                    // Add touch listeners for pinch-zoom
+                    img.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    img.addEventListener('touchmove', handleTouchMove, { passive: false });
+                    img.addEventListener('touchend', handleTouchEnd, { passive: false });
+
                 } else if (fileData.contentType === 'application/pdf') {
                     const iframe = document.createElement('iframe');
                     iframe.src = dataUri;
@@ -495,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const pre = document.createElement('pre');
                     pre.textContent = atob(fileData.base64Content);
                     modalFileContentEl.appendChild(pre);
-                    modalPrintBtn.style.display = 'none'; 
+                    modalPrintBtn.style.display = 'none';
                 } else {
                     const p = document.createElement('p');
                     p.textContent = `Type de fichier (${fileData.contentType || 'inconnu'}) non supporté pour un aperçu direct.`;
@@ -514,23 +575,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalFileContentEl.textContent = 'Erreur lors de l\'affichage du fichier.';
                 modalPrintBtn.style.display = 'none';
             }
-        } else { 
+        } else {
             modalFileContentEl.textContent = 'Contenu du fichier indisponible ou vide.';
             modalPrintBtn.style.display = 'none';
             modalDownloadBtn.style.display = 'none';
             modalShareBtn.style.display = 'none';
         }
-        
+
         modalEl.style.display = 'block';
-        modalEl.classList.add('fullscreen'); 
+        modalEl.classList.add('fullscreen');
     }
 
     closeModalBtn.onclick = () => {
         modalEl.style.display = 'none';
         modalFileContentEl.innerHTML = '';
-        modalEl.classList.remove('fullscreen'); 
+        modalEl.classList.remove('fullscreen');
         currentModalFileDataForActions = null;
-        resetImageZoomState();
+        resetImageZoomState(); // This will also remove touch listeners
     }
     window.onclick = (event) => { if (event.target == modalEl) { closeModalBtn.onclick(); } }
 
@@ -539,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const iframe = modalFileContentEl.querySelector('iframe');
             if (iframe && iframe.contentWindow) {
                 try {
-                    iframe.contentWindow.focus(); 
+                    iframe.contentWindow.focus();
                     iframe.contentWindow.print();
                 } catch (e) {
                     alert("L'impression directe a été bloquée. Essayez d'utiliser les options d'impression de la visionneuse PDF ou téléchargez le fichier.");
@@ -604,35 +665,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const folderName = prompt("Nom du nouveau dossier :");
             if (folderName && folderName.trim() !== "") {
                 const cleanFolderName = folderName.trim().replace(/[.#$[\]]/g, '_');
-                
-                let basePathForCreation = currentFirebasePath;
+
+                let basePathForCreation = currentFirebasePath; // This is where the new folder node will be created
                 if (searchGlobalCheckbox.checked) {
                     const targetParentPath = prompt("Entrez le chemin complet du dossier parent où créer ce nouveau dossier (ex: files/root/DossierExistant/files) ou laissez vide pour créer à la racine (files/root).", "files/root");
-                    if (targetParentPath === null) return; // User cancelled
+                    if (targetParentPath === null) return; 
                     basePathForCreation = targetParentPath.trim() === "" || targetParentPath.trim() === "files/root" ? "files/root" : targetParentPath;
-                     // Ensure if a path is given, it's a 'files' node of a folder
                     if (basePathForCreation !== 'files/root' && !basePathForCreation.endsWith('/files')) {
-                        // Check if it's a valid folder path without /files
-                        const parentFolderCheck = await firebaseGet(firebaseChild(firebaseRef(db), basePathForCreation));
+                         // Check if it's a valid folder path without /files (e.g. files/root/DossierExistant)
+                        const pathSegments = basePathForCreation.split('/');
+                        const potentialFolderName = pathSegments.pop(); // e.g. DossierExistant
+                        const potentialParentFilesPath = pathSegments.join('/'); // e.g. files/root
+                        
+                        const folderRefPath = `${potentialParentFilesPath}/${potentialFolderName}`;
+                        const parentFolderCheck = await firebaseGet(firebaseRef(db, folderRefPath ));
+
                         if (parentFolderCheck.exists() && parentFolderCheck.val().type === 'folder') {
-                            basePathForCreation += '/files'; // Append /files if it's a folder
+                            basePathForCreation = `${folderRefPath}/files`; // Correct path to create new folder inside
                         } else {
-                            alert("Chemin parent invalide pour la création du dossier.");
+                            alert("Chemin parent invalide pour la création du dossier. Assurez-vous que le chemin mène à un dossier existant (ex: files/root/DossierExistant) ou à un conteneur de fichiers (ex: files/root/DossierExistant/files).");
                             return;
                         }
                     }
                 }
-                const newFolderPathInParent = `${basePathForCreation}/${cleanFolderName}`;
+                const newFolderNodePath = `${basePathForCreation}/${cleanFolderName}`;
 
                 try {
-                    await firebaseSet(firebaseRef(db, newFolderPathInParent), { type: 'folder', createdAt: new Date().toISOString() });
-                    await firebaseSet(firebaseRef(db, `${newFolderPathInParent}/files/_placeholder`), true);
+                    await firebaseSet(firebaseRef(db, newFolderNodePath), { type: 'folder', createdAt: new Date().toISOString() });
+                    await firebaseSet(firebaseRef(db, `${newFolderNodePath}/files/_placeholder`), true); // Placeholder for its contents
                     alert(`Dossier "${cleanFolderName}" créé.`);
-                    
-                    if (searchGlobalCheckbox.checked) { 
-                        allDataForGlobalSearch = null; 
-                        renderGlobalSearchResults([], ''); // Clear existing results
-                        searchGlobalCheckbox.dispatchEvent(new Event('change')); // Trigger reload of global data for search
+
+                    if (searchGlobalCheckbox.checked) {
+                        allDataForGlobalSearch = null;
+                        renderGlobalSearchResults([], ''); 
+                        searchGlobalCheckbox.dispatchEvent(new Event('change'));
                     } else {
                         displayFiles(currentFirebasePath, false, searchFileInput.value);
                     }
@@ -640,127 +706,255 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // --- Upload Logic ---
+    const globalProgressTracker = {
+        filesToAttempt: 0,
+        filesProcessed: 0,
+        largeFilesSkipped: 0,
+        errorsEncountered: 0,
+        reset: function() {
+            this.filesToAttempt = 0;
+            this.filesProcessed = 0;
+            this.largeFilesSkipped = 0;
+            this.errorsEncountered = 0;
+        }
+    };
 
-    async function handleFileUploads(files) {
-        if (!isAdminLoggedIn || !files || files.length === 0) return;
-        const MAX_SIZE_MB = 7; 
-        let largeFileDetected = false;
-        let filesToUpload = Array.from(files);
-        let uploadedCount = 0;
-        const totalFilesToAttempt = filesToUpload.length;
-
-        if (totalFilesToAttempt === 0) return;
-        
-        const dragDropAreaText = dragDropArea.querySelector('p');
-        const dragDropAreaIcon = dragDropArea.querySelector('ion-icon[name="cloud-upload-outline"]'); 
-        const originalText = dragDropAreaText.textContent;
-        
-        dragDropAreaText.innerHTML = `Téléversement en cours... <ion-icon name="sync-outline" class="spin"></ion-icon>`;
-        if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'none';
-
-        let finalUploadPath = currentFirebasePath;
-        if (searchGlobalCheckbox.checked) {
-            const targetParentPath = prompt("Entrez le chemin complet du dossier où téléverser les fichiers (ex: files/root/DossierExistant/files) ou laissez vide pour la racine (files/root).", "files/root");
-            if (targetParentPath === null) { // User cancelled
-                dragDropAreaText.textContent = originalText;
-                if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'block';
-                return;
-            }
-            finalUploadPath = targetParentPath.trim() === "" || targetParentPath.trim() === "files/root" ? "files/root" : targetParentPath;
-            // Ensure if a path is given, it's a 'files' node of a folder
-            if (finalUploadPath !== 'files/root' && !finalUploadPath.endsWith('/files')) {
-                const parentFolderCheck = await firebaseGet(firebaseChild(firebaseRef(db), finalUploadPath));
-                if (parentFolderCheck.exists() && parentFolderCheck.val().type === 'folder') {
-                    finalUploadPath += '/files'; // Append /files if it's a folder
-                } else {
-                    alert("Chemin invalide pour le téléversement.");
-                    dragDropAreaText.textContent = originalText;
-                    if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'block';
-                    return;
-                }
-            }
+    async function processSingleFile(file, targetPathInFirebase) {
+        globalProgressTracker.filesToAttempt++;
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            alert(`Fichier "${file.name}" (${(file.size / (1024*1024)).toFixed(2)}MB) est trop volumineux (limite ${MAX_SIZE_MB}MB). Il ne sera pas ajouté.\n🚨 N.B. : Firebase a une limite interne d'environ 10MB par écriture après encodage.`);
+            globalProgressTracker.largeFilesSkipped++;
+            globalProgressTracker.filesProcessed++;
+            return;
         }
 
-        for (const file of filesToUpload) { 
-            if (file.size > MAX_SIZE_MB * 1024 * 1024 * 0.7) { 
-                alert(`Fichier "${file.name}" trop volumineux (> ${MAX_SIZE_MB}MB après encodage potentiel). Il ne sera pas ajouté.`);
-                largeFileDetected = true;
-                uploadedCount++;
-                if (uploadedCount === totalFilesToAttempt) { // All files processed (or skipped)
-                    dragDropAreaText.textContent = originalText;
-                    if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'block';
-                    if (searchGlobalCheckbox.checked) { allDataForGlobalSearch = null; searchGlobalCheckbox.dispatchEvent(new Event('change')); } 
-                    else { displayFiles(currentFirebasePath, false, searchFileInput.value); }
-                }
-                continue;
-            }
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const base64Content = e.target.result.split(',')[1];
-                const fileName = file.name.replace(/[.#$[\]]/g, '_');
-                const newFilePath = `${finalUploadPath}/${fileName}`; 
+                const fileNameClean = file.name.replace(/[.#$[\]]/g, '_');
+                const newFilePath = `${targetPathInFirebase}/${fileNameClean}`;
                 try {
                     await firebaseSet(firebaseRef(db, newFilePath), {
                         type: 'file', contentType: file.type, base64Content: base64Content,
-                        uploadedAt: new Date().toISOString()
+                        uploadedAt: new Date().toISOString(), originalName: file.name
                     });
                 } catch (error) {
-                    console.error(`Erreur ajout ${fileName}:`, error);
-                    alert(`Erreur ajout ${fileName}. Firebase peut refuser les écritures trop volumineuses.`);
+                    console.error(`Erreur ajout ${fileNameClean}:`, error);
+                    alert(`Erreur lors de l'ajout de ${fileNameClean}. Les fichiers très volumineux peuvent être refusés par Firebase (limite ~10MB encodé).`);
+                    globalProgressTracker.errorsEncountered++;
                 } finally {
-                    uploadedCount++;
-                    if (uploadedCount === totalFilesToAttempt) {
-                        dragDropAreaText.textContent = originalText;
-                        if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'block';
-                        if (searchGlobalCheckbox.checked) { allDataForGlobalSearch = null; searchGlobalCheckbox.dispatchEvent(new Event('change')); } 
-                        else { displayFiles(currentFirebasePath, false, searchFileInput.value); }
-                        if (!largeFileDetected) alert("Téléversement terminé.");
-                        else alert("Téléversement terminé (certains fichiers ont pu être ignorés).");
-                    }
+                    globalProgressTracker.filesProcessed++;
+                    resolve();
                 }
             };
             reader.onerror = (error) => {
                 console.error("Erreur lecture fichier:", error);
-                uploadedCount++;
-                if (uploadedCount === totalFilesToAttempt) { 
-                    dragDropAreaText.textContent = originalText;
-                    if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'block';
-                    if (searchGlobalCheckbox.checked) { allDataForGlobalSearch = null; searchGlobalCheckbox.dispatchEvent(new Event('change')); }
-                    else { displayFiles(currentFirebasePath, false, searchFileInput.value); }
-                }
+                globalProgressTracker.errorsEncountered++;
+                globalProgressTracker.filesProcessed++;
+                reject(error); // Propagate error
             };
             reader.readAsDataURL(file);
+        });
+    }
+
+    async function processDirectoryEntryRecursive(directoryEntry, targetContainerPathInFirebase) {
+        const folderNameClean = directoryEntry.name.replace(/[.#$[\]]/g, '_');
+        const newFolderNodePath = `${targetContainerPathInFirebase}/${folderNameClean}`; // Path for the folder node itself
+
+        // Create folder node in Firebase
+        await firebaseSet(firebaseRef(db, newFolderNodePath), { type: 'folder', createdAt: new Date().toISOString() });
+        // Create its "files" child with a placeholder for contents
+        const filesContainerPathForThisFolder = `${newFolderNodePath}/files`;
+        await firebaseSet(firebaseRef(db, `${filesContainerPathForThisFolder}/_placeholder`), true);
+
+        const dirReader = directoryEntry.createReader();
+
+        let entriesBatch = await new Promise((resolve, reject) => dirReader.readEntries(resolve, reject));
+        while (entriesBatch.length > 0) {
+            for (const entry of entriesBatch) {
+                if (entry.isFile) {
+                    await new Promise((resolveFile) => { // Ensure file processing completes
+                        entry.file(async (file) => {
+                            await processSingleFile(file, filesContainerPathForThisFolder).catch(err => console.error("Failed to process a file in directory:", err));
+                            resolveFile();
+                        }, (err) => {
+                             console.error(`Erreur accès fichier ${entry.name} dans dossier:`, err);
+                             globalProgressTracker.errorsEncountered++;
+                             globalProgressTracker.filesProcessed++; // still counts as processed attempt
+                             resolveFile(); // continue with other files
+                        });
+                    });
+                } else if (entry.isDirectory) {
+                    await processDirectoryEntryRecursive(entry, filesContainerPathForThisFolder); // Sub-folders go into the "files" container of their parent
+                }
+            }
+            entriesBatch = await new Promise((resolve, reject) => dirReader.readEntries(resolve, reject)); // Read next batch
         }
-        if (filesToUpload.filter(f => !(f.size > MAX_SIZE_MB * 1024 * 1024 * 0.7)).length === 0 && largeFileDetected) { // Only if all files were too large
-            dragDropAreaText.textContent = originalText;
-            if(dragDropAreaIcon) dragDropAreaIcon.style.display = 'block';
-        }
-        fileInput.value = '';
     }
     
-    if (fileInput) { fileInput.addEventListener('change', (event) => handleFileUploads(event.target.files)); }
+    async function handleUploadTasks(items, baseUploadPath) {
+        const filesToProcess = [];
+        const directoriesToProcess = [];
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === 'file') { // This is a DataTransferItem
+                const entry = typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null;
+                if (entry) {
+                    if (entry.isFile) filesToProcess.push(entry);
+                    else if (entry.isDirectory) directoriesToProcess.push(entry);
+                } else { // Fallback if not webkitGetAsEntry (e.g. simple file object from input)
+                    const file = item.getAsFile ? item.getAsFile() : item; // item might be a File object directly
+                    if (file instanceof File) {
+                         // Wrap it to look like a FileSystemFileEntry for consistency if needed by processSingleFile
+                         // Or adapt processSingleFile to take File directly
+                         filesToProcess.push({ isFile: true, file: (cb) => cb(file), name: file.name }); // Simple wrapper
+                    }
+                }
+            }
+        }
+        
+        // Process individual files dropped at the target level
+        for (const fileEntry of filesToProcess) {
+            await new Promise(resolve => {
+                fileEntry.file(async (file) => { // Get actual File object
+                    await processSingleFile(file, baseUploadPath).catch(err => console.error("File processing error:", err));
+                    resolve();
+                }, (err) => {
+                    console.error("Error getting file from entry:", err);
+                    globalProgressTracker.errorsEncountered++;
+                    globalProgressTracker.filesProcessed++;
+                    resolve();
+                });
+            });
+        }
+
+        // Process directories dropped at the target level
+        for (const dirEntry of directoriesToProcess) {
+            await processDirectoryEntryRecursive(dirEntry, baseUploadPath).catch(err => console.error("Directory processing error:", err));
+        }
+    }
+
+
+    async function manageUploadProcess(dataTransferOrFileArray) {
+        if (!isAdminLoggedIn) return;
+        globalProgressTracker.reset();
+
+        const dragDropAreaTextEl = dragDropArea.querySelector('p');
+        const dragDropIconEl = dragDropArea.querySelector('ion-icon[name="cloud-upload-outline"]');
+        const originalDragDropText = dragDropAreaTextEl.textContent;
+
+        dragDropAreaTextEl.innerHTML = `Préparation du téléversement... <ion-icon name="hourglass-outline" class="spin"></ion-icon>`;
+        if (dragDropIconEl) dragDropIconEl.style.display = 'none';
+
+        let finalUploadPath = currentFirebasePath; // Base path for items, e.g., 'files/root/someFolder/files'
+        if (searchGlobalCheckbox.checked) {
+            const targetParentPath = prompt("Entrez le chemin complet du dossier où téléverser les éléments (ex: files/root/DossierCible/files ou files/root pour la racine) ou laissez vide pour la racine (files/root).", "files/root");
+            if (targetParentPath === null) {
+                dragDropAreaTextEl.textContent = originalDragDropText;
+                if (dragDropIconEl) dragDropIconEl.style.display = 'block';
+                return;
+            }
+            let rawPath = targetParentPath.trim();
+            if (rawPath === "" || rawPath === "files/root" || rawPath === "Racine") {
+                finalUploadPath = "files/root";
+            } else {
+                // Ensure it's a valid 'files' node of a folder or root
+                // Example: user enters "files/root/MyFolder"
+                // We need to upload into "files/root/MyFolder/files"
+                const testPath = rawPath.endsWith('/files') ? rawPath.substring(0, rawPath.length - '/files'.length) : rawPath;
+                
+                if (testPath === "files/root") { // Uploading to root's files container
+                    finalUploadPath = "files/root";
+                } else {
+                    const folderSnapshot = await firebaseGet(firebaseRef(db, testPath));
+                    if (folderSnapshot.exists() && folderSnapshot.val().type === 'folder') {
+                        finalUploadPath = `${testPath}/files`;
+                    } else {
+                        alert("Chemin invalide pour le téléversement. Le dossier parent spécifié n'existe pas ou n'est pas un dossier.");
+                        dragDropAreaTextEl.textContent = originalDragDropText;
+                        if (dragDropIconEl) dragDropIconEl.style.display = 'block';
+                        return;
+                    }
+                }
+            }
+        }
+        
+        dragDropAreaTextEl.innerHTML = `Téléversement en cours... <ion-icon name="sync-outline" class="spin"></ion-icon>`;
+
+        if (dataTransferOrFileArray instanceof FileList || Array.isArray(dataTransferOrFileArray)) { // From file input
+            const fileArray = Array.from(dataTransferOrFileArray);
+            const wrappedFiles = fileArray.map(f => ({ getAsFile: () => f, kind: 'file', webkitGetAsEntry: () => ({isFile: true, isDirectory: false, name: f.name, file: (cb) => cb(f) }) }));
+            await handleUploadTasks(wrappedFiles, finalUploadPath);
+        } else if (dataTransferOrFileArray instanceof DataTransferItemList) { // From drag and drop
+            await handleUploadTasks(dataTransferOrFileArray, finalUploadPath);
+        }
+
+
+        // Finalize UI
+        dragDropAreaTextEl.textContent = originalDragDropText;
+        if (dragDropIconEl) dragDropIconEl.style.display = 'block';
+        fileInput.value = ''; // Clear file input regardless
+
+        let summary = `Téléversement terminé. ${globalProgressTracker.filesProcessed} sur ${globalProgressTracker.filesToAttempt} tentatives de fichiers traitées.`;
+        if (globalProgressTracker.largeFilesSkipped > 0) summary += ` ${globalProgressTracker.largeFilesSkipped} fichier(s) volumineux ignoré(s).`;
+        if (globalProgressTracker.errorsEncountered > 0) summary += ` ${globalProgressTracker.errorsEncountered} erreur(s) rencontrée(s).`;
+        alert(summary + "\n🚨 N.B. : Firebase a une limite interne d'environ 10MB par écriture. Les fichiers plus gros échoueront.");
+
+        if (searchGlobalCheckbox.checked) {
+            allDataForGlobalSearch = null; // Invalidate cache
+            searchGlobalCheckbox.dispatchEvent(new Event('change')); // Trigger reload
+        } else {
+            displayFiles(currentFirebasePath, false, searchFileInput.value); // Refresh current view
+        }
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (event) => {
+            if (event.target.files.length > 0) {
+                manageUploadProcess(event.target.files);
+            }
+        });
+    }
+
     if (dragDropArea) {
         dragDropArea.addEventListener('dragover', (event) => { event.preventDefault(); if (isAdminLoggedIn) dragDropArea.classList.add('dragover'); });
-        dragDropArea.addEventListener('dragleave', () => { if (isAdminLoggedIn) dragDropArea.classList.remove('dragover'); }); // Corrected: remove dragover, not dragleave
-        dragDropArea.addEventListener('drop', (event) => { event.preventDefault(); if (isAdminLoggedIn) { dragDropArea.classList.remove('dragover'); const files = event.dataTransfer.files; if (files.length > 0) { handleFileUploads(files); } } });
+        dragDropArea.addEventListener('dragleave', () => { if (isAdminLoggedIn) dragDropArea.classList.remove('dragover'); });
+        dragDropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            if (isAdminLoggedIn) {
+                dragDropArea.classList.remove('dragover');
+                if (event.dataTransfer && event.dataTransfer.items && event.dataTransfer.items.length > 0) {
+                    manageUploadProcess(event.dataTransfer.items);
+                }
+            }
+        });
         dragDropArea.addEventListener('click', () => { if (isAdminLoggedIn) { fileInput.click(); } });
     }
 
-    async function deleteItem(itemFullPath, itemName, itemType) { 
+
+    async function deleteItem(itemFullPath, itemName, itemType) {
         if (!isAdminLoggedIn) return;
+        // itemFullPath is the path to the item node itself (e.g. files/root/MyFolder or files/root/files/MyFile.txt)
         if (confirm(`Supprimer "${itemName}" (${itemType}) ? Ceci est irréversible.`)) {
             try {
                 await firebaseRemove(firebaseRef(db, itemFullPath));
                 if (itemType === 'folder') {
+                    // Also remove its "files" child that holds its contents
                     await firebaseRemove(firebaseRef(db, `${itemFullPath}/files`)).catch(() => {});
                 }
                 alert(`"${itemName}" a été supprimé.`);
-                
-                if (searchGlobalCheckbox.checked) { 
-                    allDataForGlobalSearch = null; 
-                    renderGlobalSearchResults([], ''); 
-                    searchGlobalCheckbox.dispatchEvent(new Event('change')); 
+
+                if (searchGlobalCheckbox.checked) {
+                    allDataForGlobalSearch = null;
+                    renderGlobalSearchResults([], '');
+                    searchGlobalCheckbox.dispatchEvent(new Event('change'));
                 } else {
+                    // Determine the parent path to refresh
+                    // currentFirebasePath is already the parent "files" container for the current view
                     displayFiles(currentFirebasePath, false, searchFileInput.value);
                 }
             } catch (error) { console.error("Erreur suppression:", error); alert("Erreur suppression."); }
@@ -772,26 +966,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const newNameRaw = prompt(`Entrez le nouveau nom pour "${oldName}":`, oldName);
         if (newNameRaw && newNameRaw.trim() !== "" && newNameRaw.trim() !== oldName) {
             const newName = newNameRaw.trim().replace(/[.#$[\]]/g, '_');
+            // itemFullPath is like .../container/OldName
+            // parentPath is .../container
             const parentPath = itemFullPath.substring(0, itemFullPath.lastIndexOf('/'));
-            const newItemFullPath = `${parentPath}/${newName}`;
+            const newItemFullPath = `${parentPath}/${newName}`; // .../container/NewName
 
-            if (itemFullPath === newItemFullPath) { alert("Le nom est identique ou invalide."); return; }
+            if (itemFullPath === newItemFullPath) { alert("Le nom est identique ou invalide après nettoyage."); return; }
 
             try {
                 const itemRef = firebaseRef(db, itemFullPath);
                 const snapshot = await firebaseGet(itemRef);
                 if (snapshot.exists()) {
                     const itemData = snapshot.val();
-                    await firebaseSet(firebaseRef(db, newItemFullPath), itemData);
+                    await firebaseSet(firebaseRef(db, newItemFullPath), itemData); // Create new node with old data
 
                     if (itemType === 'folder') {
-                        const contentsSnapshot = await firebaseGet(firebaseRef(db, `${itemFullPath}/files`));
+                        // Move contents from oldFolder/files to newFolder/files
+                        const oldContentsPath = `${itemFullPath}/files`;
+                        const newContentsPath = `${newItemFullPath}/files`;
+                        const contentsSnapshot = await firebaseGet(firebaseRef(db, oldContentsPath));
                         if (contentsSnapshot.exists()) {
-                            await firebaseSet(firebaseRef(db, `${newItemFullPath}/files`), contentsSnapshot.val());
+                            await firebaseSet(firebaseRef(db, newContentsPath), contentsSnapshot.val());
                         }
-                        await firebaseRemove(firebaseRef(db, `${itemFullPath}/files`)).catch(() => {});
+                        await firebaseRemove(firebaseRef(db, oldContentsPath)).catch(() => {}); // Remove old contents container
                     }
-                    await firebaseRemove(itemRef);
+                    await firebaseRemove(itemRef); // Remove old item node
                     alert(`"${oldName}" renommé en "${newName}".`);
 
                     if (searchGlobalCheckbox.checked) {
@@ -799,14 +998,15 @@ document.addEventListener('DOMContentLoaded', () => {
                          renderGlobalSearchResults([], '');
                          searchGlobalCheckbox.dispatchEvent(new Event('change'));
                     } else {
+                        // currentFirebasePath should be the parent path that was being viewed
                         displayFiles(currentFirebasePath, false, searchFileInput.value);
                     }
                 } else { alert("L'élément n'a pas été trouvé."); }
             } catch (error) { console.error("Erreur renommage:", error); alert("Erreur renommage."); }
         }
     }
-    
+
     setInitialNavState();
-    displayFiles(currentFirebasePath, true); 
-    toggleAdminMode(false); 
+    displayFiles(currentFirebasePath, true);
+    toggleAdminMode(false);
 });
