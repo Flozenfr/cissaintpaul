@@ -2639,7 +2639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePhotoUpload(e) {
         const files = Array.from(e.target.files);
         const maxPhotos = 5;
-        const maxSizeMB = 2; 
+        const maxSizeMB = 50; 
 
         if (photosBase64.length + files.length > maxPhotos) { 
             showMessage(`Vous ne pouvez télécharger qu'un maximum de ${maxPhotos} photos. Vous en avez déjà ${photosBase64.length}.`, "error");
