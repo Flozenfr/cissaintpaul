@@ -83,6 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminInterventionUrgenciesTextarea = document.getElementById('admin-intervention-urgencies');
     const saveDropdownListsBtn = document.getElementById('save-dropdown-lists-btn');
 
+    // Dashboard elements
+    const dashboardMonthFilter = document.getElementById('dashboard-month-filter');
+    const dashboardYearFilter = document.getElementById('dashboard-year-filter');
+    const applyDashboardFiltersBtn = document.getElementById('apply-dashboard-filters-btn');
+    const exportDashboardInterventionsCsvBtn = document.getElementById('export-dashboard-interventions-csv-btn');
+    const dashboardInterventionsPeriode = document.getElementById('stat-interventions-periode');
+    const dashboardInterventionsDetailList = document.getElementById('dashboard-interventions-detail-list');
+
 
     // --- VARIABLES GLOBALES ---
     let allInterventions = {};
@@ -111,9 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const DELETE_PASSWORD = "Aspf66220*"; 
     let isPharmacyAuthenticated = false;
     let currentUser = "Anonyme";
-    let initialPompierStockLoad = true; 
-    let initialConfigLoad = true;
-    let initialStockExpiryLoad = true;
+    
+    let dataLoadStatus = {
+        config: false,
+        pompierStock: false,
+        pharmaStock: false,
+        alertsShown: false 
+    };
 
 
     // --- GESTION DE LA MODALE PERSONNALISÉE ---
@@ -165,80 +177,138 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- ALERTE STOCK BAS & PEREMPTION ---
-    function checkAndShowLowStockAlert() {
-        const lowStockItems = [];
-        const threshold = appConfig.lowStockThreshold || 3; // Utilise le seuil de config ou 3 par défaut
+    // --- ALERTE COMBINÉE STOCK BAS & PEREMPTION ---
+    function checkAndShowCombinedAlerts() {
+        if (dataLoadStatus.alertsShown) return;
+        if (!dataLoadStatus.config || !dataLoadStatus.pompierStock || !dataLoadStatus.pharmaStock) return;
+
+        // VSAV Low Stock
+        const vsavLowStockItems = [];
+        const vsavThreshold = appConfig.lowStockThreshold || 3;
         for (const itemName in pompierStock) {
-            if (pompierStock[itemName] && typeof pompierStock[itemName].quantity === 'number' && pompierStock[itemName].quantity <= threshold) {
-                lowStockItems.push({ name: itemName, quantity: pompierStock[itemName].quantity });
+            if (pompierStock[itemName] && typeof pompierStock[itemName].quantity === 'number' && pompierStock[itemName].quantity <= vsavThreshold) {
+                vsavLowStockItems.push({ name: itemName, quantity: pompierStock[itemName].quantity });
             }
         }
 
-        if (lowStockItems.length > 0) {
-            const lowStockAlertModalEl = document.getElementById('lowStockAlertModal');
-            const lowStockAlertListEl = document.getElementById('lowStockAlertList');
-            
-            if (!lowStockAlertModalEl || !lowStockAlertListEl) {
-                console.error("Low stock alert modal elements not found in HTML!");
-                return;
-            }
-
-            lowStockAlertListEl.innerHTML = lowStockItems
-                .map(item => `<li>${item.name}: ${item.quantity} restant(s)</li>`)
-                .join('');
-            lowStockAlertModalEl.classList.add('visible');
-        }
-    }
-
-    function checkAndShowExpiryAlerts() {
+        // Expiry Alerts (Both Stocks)
         const expiringItems = [];
         const today = new Date();
-        const alertPeriodDays = 30; 
-
-        const checkStock = (stock, stockName) => {
+        const alertPeriodDays = 30;
+        const checkStockExpiry = (stock, stockName) => {
             for (const itemName in stock) {
                 const item = stock[itemName];
-                if (item && item.expiryDate) { // Vérifie que 'item' et 'item.expiryDate' existent
+                if (item && item.expiryDate) {
                     const expiry = new Date(item.expiryDate);
-                    if (isNaN(expiry.getTime())) { // Vérifie si la date est valide
+                    if (isNaN(expiry.getTime())) {
                         console.warn(`Date de péremption invalide pour ${itemName} dans ${stockName}: ${item.expiryDate}`);
                         continue;
                     }
                     const diffTime = expiry - today;
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     if (diffDays <= alertPeriodDays) {
-                        expiringItems.push({ 
-                            name: itemName, 
-                            stock: stockName, 
-                            expiryDate: formatDate(item.expiryDate), 
-                            daysLeft: diffDays 
+                        expiringItems.push({
+                            name: itemName,
+                            stock: stockName,
+                            expiryDate: formatDate(item.expiryDate),
+                            daysLeft: diffDays
                         });
                     }
                 }
             }
         };
+        checkStockExpiry(pompierStock, "Stock VSAV");
+        checkStockExpiry(pharmaStock, "Stock Pharmacie");
+        expiringItems.sort((a, b) => a.daysLeft - b.daysLeft);
 
-        checkStock(pompierStock, "Stock VSAV");
-        checkStock(pharmaStock, "Stock Pharmacie");
-
-        if (expiringItems.length > 0) {
-            const expiryAlertModalEl = document.getElementById('expiryAlertModal');
-            const expiryAlertListEl = document.getElementById('expiryAlertList');
-
-            if (!expiryAlertModalEl || !expiryAlertListEl) {
-                console.error("Expiry alert modal elements not found in HTML!");
-                return;
+        // Pharmacy Low/Depleted Stock
+        const pharmaLowOrDepletedItems = [];
+        const pharmaThreshold = appConfig.lowStockThreshold || 3; 
+        for (const itemName in pharmaStock) {
+            if (pharmaStock[itemName] && typeof pharmaStock[itemName].quantity === 'number') {
+                if (pharmaStock[itemName].quantity <= 0) {
+                    pharmaLowOrDepletedItems.push({ name: itemName, quantity: pharmaStock[itemName].quantity, status: 'Épuisé' });
+                } else if (pharmaStock[itemName].quantity <= pharmaThreshold) {
+                    pharmaLowOrDepletedItems.push({ name: itemName, quantity: pharmaStock[itemName].quantity, status: 'Bas' });
+                }
             }
-            
-            expiringItems.sort((a,b) => a.daysLeft - b.daysLeft); 
-
-            expiryAlertListEl.innerHTML = expiringItems.map(item => 
-                `<li>${item.name} (${item.stock}) - Expire le: ${item.expiryDate} 
-                 (${item.daysLeft <= 0 ? 'Périmé' : 'J-' + item.daysLeft})</li>`
-            ).join('');
-            expiryAlertModalEl.classList.add('visible');
         }
+
+
+        // Modal Elements
+        const combinedAlertModalEl = document.getElementById('combinedAlertModal');
+        const vsavLowStockListEl = document.getElementById('combinedVsavLowStockList'); 
+        const expiryListEl = document.getElementById('combinedExpiryList');
+        const pharmaStockAlertListEl = document.getElementById('combinedPharmaStockAlertList'); 
+
+        const vsavLowStockCountEl = document.getElementById('vsav-low-stock-count'); 
+        const expiryCountEl = document.getElementById('expiry-count');
+        const pharmaStockAlertCountEl = document.getElementById('pharma-stock-alert-count'); 
+
+        const noAlertsMessageEl = document.getElementById('no-alerts-message');
+        const vsavLowStockSectionEl = document.getElementById('combined-vsav-low-stock-section'); 
+        const expirySectionEl = document.getElementById('combined-expiry-section');
+        const pharmaStockAlertSectionEl = document.getElementById('combined-pharma-stock-alert-section'); 
+
+        const alertSeparator1El = document.getElementById('alert-separator-1');
+        const alertSeparator2El = document.getElementById('alert-separator-2');
+
+
+        if (!combinedAlertModalEl || !vsavLowStockListEl || !expiryListEl || !pharmaStockAlertListEl ||
+            !vsavLowStockCountEl || !expiryCountEl || !pharmaStockAlertCountEl ||
+            !noAlertsMessageEl || !vsavLowStockSectionEl || !expirySectionEl || !pharmaStockAlertSectionEl ||
+            !alertSeparator1El || !alertSeparator2El) {
+            console.error("Combined alert modal elements not fully found in HTML!");
+            return;
+        }
+        
+        let hasVsavLowStock = vsavLowStockItems.length > 0;
+        let hasExpiringItems = expiringItems.length > 0;
+        let hasPharmaStockAlerts = pharmaLowOrDepletedItems.length > 0;
+
+        vsavLowStockSectionEl.style.display = hasVsavLowStock ? 'block' : 'none';
+        if (hasVsavLowStock) {
+            vsavLowStockCountEl.textContent = vsavLowStockItems.length;
+            vsavLowStockListEl.innerHTML = vsavLowStockItems
+                .map(item => `<li>${item.name}: ${item.quantity} restant(s)</li>`)
+                .join('');
+        }
+
+        expirySectionEl.style.display = hasExpiringItems ? 'block' : 'none';
+        if (hasExpiringItems) {
+            expiryCountEl.textContent = expiringItems.length;
+            expiryListEl.innerHTML = expiringItems.map(item =>
+                `<li>${item.name} (${item.stock}) - Expire le: ${item.expiryDate}
+                 (${item.daysLeft <= 0 ? '<strong style="color:var(--fire-red);">Périmé</strong>' : 'J-' + item.daysLeft})</li>`
+            ).join('');
+        }
+        
+        pharmaStockAlertSectionEl.style.display = hasPharmaStockAlerts ? 'block' : 'none';
+        if (hasPharmaStockAlerts) {
+            pharmaStockAlertCountEl.textContent = pharmaLowOrDepletedItems.length;
+            pharmaStockAlertListEl.innerHTML = pharmaLowOrDepletedItems
+                .map(item => `<li>${item.name}: ${item.quantity} - <strong style="color:${item.status === 'Épuisé' ? 'var(--fire-red)' : 'var(--warning-light)'};">${item.status}</strong></li>`)
+                .join('');
+        }
+        
+        // Manage Separators Visibility
+        let visibleSections = [hasVsavLowStock, hasExpiringItems, hasPharmaStockAlerts];
+        let firstVisible = visibleSections.indexOf(true);
+        let secondVisible = visibleSections.indexOf(true, firstVisible + 1);
+        
+        alertSeparator1El.style.display = (firstVisible !== -1 && secondVisible !== -1) ? 'block' : 'none';
+        
+        let thirdVisible = visibleSections.indexOf(true, secondVisible + 1);
+        alertSeparator2El.style.display = (secondVisible !== -1 && thirdVisible !== -1) ? 'block' : 'none';
+
+
+        if (hasVsavLowStock || hasExpiringItems || hasPharmaStockAlerts) {
+            noAlertsMessageEl.style.display = 'none';
+            combinedAlertModalEl.classList.add('visible');
+        } else {
+            noAlertsMessageEl.style.display = 'block';
+        }
+        dataLoadStatus.alertsShown = true; 
     }
 
 
@@ -255,17 +325,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (adminInterventionUrgenciesTextarea) adminInterventionUrgenciesTextarea.value = (appConfig.interventionUrgencies || []).join(',');
             
             populateInterventionFormDropdowns(); 
-
-            if (initialConfigLoad) { 
-                if(document.getElementById('dashboard-view')?.classList.contains('visible')) displayDashboard();
-                initialConfigLoad = false;
-            }
+            dataLoadStatus.config = true;
+            checkAndShowCombinedAlerts();
+            if(document.getElementById('dashboard-view')?.classList.contains('visible')) displayDashboard();
         });
 
         database.ref('interventions').on('value', snapshot => {
             allInterventions = snapshot.val() || {};
             refreshCurrentView();
             if(document.getElementById('dashboard-view')?.classList.contains('visible')) displayDashboard();
+            populateDashboardDateFilters();
         });
         database.ref('stocks/pompier').on('value', snapshot => {
             pompierStock = snapshot.val() || {};
@@ -276,15 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (materielSelectionModal.classList.contains('visible')) {
                 populateMaterielSelectionModal();
             }
-            if (initialPompierStockLoad) { 
-                checkAndShowLowStockAlert(); // Vérifie stock bas après chargement config et stock
-                initialPompierStockLoad = false;
-            }
-            // Déplacé le check de péremption pour s'assurer que les deux stocks sont chargés
-            if (!initialPompierStockLoad && !initialStockExpiryLoad) { 
-                 checkAndShowExpiryAlerts();
-                 initialStockExpiryLoad = false; 
-            }
+            dataLoadStatus.pompierStock = true;
+            checkAndShowCombinedAlerts();
             if(document.getElementById('dashboard-view')?.classList.contains('visible')) displayDashboard();
         });
         database.ref('stocks/pharmacie').on('value', snapshot => {
@@ -296,10 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (materielSelectionModal.classList.contains('visible')) {
                 populateMaterielSelectionModal();
             }
-            if (!initialPompierStockLoad && !initialStockExpiryLoad) { // Assure que pompierStock est aussi chargé
-                checkAndShowExpiryAlerts();
-                initialStockExpiryLoad = false; 
-            }
+            dataLoadStatus.pharmaStock = true;
+            checkAndShowCombinedAlerts();
         });
         database.ref('log').on('value', snapshot => {
             activityLog = snapshot.val() || {};
@@ -316,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const populateSelect = (selectId, optionsArray, defaultSelected) => {
             const selectElement = document.getElementById(selectId);
             if (selectElement) {
-                const currentValue = selectElement.value; // Sauvegarder la valeur actuelle si le form est en édition
+                const currentValue = selectElement.value; 
                 selectElement.innerHTML = ''; 
                 (optionsArray || []).forEach(optionValue => {
                     const option = document.createElement('option');
@@ -324,7 +384,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.textContent = optionValue;
                     selectElement.appendChild(option);
                 });
-                 // Restaurer la valeur si elle existe dans les nouvelles options, sinon utiliser le défaut
                 if (optionsArray && optionsArray.includes(currentValue)) {
                     selectElement.value = currentValue;
                 } else if (defaultSelected && optionsArray && optionsArray.includes(defaultSelected)) {
@@ -332,13 +391,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (optionsArray && optionsArray.length > 0) {
                     selectElement.value = optionsArray[0];
                 }
-
             }
         };
 
         populateSelect('statut', appConfig.interventionStatuses, appConfig.interventionStatuses[0]);
         populateSelect('urgence', appConfig.interventionUrgencies, appConfig.interventionUrgencies[0]);
-        // Pour catégorie, on essaie de préselectionner "Accident" si elle existe, sinon la première de la liste.
         const defaultCategory = (appConfig.interventionCategories || []).includes("Accident") ? "Accident" : (appConfig.interventionCategories || [])[0];
         populateSelect('categorie', appConfig.interventionCategories, defaultCategory);
     }
@@ -657,7 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const archiveSearchTerm = (archiveSearchInput.value || '').toLowerCase();
         const pharmacyGlobalSearchTerm = (pharmacySearchInput.value || '').toLowerCase(); 
         
-        const sortedInterventions = Object.entries(allInterventions).sort(([, a], [, b]) => b.createdAt - a.createdAt);
+        const sortedInterventions = Object.entries(allInterventions).sort(([, a], [, b]) => (b.createdAt || 0) - (a.createdAt || 0) );
     
         let filteredCurrent = [], filteredArchive = [], filteredPharmacyReappro = [], filteredPharmacyArchive = [];
     
@@ -665,29 +722,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = { id, ...inter };
             const searchableInterventionText = `${inter.numero_intervention} ${inter.nom || ''} ${inter.lieu || ''} ${inter.date || ''} ${Object.keys(inter.materiels||{}).join(' ')}`.toLowerCase();
     
-            if (inter.archived) { 
-                if (document.getElementById('archive-view')?.classList.contains('visible') && searchableInterventionText.includes(archiveSearchTerm)) {
+            if (inter.archived) { // Intervention clôturée par Pompier
+                // Pour la vue "Archive Pompier"
+                if (document.getElementById('archive-view')?.classList.contains('visible') && 
+                    searchableInterventionText.includes(archiveSearchTerm)) {
                     filteredArchive.push(data);
                 }
                 
+                // Pour la vue "Archives Pharmacie" (Pompier clôturé ET Pharmacie a traité)
                 if (document.getElementById('pharmacy-archives-view')?.classList.contains('visible') && 
                     searchableInterventionText.includes(pharmacyGlobalSearchTerm) && 
                     inter.pharmacyStatus === 'Traité') { 
                      filteredPharmacyArchive.push(data);
                 }
 
+                // Pour la vue "Réapprovisionnement en Attente" (Pompier clôturé MAIS Pharmacie PAS encore traité)
+                // Cela inclut celles avec matériel et celles sans matériel qui attendent l'ack de la pharmacie
                 if (document.getElementById('reappro-view')?.classList.contains('visible') &&
                     searchableInterventionText.includes(pharmacyGlobalSearchTerm) &&
-                    inter.pharmacyStatus !== 'Traité') { 
-                    if (inter.materiels && Object.keys(inter.materiels).length > 0) { 
-                        if (!filteredPharmacyReappro.find(item => item.id === id)) { 
-                            filteredPharmacyReappro.push(data);
-                        }
+                    inter.pharmacyStatus !== 'Traité') { // DEVRAIT ÊTRE 'À traiter' ou autre non-'Traité'
+                     if (!filteredPharmacyReappro.find(item => item.id === id)) { 
+                        filteredPharmacyReappro.push(data);
                     }
                 }
 
-            } else { 
-                if (document.getElementById('current-view')?.classList.contains('visible') && searchableInterventionText.includes(currentSearchTerm)) {
+            } else { // Intervention NON clôturée par Pompier (en cours Pompier)
+                if (document.getElementById('current-view')?.classList.contains('visible') && 
+                    searchableInterventionText.includes(currentSearchTerm)) {
                     filteredCurrent.push(data);
                 }
             }
@@ -703,7 +764,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function renderPaginatedView(dataArray, container, paginationId, currentPage, cardCreator, pageType) {
         if (!container) {
-            // console.warn(`Container for paginationId ${paginationId} not found.`);
             return;
         }
         const totalPages = Math.ceil(dataArray.length / ITEMS_PER_PAGE);
@@ -780,15 +840,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createPharmacyCard(inter) { 
-        const { id, numero_intervention, date, pharmacyStatus, nom } = inter;
+        const { id, numero_intervention, date, pharmacyStatus, nom, statut } = inter; 
         let statusText, statusClass;
         switch(pharmacyStatus) {
             case 'En cours de traitement': statusText = 'En Cours Pharma'; statusClass = 'badge-en-cours-de-traitement'; break;
-            case 'Traité':  statusText = 'Traité'; statusClass = 'badge-traite'; break;
+            case 'Traité':  statusText = 'Traité (Erreur Aff.)'; statusClass = 'badge-traite'; break; // Should not appear here
             case 'En attente': statusText = 'En Attente Traitement'; statusClass = 'badge-en-attente';  break;
             case 'À vérifier par pharmacie': statusText = 'Vérification Pharmacie'; statusClass = 'badge-warning-light'; break;
-            default: statusText = 'À Traiter'; statusClass = 'badge-a-traiter';
+            default: statusText = 'À Traiter'; statusClass = 'badge-a-traiter'; // This is the expected status
         }
+        
+        const pompierStatusText = inter.archived ? 'Archivé Pompier' : (statut || 'En cours');
+        const pompierStatusClass = inter.archived ? 'badge-termine' : `badge-${(statut || 'en-cours').toLowerCase().replace(/\s/g, '-')}`;
+
 
         return `
         <div class="intervention-card pharmacy-card" data-id="${id}">
@@ -798,8 +862,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="card-body">
                 <div class="card-item"><i class="bi bi-calendar-check"></i> <span>Intervention du ${formatDate(date)}</span></div>
-                 <div class="card-item"><i class="bi bi-person"></i> <span>Par Pompier: ${nom || 'N/A'}</span></div>
-                 ${inter.archivedAt ? `<div class="card-item"><i class="bi bi-archive"></i> <span>Archivée Pompier le: ${new Date(inter.archivedAt).toLocaleDateString('fr-FR')}</span></div>` : ''}
+                <div class="card-item"><i class="bi bi-person"></i> <span>Par Pompier: ${nom || 'N/A'}</span></div>
+                <div class="card-item"><i class="bi bi-cone-striped"></i> Pompier: <span class="status-badge ${pompierStatusClass}">${pompierStatusText}</span></div>
+                ${inter.archivedAt && inter.archived ? `<div class="card-item"><i class="bi bi-archive"></i> <span>Archivée Pompier le: ${new Date(inter.archivedAt).toLocaleDateString('fr-FR')}</span></div>` : ''}
             </div>
             <div class="card-footer">
                 ${(pharmacyStatus !== 'Traité') ? `<button class="btn-primary process-material-btn" data-id="${id}" title="Traiter le matériel de cette intervention"><i class="bi bi-arrow-repeat"></i> <span class="btn-text">Traiter Matériel</span></button>` : ''}
@@ -845,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.close-intervention-btn').forEach(btn => btn.addEventListener('click', (e) => closeInterventionDirectly(e.currentTarget.dataset.id)));
         document.querySelectorAll('.process-material-btn').forEach(btn => btn.addEventListener('click', (e) => openMaterialManagementModal(e.currentTarget.dataset.id, 'pharmacy')));
     
-        if (unifiedStockCards) { // Ensure element exists before adding listener
+        if (unifiedStockCards) { 
             unifiedStockCards.addEventListener('click', async (e) => {
                 const editBtn = e.target.closest('.edit-vsav-stock-btn');
                 const saveBtn = e.target.closest('.save-vsav-stock-btn');
@@ -888,42 +953,49 @@ document.addEventListener('DOMContentLoaded', () => {
             categorie: document.getElementById('categorie').value,
             commentaire: document.getElementById('commentaire').value,
             photos: photosBase64,
-            materiels: materiels.reduce((obj, mat) => ({ ...obj, [mat.name]: { quantity_used: mat.qty, reappro_status: '', comment: '', pharma_status: '', pharma_comment: '', quantity_missing: 0 } }), {}),
-            archived: false, 
-            pharmacyStatus: (materiels.length > 0) ? 'En attente' : 'Traité', 
+            materiels: materiels.reduce((obj, mat) => ({ ...obj, [mat.name]: { 
+                quantity_used: mat.qty, 
+                reappro_status: '', 
+                comment: '', 
+                pharma_status: '', 
+                pharma_comment: '', 
+                quantity_missing: 0,
+                quantity_reappro_vsav: 0 
+            } }), {}),
         };
-
-        if (interventionData.statut === "Terminé" && materiels.length === 0) {
-            interventionData.archived = true; 
-            interventionData.pharmacyStatus = 'Traité'; 
-            interventionData.archivedAt = firebase.database.ServerValue.TIMESTAMP; 
-            interventionData.pharmacyProcessedAt = firebase.database.ServerValue.TIMESTAMP; 
-        }
-
-
+        
         const dbRef = id ? database.ref('interventions/' + id) : database.ref('interventions').push();
         const timestamp = firebase.database.ServerValue.TIMESTAMP;
-        if (id) { 
-            interventionData.updatedAt = timestamp;
-            const existingInter = allInterventions[id];
-            if (existingInter) {
-                interventionData.createdAt = existingInter.createdAt || timestamp;
-                if(interventionData.archived && !existingInter.archivedAt) { 
-                     interventionData.archivedAt = timestamp;
-                } else if (existingInter.archivedAt) { 
-                    interventionData.archivedAt = existingInter.archivedAt;
+        const existingInter = id ? allInterventions[id] : null;
+
+        if (interventionData.statut === "Terminé") { // Pompier clôture
+            interventionData.archived = true;
+            interventionData.pharmacyStatus = 'À traiter'; // Toujours 'À traiter' pour la pharmacie
+            interventionData.pharmacyProcessedAt = null;  // Timestamp sera mis par la pharmacie
+            interventionData.archivedAt = existingInter?.archivedAt || timestamp; // Conserver si déjà archivé, sinon nouveau timestamp
+        } else { // Intervention 'En cours' (pas clôturée par pompier)
+            interventionData.archived = false;
+            interventionData.archivedAt = null;
+            if (!id) { // Nouvel item 'En cours'
+                if (Object.keys(interventionData.materiels).length > 0) {
+                    interventionData.pharmacyStatus = 'À traiter'; 
+                    interventionData.pharmacyProcessedAt = null;
+                } else {
+                    interventionData.pharmacyStatus = 'Traité'; // Pas de matériel, donc traité pour pharmacie
+                    interventionData.pharmacyProcessedAt = timestamp;
                 }
-                if(interventionData.pharmacyStatus === 'Traité' && !existingInter.pharmacyProcessedAt) {
-                     interventionData.pharmacyProcessedAt = timestamp;
-                } else if (existingInter.pharmacyProcessedAt) {
-                    interventionData.pharmacyProcessedAt = existingInter.pharmacyProcessedAt;
-                }
+            } else if (existingInter) { // Modification d'un item 'En cours' existant
+                interventionData.pharmacyStatus = existingInter.pharmacyStatus;
+                interventionData.pharmacyProcessedAt = existingInter.pharmacyProcessedAt;
             }
-        } else { 
+        }
+        
+        if (existingInter) { // Modification
+            interventionData.createdAt = existingInter.createdAt || timestamp;
+            interventionData.updatedAt = timestamp;
+        } else { // Nouveau
             interventionData.createdAt = timestamp;
             interventionData.updatedAt = timestamp;
-             if(interventionData.archived) interventionData.archivedAt = timestamp;
-             if(interventionData.pharmacyStatus === 'Traité') interventionData.pharmacyProcessedAt = timestamp;
         }
         
         dbRef.set(interventionData).then(() => {
@@ -1007,20 +1079,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     updates.materiels = JSON.parse(JSON.stringify(inter.materiels)); 
                     for (const matName in updates.materiels) {
                         const details = updates.materiels[matName];
-                        const qtyUsed = details.quantity_used || 0;
+                        // const qtyUsed = details.quantity_used || 0; // Not used directly here for stock adjustment
+                        const qtyReapproVsav = details.quantity_reappro_vsav || 0;
 
-                        if (details.reappro_status === 'Réapprovisionné' && qtyUsed > 0) {
+
+                        if (qtyReapproVsav > 0) { // If quantity was taken from VSAV previously
                              const pompierStockRef = database.ref(`stocks/pompier/${matName}`);
                              stockUpdatePromises.push(
                                  pompierStockRef.once('value').then(snapshot => {
                                      if (snapshot.exists()) {
-                                         return pompierStockRef.child('quantity').set(firebase.database.ServerValue.increment(qtyUsed));
+                                         return pompierStockRef.child('quantity').set(firebase.database.ServerValue.increment(qtyReapproVsav));
                                      } else {
-                                         return pompierStockRef.set({ quantity: qtyUsed, notes: 'Restitué lors désarchivage pompier', expiryDate: details.expiryDate || null });
+                                         return pompierStockRef.set({ quantity: qtyReapproVsav, notes: 'Restitué lors désarchivage pompier', expiryDate: details.expiryDate || null });
                                      }
                                  })
                              );
-                            stockLogEntries.push(`+${qtyUsed} '${matName}' (VSAV)`);
+                            stockLogEntries.push(`+${qtyReapproVsav} '${matName}' (VSAV) restitué`);
                         }
                         
                         details.reappro_status = ""; 
@@ -1028,21 +1102,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         details.pharma_status = ""; 
                         details.pharma_comment = ""; 
                         details.quantity_missing = 0; 
+                        details.quantity_reappro_vsav = 0; // Reset this field
                         materialResetLog.push(matName);
                     }
                 }
                 
-                if (updates.materiels && Object.keys(updates.materiels).length > 0) {
-                    updates.pharmacyStatus = 'À traiter'; 
-                    updates.pharmacyProcessedAt = null;
-                } else {
-                    updates.pharmacyStatus = 'Traité';
-                     if (!inter.pharmacyProcessedAt) { 
-                        updates.pharmacyProcessedAt = firebase.database.ServerValue.TIMESTAMP;
-                    } else {
-                         updates.pharmacyProcessedAt = inter.pharmacyProcessedAt; 
-                    }
-                }
+                // Lors du désarchivage pompier, on remet toujours la pharmacie à 'À traiter'
+                updates.pharmacyStatus = 'À traiter'; 
+                updates.pharmacyProcessedAt = null;
                 
                 await Promise.all(stockUpdatePromises); 
                 await database.ref(`interventions/${id}`).update(updates);
@@ -1093,14 +1160,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const inter = allInterventions[id];
         if (!inter) return;
 
-        if (!inter.archived || inter.pharmacyStatus !== 'Traité') {
-            showMessage("Cette intervention ne peut pas être désarchivée par la pharmacie dans son état actuel. Elle doit être archivée par le pompier et marquée comme 'Traité' par la pharmacie.", "warning");
+        if (inter.pharmacyStatus !== 'Traité') { 
+            showMessage("Cette intervention ne peut pas être remise 'À traiter' par la pharmacie dans son état actuel. Elle doit être marquée comme 'Traité' par la pharmacie au préalable.", "warning");
             return;
         }
 
         const confirmed = await showCustomDialog({
             title: "Remettre l'Intervention 'À Traiter' (Pharmacie)",
-            message: `Remettre l'intervention n°${inter.numero_intervention} au statut "À traiter" pour la pharmacie ?\nCela annulera le statut 'Traité' de la pharmacie, retirera l'intervention des archives pharmacie, inversera les mouvements de stock Pharmacie -> VSAV et annulera les commandes associées.\nLe statut d'archivage pompier reste inchangé.`
+            message: `Remettre l'intervention n°${inter.numero_intervention} au statut "À traiter" pour la pharmacie ?\nCela annulera le statut 'Traité' de la pharmacie, retirera l'intervention des archives pharmacie (si applicable), inversera les mouvements de stock Pharmacie -> VSAV (si applicable) et annulera les commandes associées.\nLe statut d'archivage pompier reste inchangé.`
         });
 
         if (confirmed) {
@@ -1117,19 +1184,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (const matKey in inter.materiels) {
                         const materialDetail = inter.materiels[matKey];
                         if (materialDetail.pharma_status === 'Réapprovisionné') { 
-                            const qtyReversed = (materialDetail.reappro_status === 'Manquant' && materialDetail.quantity_missing > 0)
-                                                ? materialDetail.quantity_missing
-                                                : (materialDetail.quantity_used || 0);
+                            // Quantity that was moved from Pharma to VSAV
+                            const qtyReversedFromPharmaToVSAV = (materialDetail.reappro_status === 'Manquant' && materialDetail.quantity_missing > 0)
+                                                ? materialDetail.quantity_missing // This case implies pharmacy supplied for 'manquant'
+                                                : (materialDetail.quantity_used || 0); // This case implies pharmacy supplied for initial use
 
-                            if (qtyReversed > 0) {
+                            if (qtyReversedFromPharmaToVSAV > 0) {
                                 const pharmaStockRef = database.ref(`stocks/pharmacie/${matKey}`);
                                 allDBPromises.push(
                                     pharmaStockRef.once('value').then(snapshot => {
-                                        const currentPharmaData = snapshot.val() || { quantity: 0, notes: '', expiryDate: null };
                                         return pharmaStockRef.update({ 
-                                            quantity: firebase.database.ServerValue.increment(qtyReversed),
-                                            // notes: currentPharmaData.notes, // Conserve les notes existantes
-                                            // expiryDate: currentPharmaData.expiryDate // Conserve la date existante
+                                            quantity: firebase.database.ServerValue.increment(qtyReversedFromPharmaToVSAV),
                                         });
                                     })
                                 );
@@ -1137,18 +1202,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const pompierStockRef = database.ref(`stocks/pompier/${matKey}/quantity`);
                                 allDBPromises.push(
                                     pompierStockRef.once('value').then(snapshot => {
-                                        if (snapshot.exists() && snapshot.val() >= qtyReversed) {
-                                            return pompierStockRef.set(firebase.database.ServerValue.increment(-qtyReversed));
+                                        if (snapshot.exists() && snapshot.val() >= qtyReversedFromPharmaToVSAV) {
+                                            return pompierStockRef.set(firebase.database.ServerValue.increment(-qtyReversedFromPharmaToVSAV));
                                         } else if (snapshot.exists()) {
-                                            stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' (${snapshot.val()}) insuffisant pour retrait de ${qtyReversed}. Mis à 0.`);
+                                            stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' (${snapshot.val()}) insuffisant pour retrait de ${qtyReversedFromPharmaToVSAV}. Mis à 0.`);
                                             return pompierStockRef.set(0);
                                         } else {
-                                            stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' non trouvé pour retrait de ${qtyReversed}.`);
+                                            stockReversalLogEntries.push(`Alerte: Stock VSAV pour '${matKey}' non trouvé pour retrait de ${qtyReversedFromPharmaToVSAV}.`);
                                             return Promise.resolve(); 
                                         }
                                     })
                                 );
-                                stockReversalLogEntries.push(`Stock inversé pour '${matKey}': +${qtyReversed} Pharmacie, -${qtyReversed} VSAV (ou ajusté)`);
+                                stockReversalLogEntries.push(`Stock inversé pour '${matKey}': +${qtyReversedFromPharmaToVSAV} Pharmacie, -${qtyReversedFromPharmaToVSAV} VSAV (ou ajusté)`);
                             }
                         }
                     }
@@ -1185,6 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (const matKey in interventionNodeUpdates.materiels) {
                         interventionNodeUpdates.materiels[matKey].pharma_status = "";
                         interventionNodeUpdates.materiels[matKey].pharma_comment = "";
+                        // quantity_reappro_vsav remains as is, as this action primarily concerns pharmacy's processing.
                         materialResetLog.push(matKey);
                     }
                 }
@@ -1258,19 +1324,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!inter) return;
         const confirmed = await showCustomDialog({
             title: "Clôturer l'intervention (sans matériel)",
-            message: `Aucun matériel n'est associé à cette intervention ou le matériel a déjà été géré. Clôturer et archiver l'intervention n°${inter.numero_intervention} ?`
+            message: `Aucun matériel n'est associé à cette intervention ou le matériel a déjà été géré. Clôturer et archiver l'intervention n°${inter.numero_intervention} ? Elle sera mise "À traiter" pour la pharmacie.`
         });
         if (confirmed) {
             const updates = {
                 archived: true, 
                 statut: 'Terminé', 
-                pharmacyStatus: 'Traité', 
+                pharmacyStatus: 'À traiter', // Toujours 'À traiter'
                 archivedAt: firebase.database.ServerValue.TIMESTAMP, 
-                pharmacyProcessedAt: firebase.database.ServerValue.TIMESTAMP 
+                pharmacyProcessedAt: null // La pharmacie traitera
             };
             await database.ref(`interventions/${id}`).update(updates);
-            addLogEntry('Intervention Clôturée (Sans Matériel)', `n°${inter.numero_intervention} archivée directement par ${currentUser}.`);
-            showMessage('Intervention clôturée et archivée (aucun matériel à traiter).', 'success');
+            addLogEntry('Intervention Clôturée (Pompier, sans mat. géré)', `n°${inter.numero_intervention} archivée par ${currentUser}. Pharmacie à traiter.`);
+            showMessage('Intervention clôturée et archivée. En attente de traitement par la pharmacie.', 'success');
         }
     }
 
@@ -1316,9 +1382,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="detail-section full-width"><h4><i class="bi bi-tools"></i> Matériels Utilisés et Suivi Réapprovisionnement</h4> 
                         <div>${Object.entries(inter.materiels || {}).map(([name, d]) => {
                             let reapproStatusDisplay = d.reappro_status || 'Non défini';
+                            if (d.reappro_status === 'Réapprovisionné' && typeof d.quantity_reappro_vsav === 'number') {
+                                reapproStatusDisplay += ` (Qté effective VSAV: ${d.quantity_reappro_vsav})`;
+                            }
                             if (d.reappro_status === 'Manquant') {
                                 reapproStatusDisplay += ` (Qté demandée pour vérif. Pharmacie: ${d.quantity_missing || d.quantity_used || 'N/A'})`;
                             }
+                            
                             let pharmaStatusDisplay = d.pharma_status || 'Non traité par pharmacie';
                             if (d.pharma_status === 'En commande') {
                                 pharmaStatusDisplay += ` (Commande pour ${d.quantity_missing > 0 ? d.quantity_missing : d.quantity_used})`;
@@ -1358,23 +1428,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!inter) return;
         const hasMaterials = inter.materiels && Object.keys(inter.materiels).length > 0;
 
+        // MODIFICATION: Si l'intervention est 'À traiter' (par la pharmacie) et n'a pas de matériel,
+        // la pharmacie peut la marquer 'Traité' directement.
         if (!hasMaterials) {
-            if (userType === 'firefighter') {
+            if (userType === 'firefighter') { // Pompier
                 closeInterventionDirectly(interId); 
-            } else { 
-                if (inter.pharmacyStatus && inter.pharmacyStatus !== 'Traité') {
+            } else { // Pharmacie
+                if (inter.pharmacyStatus === 'À traiter') { // Si c'est à la pharmacie de traiter et qu'il n'y a rien
                     database.ref(`interventions/${interId}`).update({ 
                         pharmacyStatus: 'Traité',
                         pharmacyProcessedAt: firebase.database.ServerValue.TIMESTAMP
                     });
-                    addLogEntry('Traitement Pharmacie (Auto)', `Inter n°${inter.numero_intervention} marquée traitée (aucun matériel) par ${currentUser}.`);
+                    addLogEntry('Traitement Pharmacie (Sans Matériel)', `Inter n°${inter.numero_intervention} marquée traitée (aucun matériel effectif) par ${currentUser}.`);
                     showMessage("Intervention marquée comme traitée par la pharmacie (aucun matériel).", 'success');
                 } else {
-                    showMessage("Aucun matériel à traiter pour cette intervention.", "info");
+                    showMessage("Aucun matériel à traiter pour cette intervention, ou déjà traitée.", "info");
                 }
             }
             return; 
         }
+
 
         const listContainer = document.getElementById('material-management-list');
         document.getElementById('material-modal-inter-num').textContent = `n°${inter.numero_intervention}`;
@@ -1390,11 +1463,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const itemsHtml = Object.entries(inter.materiels).map(([matName, details]) => {
             const qtyUsedOriginal = details.quantity_used || 1;
+            const initialReapproVsavQty = details.quantity_reappro_vsav !== undefined ? details.quantity_reappro_vsav : qtyUsedOriginal;
+            const initialMissingQty = details.quantity_missing !== undefined ? details.quantity_missing : qtyUsedOriginal;
+
             if (userType === 'firefighter') {
                 return `
                 <div class="material-management-item firefighter-view" data-mat-name="${matName}">
                     <span>${matName}</span>
-                    <input type="number" class="mat-qty-used" value="${qtyUsedOriginal}" min="0" readonly title="Quantité utilisée initialement (non modifiable ici)">
+                    <input type="number" class="mat-qty-used" value="${qtyUsedOriginal}" min="0" readonly title="Quantité utilisée initialement">
                     <div>
                         <select class="mat-reappro-status">
                             <option value="">Choisir statut...</option>
@@ -1402,10 +1478,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="Manquant" ${details.reappro_status === 'Manquant' ? 'selected' : ''}>Manquant (vérif. pharmacie)</option>
                             <option value="Pas besoin" ${details.reappro_status === 'Pas besoin' ? 'selected' : ''}>Pas besoin de réappro.</option>
                         </select>
-                        <div class="quantity-input-group missing-qty-input ${details.reappro_status === 'Manquant' ? 'visible' : ''}" style="margin-top: 0.5rem;">
+                        
+                        <div class="quantity-input-group reappro-vsav-qty-input" style="margin-top: 0.5rem; display: ${details.reappro_status === 'Réapprovisionné' ? 'flex' : 'none'};">
+                            <label style="font-size:0.8em; margin-right:5px;">Qté réappro. VSAV:</label>
+                            <button type="button" class="qty-adjust-btn" data-target-class="reappro-vsav-qty-value" data-action="decrement">-</button>
+                            <input type="number" class="reappro-vsav-qty-value" placeholder="Qté" value="${initialReapproVsavQty}" min="0" max="${qtyUsedOriginal}" step="1">
+                            <button type="button" class="qty-adjust-btn" data-target-class="reappro-vsav-qty-value" data-action="increment">+</button>
+                        </div>
+
+                        <div class="quantity-input-group missing-qty-input" style="margin-top: 0.5rem; display: ${details.reappro_status === 'Manquant' ? 'flex' : 'none'};">
                             <label style="font-size:0.8em; margin-right:5px;">Qté pour vérif. pharmacie:</label>
                             <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="decrement">-</button>
-                            <input type="number" class="missing-qty-value" placeholder="Qté" value="${details.quantity_missing || qtyUsedOriginal}" min="1" step="1">
+                            <input type="number" class="missing-qty-value" placeholder="Qté" value="${initialMissingQty}" min="1" step="1">
                             <button type="button" class="qty-adjust-btn" data-target-class="missing-qty-value" data-action="increment">+</button>
                         </div>
                     </div>
@@ -1413,17 +1497,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
             } else { 
                  const pompierReapproStatus = details.reappro_status || "Non défini par pompier";
-                 const pompierMissingQty = details.quantity_missing || 0;
                  let materialContext = `Utilisé: ${qtyUsedOriginal}. Demande Pompier (VSAV): ${pompierReapproStatus}`;
-                 if (pompierReapproStatus === 'Manquant' && pompierMissingQty > 0) {
-                     materialContext += ` (Qté pour vérif: ${pompierMissingQty})`;
-                 } else if (pompierReapproStatus === 'Manquant' && pompierMissingQty === 0) {
-                     materialContext += ` (Qté pour vérif: ${qtyUsedOriginal})`; 
+                 if (pompierReapproStatus === 'Réapprovisionné') {
+                     materialContext += ` (Qté VSAV: ${details.quantity_reappro_vsav || 'N/A'})`;
+                     if(details.quantity_missing > 0) materialContext += `, Reste Manquant: ${details.quantity_missing}`;
+                 } else if (pompierReapproStatus === 'Manquant') {
+                     materialContext += ` (Qté pour vérif: ${details.quantity_missing || qtyUsedOriginal})`;
                  }
                  if (details.pharma_status === 'À vérifier par pharmacie') {
                     materialContext += `. Pharmacie: À vérifier pour commande/réappro.`;
                  }
-
 
                 return `
                 <div class="material-management-item pharmacy-view" data-mat-name="${matName}">
@@ -1445,18 +1528,33 @@ document.addEventListener('DOMContentLoaded', () => {
         listContainer.querySelectorAll('.mat-reappro-status').forEach(select => {
             select.addEventListener('change', e => {
                 const itemRow = e.target.closest('.material-management-item');
-                const missingQtyGroup = itemRow.querySelector('.missing-qty-input'); 
+                const qtyUsedOriginal = parseInt(itemRow.querySelector('.mat-qty-used').value, 10) || 1;
+        
+                const missingQtyGroup = itemRow.querySelector('.missing-qty-input');
                 const missingQtyInput = missingQtyGroup.querySelector('.missing-qty-value');
-                missingQtyGroup.classList.toggle('visible', e.target.value === 'Manquant');
-                if (e.target.value === 'Manquant') { 
-                    if(!missingQtyInput.value || parseInt(missingQtyInput.value,10) === 0 ) { 
-                        const qtyUsed = parseInt(itemRow.querySelector('.mat-qty-used').value, 10) || 1;
-                        missingQtyInput.value = qtyUsed; 
+        
+                const reapproVsavQtyGroup = itemRow.querySelector('.reappro-vsav-qty-input');
+                const reapproVsavQtyInput = reapproVsavQtyGroup.querySelector('.reappro-vsav-qty-value');
+        
+                missingQtyGroup.style.display = 'none';
+                reapproVsavQtyGroup.style.display = 'none';
+        
+                if (e.target.value === 'Manquant') {
+                    missingQtyGroup.style.display = 'flex';
+                    if (!missingQtyInput.value || parseInt(missingQtyInput.value, 10) === 0) {
+                        missingQtyInput.value = qtyUsedOriginal;
                     }
+                } else if (e.target.value === 'Réapprovisionné') {
+                    reapproVsavQtyGroup.style.display = 'flex';
+                    reapproVsavQtyInput.value = qtyUsedOriginal; 
+                    reapproVsavQtyInput.max = qtyUsedOriginal;  
+                    reapproVsavQtyInput.min = 0; 
                 } else { 
                     missingQtyInput.value = ''; 
+                    reapproVsavQtyInput.value = '';
                 }
             });
+            select.dispatchEvent(new Event('change'));
         });
         materialManagementModal.classList.add('visible');
     }
@@ -1466,75 +1564,100 @@ document.addEventListener('DOMContentLoaded', () => {
         const interRef = database.ref(`interventions/${interId}`);
         const intervention = allInterventions[interId]; 
         let allFirefighterInputsValid = true; 
-        let isPharmacyProcessingAnyItem = false; 
         let pharmacyActionsLog = [];
         let pompierActionsLog = [];
         let dbOperationPromises = []; 
-
+        let materialsInCurrentUpdate = []; 
 
         document.querySelectorAll('#material-management-list .material-management-item:not(.header)').forEach(item => {
             const matName = item.dataset.matName;
-            const interventionMaterialDetails = intervention.materiels[matName]; 
+            materialsInCurrentUpdate.push(matName); 
             
             if (userType === 'firefighter') {
-                const reappro_status = item.querySelector('.mat-reappro-status').value;
+                const reapproStatus = item.querySelector('.mat-reappro-status').value;
                 const comment = item.querySelector('.mat-comment').value;
-                let quantity_missing = 0; 
-
-                if (reappro_status === 'Manquant') {
-                    const missingInput = item.querySelector('.missing-qty-value'); 
-                    quantity_missing = parseInt(missingInput.value, 10);
-                    if (isNaN(quantity_missing) || quantity_missing <= 0) {
-                        allFirefighterInputsValid = false; 
-                        missingInput.style.borderColor = 'red'; 
-                    } else {
-                        missingInput.style.borderColor = ''; 
-                    }
-                    updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; 
-                    pompierActionsLog.push(`${quantity_missing} x '${matName}' signalé manquant (vérification pharmacie requise) pour inter n°${intervention.numero_intervention}`);
-                } else if (reappro_status === 'Réapprovisionné' || reappro_status === 'Pas besoin') {
-                     updates[`materiels/${matName}/pharma_status`] = interventionMaterialDetails.pharma_status === 'À vérifier par pharmacie' ? '' : (interventionMaterialDetails.pharma_status || '');
-                } else { 
-                     updates[`materiels/${matName}/pharma_status`] = interventionMaterialDetails.pharma_status || '';
-                }
-
-
-                updates[`materiels/${matName}/reappro_status`] = reappro_status;
-                updates[`materiels/${matName}/quantity_missing`] = quantity_missing; 
+                const qtyUsedOriginal = intervention.materiels[matName]?.quantity_used || 0;
+                
+                updates[`materiels/${matName}/reappro_status`] = reapproStatus;
                 updates[`materiels/${matName}/comment`] = comment;
+                updates[`materiels/${matName}/quantity_reappro_vsav`] = 0; 
+                updates[`materiels/${matName}/quantity_missing`] = 0;   
+                
+                updates[`materiels/${matName}/pharma_status`] = intervention.materiels[matName]?.pharma_status || ''; 
 
-                if (!reappro_status && Object.keys(intervention.materiels || {}).length > 0) { 
+                if (!reapproStatus) { 
                     allFirefighterInputsValid = false; 
                     item.querySelector('.mat-reappro-status').style.borderColor = 'red';
-                } else if (reappro_status) {
+                } else {
                      item.querySelector('.mat-reappro-status').style.borderColor = '';
                 }
 
+                if (reapproStatus === 'Réapprovisionné') {
+                    const reapproVsavQtyInput = item.querySelector('.reappro-vsav-qty-value');
+                    let qtyActuallyReapprovisioned = parseInt(reapproVsavQtyInput.value, 10);
 
-                const qtyUsedOriginal = interventionMaterialDetails?.quantity_used || 0;
+                    if (isNaN(qtyActuallyReapprovisioned) || qtyActuallyReapprovisioned < 0) {
+                        qtyActuallyReapprovisioned = 0;
+                    }
+                    qtyActuallyReapprovisioned = Math.min(qtyActuallyReapprovisioned, qtyUsedOriginal); 
 
-                if (reappro_status === 'Réapprovisionné') { 
-                    if (pompierStock[matName] && typeof pompierStock[matName].quantity === 'number' && pompierStock[matName].quantity >= qtyUsedOriginal && qtyUsedOriginal > 0) {
-                        const pompierStockRef = database.ref(`stocks/pompier/${matName}/quantity`);
-                        dbOperationPromises.push(pompierStockRef.set(firebase.database.ServerValue.increment(-qtyUsedOriginal)));
-                        pompierActionsLog.push(`-${qtyUsedOriginal} '${matName}' (Stock VSAV) pour réappro inter n°${intervention.numero_intervention}`);
-                    } else if (qtyUsedOriginal > 0) {
-                         pompierActionsLog.push(`Alerte: '${matName}' marqué réapprovisionné VSAV mais stock VSAV inexistant, à 0 ou insuffisant. Quantité utilisée: ${qtyUsedOriginal}.`);
+                    updates[`materiels/${matName}/quantity_reappro_vsav`] = qtyActuallyReapprovisioned;
+                    
+                    let vsavStockTaken = 0;
+                    if (qtyActuallyReapprovisioned > 0) {
+                        const currentPompierStockQty = (pompierStock[matName] && typeof pompierStock[matName].quantity === 'number') ? pompierStock[matName].quantity : 0;
+                        vsavStockTaken = Math.min(qtyActuallyReapprovisioned, currentPompierStockQty);
+
+                        if (vsavStockTaken > 0) {
+                            const pompierStockRef = database.ref(`stocks/pompier/${matName}/quantity`);
+                            dbOperationPromises.push(pompierStockRef.set(firebase.database.ServerValue.increment(-vsavStockTaken)));
+                            pompierActionsLog.push(`-${vsavStockTaken} '${matName}' (Stock VSAV) pour réappro inter n°${intervention.numero_intervention}`);
+                        }
+                        if (vsavStockTaken < qtyActuallyReapprovisioned) {
+                             pompierActionsLog.push(`Alerte: Tentative de réappro. de ${qtyActuallyReapprovisioned} '${matName}' depuis VSAV, mais seulement ${vsavStockTaken} disponible(s) et pris.`);
+                        }
+                    }
+                    updates[`materiels/${matName}/quantity_reappro_vsav`] = vsavStockTaken; 
+
+                    const remainingMissingAfterVsav = qtyUsedOriginal - vsavStockTaken;
+                    if (remainingMissingAfterVsav > 0) {
+                        updates[`materiels/${matName}/quantity_missing`] = remainingMissingAfterVsav;
+                        updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; 
+                    } else { 
+                        updates[`materiels/${matName}/quantity_missing`] = 0;
+                        if (updates[`materiels/${matName}/pharma_status`] === 'À vérifier par pharmacie') {
+                             updates[`materiels/${matName}/pharma_status`] = '';
+                        }
+                    }
+
+                } else if (reapproStatus === 'Manquant') {
+                    const missingInput = item.querySelector('.missing-qty-value'); 
+                    let quantity_missing_val = parseInt(missingInput.value, 10);
+                    if (isNaN(quantity_missing_val) || quantity_missing_val <= 0) {
+                        allFirefighterInputsValid = false; 
+                        missingInput.style.borderColor = 'red'; 
+                        quantity_missing_val = qtyUsedOriginal; 
+                    } else {
+                        missingInput.style.borderColor = ''; 
+                    }
+                    updates[`materiels/${matName}/quantity_missing`] = quantity_missing_val;
+                    updates[`materiels/${matName}/pharma_status`] = 'À vérifier par pharmacie'; 
+                } else { 
+                    updates[`materiels/${matName}/quantity_missing`] = 0;
+                    if (updates[`materiels/${matName}/pharma_status`] === 'À vérifier par pharmacie') {
+                        updates[`materiels/${matName}/pharma_status`] = '';
                     }
                 }
+
             } else { // userType === 'pharmacy'
                  const pharma_status = item.querySelector('.mat-pharma-status').value;
                  const pharma_comment = item.querySelector('.mat-pharma-comment').value;
                  updates[`materiels/${matName}/pharma_status`] = pharma_status;
                  updates[`materiels/${matName}/pharma_comment`] = pharma_comment;
-
-                 if (pharma_status) { 
-                    isPharmacyProcessingAnyItem = true; 
-                 }
                  
-                 const qtyToHandlePharmacie = (interventionMaterialDetails.reappro_status === 'Manquant' && interventionMaterialDetails.quantity_missing > 0)
-                                          ? interventionMaterialDetails.quantity_missing 
-                                          : (interventionMaterialDetails.quantity_used || 0); 
+                 const qtyToHandlePharmacie = intervention.materiels[matName]?.quantity_missing > 0 
+                                              ? intervention.materiels[matName].quantity_missing
+                                              : (intervention.materiels[matName]?.quantity_used || 0);
 
                  if (pharma_status === 'En commande' && qtyToHandlePharmacie > 0) {
                     const newCommandRef = database.ref('commandes').push();
@@ -1550,7 +1673,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }));
                     pharmacyActionsLog.push(`Commande créée/confirmée: ${qtyToHandlePharmacie} x '${matName}' (Inter n°${intervention.numero_intervention})`);
                  } else if (pharma_status === 'Réapprovisionné' && qtyToHandlePharmacie > 0) {
-                    
                     const pharmaStockRef = database.ref(`stocks/pharmacie/${matName}`);
                     dbOperationPromises.push(
                         pharmaStockRef.once('value').then(snapshot => {
@@ -1569,10 +1691,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     dbOperationPromises.push(
                         pompierStockRef.once('value').then(snapshot => {
                             const currentPompierData = snapshot.val();
-                            if (snapshot.exists()) {
+                            if (snapshot.exists()) { 
                                 return pompierStockRef.update({
                                     quantity: firebase.database.ServerValue.increment(qtyToHandlePharmacie),
-                                    expiryDate: pharmaStock[matName]?.expiryDate || currentPompierData?.expiryDate || null // Prioritize pharma expiry, then existing, then null
+                                    expiryDate: pharmaStock[matName]?.expiryDate || currentPompierData?.expiryDate || null
                                 });
                             } else { 
                                 return pompierStockRef.set({ 
@@ -1592,59 +1714,17 @@ document.addEventListener('DOMContentLoaded', () => {
             await Promise.all(dbOperationPromises); 
 
             if (userType === 'firefighter') {
-                if (!allFirefighterInputsValid) return showMessage("Veuillez définir un statut de réapprovisionnement pour tous les matériels. Si 'Manquant', une quantité valide est requise.", 'error');
+                if (!allFirefighterInputsValid) return showMessage("Veuillez définir un statut de réapprovisionnement pour tous les matériels. Si 'Manquant' ou 'Réapprovisionné VSAV', une quantité valide est requise.", 'error');
                 
                 updates['statut'] = 'Terminé'; 
                 updates['archived'] = true;   
                 updates['archivedAt'] = firebase.database.ServerValue.TIMESTAMP;
                 
-                let needsPharmacyActionGlobal = false;
-                if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
-                    for (const matName of Object.keys(intervention.materiels)) {
-                        // Check the pharma_status we are about to set in `updates`
-                        if (updates[`materiels/${matName}/pharma_status`] === 'À vérifier par pharmacie') {
-                            needsPharmacyActionGlobal = true;
-                            break;
-                        }
-                    }
-                }
+                // TOUJOURS 'À traiter' pour la pharmacie lors de la clôture pompier
+                updates['pharmacyStatus'] = 'À traiter';
+                updates['pharmacyProcessedAt'] = null; 
 
-                if (needsPharmacyActionGlobal) {
-                    updates['pharmacyStatus'] = 'À traiter'; 
-                    updates['pharmacyProcessedAt'] = null;
-                } else {
-                    let allPompierHandledOrNotNeeded = true;
-                    let hasMaterialsInIntervention = false;
-                     if (intervention.materiels && Object.keys(intervention.materiels).length > 0) {
-                        hasMaterialsInIntervention = true;
-                        for (const matName of Object.keys(intervention.materiels)) {
-                            const reapproStatus = updates[`materiels/${matName}/reappro_status`];
-                            // If status is empty or "Manquant" (which now means "À vérifier par pharmacie") it's not fully handled by pompier alone.
-                            if (!reapproStatus || reapproStatus === 'Manquant') { 
-                                allPompierHandledOrNotNeeded = false;
-                                break;
-                            }
-                        }
-                    } else { // No materials in intervention
-                        allPompierHandledOrNotNeeded = true;
-                    }
-
-                    if (allPompierHandledOrNotNeeded) {
-                        updates['pharmacyStatus'] = 'Traité';
-                        if (!intervention.pharmacyProcessedAt || !hasMaterialsInIntervention) {
-                            updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
-                        } else {
-                            updates['pharmacyProcessedAt'] = intervention.pharmacyProcessedAt;
-                        }
-                    } else {
-                        // If some items are not "Pas besoin" or "Réapprovisionné", but also not "Manquant" (pharma_status not "À vérifier")
-                        // then it implies pharmacy status should remain as is or 'En attente'.
-                        updates['pharmacyStatus'] = intervention.pharmacyStatus !== 'Traité' ? (intervention.pharmacyStatus || 'En attente') : 'En attente';
-                        if (updates['pharmacyStatus'] === 'Traité') updates['pharmacyProcessedAt'] = intervention.pharmacyProcessedAt || firebase.database.ServerValue.TIMESTAMP;
-                        else  updates['pharmacyProcessedAt'] = null;
-                    }
-                }
-                addLogEntry('Intervention Clôturée (Pompier)', `n°${intervention.numero_intervention} archivée, matériel géré par ${currentUser}. ${pompierActionsLog.join('. ')}`);
+                addLogEntry('Intervention Clôturée (Pompier)', `n°${intervention.numero_intervention} archivée, matériel géré par ${currentUser}. Pharmacie à traiter. ${pompierActionsLog.join('. ')}`);
             } else { // userType === 'pharmacy'
                 let allItemsHavePharmaStatusSelected = true;
                 if (Object.keys(intervention.materiels || {}).length > 0) {
@@ -1663,7 +1743,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      return showMessage("Veuillez définir un statut de traitement pour tous les matériels listés.", 'error');
                 }
 
-                updates['pharmacyStatus'] = 'Traité';
+                updates['pharmacyStatus'] = 'Traité'; // La pharmacie a traité
                 updates['pharmacyProcessedAt'] = firebase.database.ServerValue.TIMESTAMP;
                 addLogEntry('Traitement Matériel Pharmacie', `Intervention n°${intervention.numero_intervention} traitée par ${currentUser}. Actions: ${pharmacyActionsLog.join('. ')}`);
             }
@@ -1673,6 +1753,7 @@ document.addEventListener('DOMContentLoaded', () => {
             materialManagementModal.classList.remove('visible');
 
         } catch (error) {
+            console.error("Erreur saveMaterialData:", error); 
             showMessage(`Erreur lors de l'enregistrement des données matériel: ${error.message}`, 'error');
             addLogEntry('Erreur Enregistrement Matériel', `Inter n°${intervention.numero_intervention}, Erreur: ${error.message}. Pharmacie Actions: ${pharmacyActionsLog.join('. ')}, Pompier Actions: ${pompierActionsLog.join('. ')}`);
         }
@@ -1694,7 +1775,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cardsContainer.innerHTML = '';
         const filteredStock = Object.entries(stockData)
             .filter(([name, details]) => {
-                // Robust check for details structure
                 if (typeof details !== 'object' || details === null) {
                     console.warn(`Invalid stock item structure for "${name}" in ${viewType} stock. Skipping.`);
                     return false;
@@ -1708,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         filteredStock.forEach(([name, details]) => {
-            if (typeof details !== 'object' || details === null) { // Double check here, though filter should catch it
+            if (typeof details !== 'object' || details === null) { 
                 console.error(`Skipping malformed stock item in forEach: ${name}`);
                 return; 
             }
@@ -1716,15 +1796,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const isVSAVStock = viewType === 'pompier';
             const canEditPharmacieStock = isPharmacyAuthenticated && viewType === 'pharmacie';
             
-            let inputReadOnly = true; // Default to readonly
+            let inputReadOnly = true; 
             if (isVSAVStock && isPharmacyAuthenticated) {
-                // VSAV stock is readonly unless explicitly unlocked by Pharmacie
                 inputReadOnly = true; 
             } else if (viewType === 'pharmacie' && isPharmacyAuthenticated) {
-                // Pharmacie stock is editable by Pharmacie
                 inputReadOnly = false;
             } else if (!isPharmacyAuthenticated) {
-                // Pompier view is always readonly in this stock management screen
                 inputReadOnly = true;
             }
 
@@ -1744,7 +1821,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <ion-icon name="trash-outline"></ion-icon>
                             </button>
                         </div>`;
-                } else { // VSAV stock view, by Pharmacie
+                } else { 
                     footerHtml = `
                         <div class="stock-card-footer">
                             <button class="btn-icon-card edit-vsav-stock-btn" data-name="${name}" title="Modifier Stock VSAV (Admin Pharmacie)">
@@ -1968,13 +2045,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const updatePompier = {
                     quantity: firebase.database.ServerValue.increment(qty)
                 };
-                // Conserver la date de péremption existante du pompier si elle est plus proche ou si pharmacie n'en a pas.
-                // Si le pompier n'en a pas, prendre celle de la pharmacie.
                 if (pharmaItem.expiryDate) {
                     if (!pompierItemData.expiryDate || new Date(pharmaItem.expiryDate) < new Date(pompierItemData.expiryDate)) {
                         updatePompier.expiryDate = pharmaItem.expiryDate;
                     }
-                } // else, on garde l'existante ou null.
+                } 
                 await pompierItemRef.update(updatePompier);
             } else { 
                 await pompierItemRef.set({ 
@@ -2297,7 +2372,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const pharmaItemRef = database.ref(`stocks/pharmacie/${cmdData.materialName}`);
                 const pharmaItemSnapshot = await pharmaItemRef.once('value');
-                const pharmaItemData = pharmaItemSnapshot.val();
 
                 const updateData = { 
                     quantity: firebase.database.ServerValue.increment(currentQuantityOnCard)
@@ -2305,11 +2379,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!pharmaItemSnapshot.exists()) {
                      updateData.notes = 'Ajouté via commande rangée et archivée';
                      updateData.expiryDate = null; 
-                } else {
-                    // If item exists, we don't automatically update expiry date from command receipt
-                    // as it might have its own specific expiry.
-                    // If batch tracking was in place, this would be different.
-                }
+                } 
                 await pharmaItemRef.update(updateData);
                 addLogEntry('Stock Pharmacie & Archivage Cmd', `+${currentQuantityOnCard} de '${cmdData.materialName}' au stock pharmacie. Cmd ID: ${cmdId} archivée par ${currentUser}`);
                 showMessage(`Commande archivée. Stock pharmacie pour "${cmdData.materialName}" mis à jour.`, 'success');
@@ -2842,26 +2912,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- TABLEAU DE BORD ---
-    function displayDashboard() {
+    function populateDashboardDateFilters() {
+        if (!allInterventions || Object.keys(allInterventions).length === 0) return;
+        if (!dashboardMonthFilter || !dashboardYearFilter) return; 
+
+        const uniqueYearMonths = new Set();
+        const uniqueYears = new Set();
+
+        Object.values(allInterventions).forEach(inter => {
+            if (inter.date) {
+                const [year, month] = inter.date.split('-');
+                if (year && month) {
+                    uniqueYearMonths.add(`${year}-${month}`);
+                    uniqueYears.add(year);
+                }
+            }
+        });
+
+        const sortedYearMonths = Array.from(uniqueYearMonths).sort().reverse();
+        const sortedYears = Array.from(uniqueYears).sort().reverse();
+
+        
+        const currentMonthVal = dashboardMonthFilter.value;
+        dashboardMonthFilter.innerHTML = '<option value="all">Tous les mois</option>';
+        sortedYearMonths.forEach(ym => {
+            const [year, month] = ym.split('-');
+            const option = document.createElement('option');
+            option.value = ym;
+            option.textContent = `${month}/${year}`;
+            dashboardMonthFilter.appendChild(option);
+        });
+        if (Array.from(dashboardMonthFilter.options).some(opt => opt.value === currentMonthVal)) {
+            dashboardMonthFilter.value = currentMonthVal;
+        }
+        
+        const currentYearVal = dashboardYearFilter.value;
+        dashboardYearFilter.innerHTML = '<option value="all">Toutes les années</option>';
+        sortedYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            dashboardYearFilter.appendChild(option);
+        });
+        if (Array.from(dashboardYearFilter.options).some(opt => opt.value === currentYearVal)) {
+            dashboardYearFilter.value = currentYearVal;
+        }
+    }
+
+
+    function displayDashboard(filterYear = 'all', filterMonthYear = 'all') {
         const enCoursElem = document.getElementById('stat-interventions-en-cours');
-        const moisElem = document.getElementById('stat-interventions-mois');
         const stockBasElem = document.getElementById('stat-stock-vsav-bas');
         const stockBasListElem = document.getElementById('list-stock-vsav-bas');
         const commandesAttenteElem = document.getElementById('stat-commandes-en-attente');
 
-        if (!enCoursElem || !moisElem || !stockBasElem || !stockBasListElem || !commandesAttenteElem) {
-            // console.warn("Dashboard elements not fully available.");
+        if (!enCoursElem || !stockBasElem || !stockBasListElem || !commandesAttenteElem || !dashboardInterventionsPeriode || !dashboardInterventionsDetailList) {
             return;
         }
 
         const enCoursCount = Object.values(allInterventions).filter(i => i.statut === 'En cours' && !i.archived).length;
         enCoursElem.textContent = enCoursCount;
 
-        const today = new Date();
-        const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
-        const moisCount = Object.values(allInterventions).filter(i => i.date && i.date.startsWith(currentMonth)).length;
-        moisElem.textContent = moisCount;
-        
         const threshold = appConfig.lowStockThreshold || 3;
         const lowStockVSAVItems = Object.entries(pompierStock)
             .filter(([, details]) => details && typeof details.quantity === 'number' && details.quantity <= threshold)
@@ -2873,7 +2984,98 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(c => !c.archived && (c.status === 'À commander' || c.status === 'En commande'))
             .length;
         commandesAttenteElem.textContent = commandesAttenteCount;
+
+        let filteredInterventionsForPeriod = Object.values(allInterventions);
+
+        if (filterMonthYear !== 'all') {
+            filteredInterventionsForPeriod = filteredInterventionsForPeriod.filter(i => i.date && i.date.startsWith(filterMonthYear));
+        } else if (filterYear !== 'all') {
+            filteredInterventionsForPeriod = filteredInterventionsForPeriod.filter(i => i.date && i.date.startsWith(filterYear));
+        }
+        
+        dashboardInterventionsPeriode.textContent = filteredInterventionsForPeriod.length;
+        
+        if (filteredInterventionsForPeriod.length > 0) {
+            dashboardInterventionsDetailList.innerHTML = filteredInterventionsForPeriod
+                .sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0)) 
+                .map(i => `<li>N°${i.numero_intervention} (${formatDate(i.date)}) - ${i.nom || 'N/A'} - Statut: ${i.statut}</li>`)
+                .join('');
+        } else {
+            dashboardInterventionsDetailList.innerHTML = '<li>Aucune intervention pour la période sélectionnée.</li>';
+        }
     }
+
+    function handleApplyDashboardFilters() {
+        const selectedYear = dashboardYearFilter.value;
+        const selectedMonthYear = dashboardMonthFilter.value;
+        displayDashboard(selectedYear, selectedMonthYear);
+    }
+
+    function exportDashboardToCSV() {
+        const selectedYear = dashboardYearFilter.value;
+        const selectedMonthYear = dashboardMonthFilter.value;
+        let itemsToExport = Object.values(allInterventions);
+
+        if (selectedMonthYear !== 'all') {
+            itemsToExport = itemsToExport.filter(i => i.date && i.date.startsWith(selectedMonthYear));
+        } else if (selectedYear !== 'all') {
+            itemsToExport = itemsToExport.filter(i => i.date && i.date.startsWith(selectedYear));
+        }
+        
+        if (itemsToExport.length === 0) {
+            showMessage("Aucune intervention à exporter pour la période sélectionnée.", "info");
+            return;
+        }
+
+        const headers = [
+            "ID Intervention", "N° Intervention", "Date", "Heure", "Responsable", 
+            "Lieu", "Commune", "Statut Pompier", "Urgence", "Catégorie", 
+            "Commentaire Pompier", "Archivée Pompier", "Date Archivage Pompier",
+            "Statut Pharmacie", "Date Traitement Pharmacie", "Matériels Utilisés (Nom|QtéUtilisée|StatutRéapproVSAV|QtéRéapproVSAV|CommentPomp|StatutPharma|CommentPharma|QtéManquante)"
+        ];
+        
+        const rows = itemsToExport.map(inter => {
+            const interId = inter.id || Object.keys(allInterventions).find(key => allInterventions[key] === inter);
+
+            const materialStrings = Object.entries(inter.materiels || {}).map(([name, d]) => {
+                return `${name}|${d.quantity_used || ''}|${d.reappro_status || ''}|${d.quantity_reappro_vsav || '0'}|${(d.comment || '').replace(/"/g, '""')}|${d.pharma_status || ''}|${(d.pharma_comment || '').replace(/"/g, '""')}|${d.quantity_missing || '0'}`;
+            }).join(';'); 
+
+            return [
+                interId || '', 
+                inter.numero_intervention || '',
+                formatDate(inter.date) || '',
+                inter.heure || '',
+                inter.nom || '',
+                inter.lieu || '',
+                inter.commune || '',
+                inter.statut || '',
+                inter.urgence || '',
+                inter.categorie || '',
+                (inter.commentaire || '').replace(/"/g, '""'), 
+                inter.archived ? 'Oui' : 'Non',
+                inter.archivedAt ? new Date(inter.archivedAt).toLocaleString('fr-FR') : '',
+                inter.pharmacyStatus || '',
+                inter.pharmacyProcessedAt ? new Date(inter.pharmacyProcessedAt).toLocaleString('fr-FR') : '',
+                materialStrings
+            ].map(field => `"${String(field).replace(/"/g, '""')}"`); 
+        });
+
+        let csvContent = "\uFEFF"; 
+        csvContent += headers.map(h => `"${h}"`).join(",") + "\n" 
+                   + rows.map(r => r.join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const periodeText = selectedMonthYear !== 'all' ? selectedMonthYear : (selectedYear !== 'all' ? selectedYear : 'toutes-periodes');
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", `export_interventions_${periodeText}.csv`);
+        document.body.appendChild(link); 
+        link.click();
+        document.body.removeChild(link);
+        addLogEntry("Export CSV Interventions", `Export pour période ${periodeText} par ${currentUser}`);
+    }
+
 
     // --- CONFIGURATION ADMIN ---
     async function displayAdminConfig() {
@@ -2885,7 +3087,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const adminView = document.getElementById('admin-config-view');
-        if (!adminView.classList.contains('visible')) return; // Ensure it's visible before acting
+        if (!adminView.classList.contains('visible')) return; 
 
         const password = await showCustomDialog({
             title: 'Accès Configuration Admin',
@@ -2902,13 +3104,13 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage("Mot de passe administrateur incorrect. Accès refusé.", "error");
             const defaultPharmacyTab = pharmacyNavUl.querySelector('.list[data-view="dashboard-view"]') || pharmacyNavUl.querySelector('.list');
              if (defaultPharmacyTab) setActiveTab(defaultPharmacyTab, pharmacyNavUl);
-        } else { // Cancelled
+        } else { 
              const defaultPharmacyTab = pharmacyNavUl.querySelector('.list[data-view="dashboard-view"]') || pharmacyNavUl.querySelector('.list');
              if (defaultPharmacyTab) setActiveTab(defaultPharmacyTab, pharmacyNavUl);
         }
     }
 
-    async function saveAdminConfig() { // For low stock threshold
+    async function saveAdminConfig() { 
         const password = await showCustomDialog({
             title: 'Confirmation Admin',
             message: 'Entrez le mot de passe administrateur pour sauvegarder le seuil.',
@@ -3002,6 +3204,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let currentValue = parseInt(inputEl.value, 10) || 0; 
                 const min = parseInt(inputEl.min, 10); 
+                const max = parseInt(inputEl.max, 10);
                 const step = parseInt(inputEl.step, 10) || 1; 
 
                 if (action === 'increment') {
@@ -3012,8 +3215,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!isNaN(min) && currentValue < min) {
                     currentValue = min;
-                } else if (currentValue < 0 && isNaN(min) && min !== 0) { 
+                } else if (currentValue < 0 && isNaN(min) && min !== 0) { // General fallback if min not specified but should be >=0
                     currentValue = 0;
+                }
+                if (!isNaN(max) && currentValue > max) {
+                    currentValue = max;
                 }
                 
                 inputEl.value = currentValue;
@@ -3033,7 +3239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialisation ---
     function initializeApp() {
         isPharmacyAuthenticated = !!sessionStorage.getItem('pharmaUserName'); 
-        togglePharmacyMode(isPharmacyAuthenticated); // Sets currentUser based on mode and sessionStorage
+        togglePharmacyMode(isPharmacyAuthenticated); 
         
         fetchData(); 
         setDefaultDateTime(); 
@@ -3055,7 +3261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (['reappro-view', 'pharmacy-archives-view'].includes(activeViewId)) {
                  currentPage_pharmacy = 1; currentPage_pharmacy_archive = 1; displayInterventions();
             } else if (activeViewId === 'dashboard-view') {
-                displayDashboard();
+                displayDashboard(dashboardYearFilter.value, dashboardMonthFilter.value);
             }
         });
 
@@ -3066,28 +3272,31 @@ document.addEventListener('DOMContentLoaded', () => {
         topLoginBtn.addEventListener('click', handlePharmacyLogin);
         headerLogoutBtn.addEventListener('click', handlePharmacyLogout);
         
-        openAddManualCommandModalBtn.addEventListener('click', () => {
+        if (openAddManualCommandModalBtn) openAddManualCommandModalBtn.addEventListener('click', () => {
             manualCommandItemsContainer.innerHTML = ''; 
             addManualCommandItemRow(); 
             addManualCommandModal.classList.add('visible');
         });
-        fabAddManualCommand.addEventListener('click', () => {
+        if (fabAddManualCommand) fabAddManualCommand.addEventListener('click', () => {
             manualCommandItemsContainer.innerHTML = '';
             addManualCommandItemRow();
             addManualCommandModal.classList.add('visible');
         });
-        addAnotherItemToManualCommandBtn.addEventListener('click', () => addManualCommandItemRow());
-        saveNewManualCommandBtn.addEventListener('click', handleManualCommandViaModal);
+       if (addAnotherItemToManualCommandBtn) addAnotherItemToManualCommandBtn.addEventListener('click', () => addManualCommandItemRow());
+       if (saveNewManualCommandBtn) saveNewManualCommandBtn.addEventListener('click', handleManualCommandViaModal);
 
 
-        openAddStockItemModalBtn.addEventListener('click', () => addStockItemModal.classList.add('visible'));
-        fabAddStockItem.addEventListener('click', () => addStockItemModal.classList.add('visible'));
-        saveNewStockItemBtn.addEventListener('click', handleAddNewStockItemViaModal);
+        if (openAddStockItemModalBtn) openAddStockItemModalBtn.addEventListener('click', () => addStockItemModal.classList.add('visible'));
+        if (fabAddStockItem) fabAddStockItem.addEventListener('click', () => addStockItemModal.classList.add('visible'));
+        if (saveNewStockItemBtn) saveNewStockItemBtn.addEventListener('click', handleAddNewStockItemViaModal);
 
-        clearJournalBtn.addEventListener('click', handleClearJournal);
+        if (clearJournalBtn) clearJournalBtn.addEventListener('click', handleClearJournal);
 
         if(saveAdminConfigBtn) saveAdminConfigBtn.addEventListener('click', saveAdminConfig);
         if(saveDropdownListsBtn) saveDropdownListsBtn.addEventListener('click', saveDropdownLists);
+
+        if (applyDashboardFiltersBtn) applyDashboardFiltersBtn.addEventListener('click', handleApplyDashboardFilters);
+        if (exportDashboardInterventionsCsvBtn) exportDashboardInterventionsCsvBtn.addEventListener('click', exportDashboardToCSV);
 
 
         document.querySelectorAll('#commandes-view .desktop-sub-nav .sub-nav-btn').forEach(btn => {
@@ -3131,6 +3340,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if(activeViewId) updatePharmacyHeaderSubNav(activeViewId);
         });
+        
+        populateDashboardDateFilters(); 
+        displayDashboard(); 
     }
 
     initializeApp();
