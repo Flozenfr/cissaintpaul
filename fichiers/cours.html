@@ -9,16 +9,17 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, set, get, child, remove, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
+        // 🚨 REMPLACEZ AVEC VOS VRAIES VALEURS DE CONFIGURATION FIREBASE 🚨
         const firebaseConfig = {
-            apiKey: "AIzaSyBwUK8FB0bC2QyimFvMVkaGXYjt0Tv7Wf8", // Remplacez par votre clé API
-            authDomain: "cours-77004.firebaseapp.com",
-            databaseURL: "https://cours-77004-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "cours-77004",
-            storageBucket: "cours-77004.firebasestorage.app",
-            messagingSenderId: "280730833445",
-            appId: "1:280730833445:web:b32cf4c470b9259e08e5cc",
-            measurementId: "G-ZVPXBXN588"
-        };
+ apiKey: "AIzaSyBwUK8FB0bC2QyimFvMVkaGXYjt0Tv7Wf8",
+ authDomain: "cours-77004.firebaseapp.com",
+ databaseURL: "https://cours-77004-default-rtdb.europe-west1.firebasedatabase.app",
+ projectId: "cours-77004",
+ storageBucket: "cours-77004.firebasestorage.app",
+ messagingSenderId: "280730833445",
+ appId: "1:280730833445:web:b32cf4c470b9259e08e5cc",
+ measurementId: "G-ZVPXBXN588"
+};
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
@@ -51,6 +52,14 @@
             <button id="backBtn" title="Précédent" disabled><ion-icon name="arrow-back-outline"></ion-icon></button>
             <button id="forwardBtn" title="Suivant" disabled><ion-icon name="arrow-forward-outline"></ion-icon></button>
             <h2 id="current-path-display">Racine</h2>
+            <div class="search-container">
+                <input type="search" id="searchFileInput" placeholder="Rechercher..." title="Rechercher des fichiers/dossiers">
+                <label class="search-scope-label" title="Cocher pour rechercher dans tous les dossiers depuis la racine">
+                    <input type="checkbox" id="searchGlobalCheckbox">
+                    <ion-icon name="earth-outline" class="global-search-icon"></ion-icon>
+                    <span class="scope-text">Partout</span>
+                </label>
+            </div>
         </div>
 
         <div id="drag-drop-area" style="display: none;">
@@ -67,7 +76,10 @@
             <div id="modal-controls" style="display:none;">
                 <button id="modal-print-btn" title="Imprimer"><ion-icon name="print-outline"></ion-icon> Imprimer</button>
                 <button id="modal-download-btn" title="Télécharger"><ion-icon name="download-outline"></ion-icon> Télécharger</button>
-                <button id="modal-fullscreen-btn" title="Plein écran"><ion-icon name="scan-outline"></ion-icon> Plein écran</button>
+                <button id="modal-zoom-in-btn" title="Zoom Avant" style="display:none;"><ion-icon name="add-circle-outline"></ion-icon></button>
+                <button id="modal-zoom-out-btn" title="Zoom Arrière" style="display:none;"><ion-icon name="remove-circle-outline"></ion-icon></button>
+                <button id="modal-zoom-reset-btn" title="Zoom Initial" style="display:none;"><ion-icon name="expand-outline"></ion-icon></button>
+                <button id="modal-share-btn" title="Partager"><ion-icon name="share-social-outline"></ion-icon> Partager</button>
             </div>
             <h3 id="modal-file-name"></h3>
             <div id="modal-file-content"></div>
@@ -97,7 +109,8 @@
             </li>
         </ul>
     </div>
-<div id="custom-interaction-modal-overlay" class="custom-interaction-modal-overlay" style="display: none;">
+
+    <div id="custom-interaction-modal-overlay" class="custom-interaction-modal-overlay" style="display: none;">
         <div class="custom-interaction-modal-content">
             <h3 id="custom-interaction-modal-title" class="custom-interaction-modal-title">Titre de la Modale</h3>
             <p id="custom-interaction-modal-message" class="custom-interaction-modal-message">Message ici...</p>
@@ -108,6 +121,7 @@
             </div>
         </div>
     </div>
+
     <script type="module" src="https://unpkg.com/ionicons@7/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7/dist/ionicons/ionicons.js"></script>
     <script src="js/cours.js"></script>
