@@ -1,0 +1,576 @@
+/* POLICE */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --fire-red: #e5383b;
+    --charcoal: #1B1B1E;
+    --smoke-white: rgba(237, 242, 244, 0.95);
+    --ember-orange: #ff9100;
+    --light-gray: #cccccc;
+    --hover-bg: #3a3a3e;
+    --item-bg: rgba(45, 45, 48, 0.7);
+    --admin-bar-bg: rgba(20, 20, 22, 0.9);
+    --card-bg: rgba(55, 55, 60, 0.8);
+    --card-border: var(--ember-orange);
+    --admin-mode-indicator: #4caf50;
+    --modal-shadow-color: rgba(229, 56, 59, 0.5);
+    --modal-glow-strong: rgba(229, 56, 59, 0.7);
+    --modal-glow-soft: rgba(255, 145, 0, 0.5);
+}
+
+body {
+    background-color: var(--charcoal);
+    color: var(--smoke-white);
+    position: relative;
+    overflow-x: hidden;
+    padding-top: 70px; /* Espace pour la barre admin fixe */
+    padding-bottom: 95px; /* Espace pour la navigation fixe */
+    min-height: 100vh;
+}
+
+.background-embers {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; overflow: hidden; pointer-events: none;
+}
+.ember {
+    position: absolute; bottom: -20px; background-color: var(--ember-orange);
+    border-radius: 50%; opacity: 0;
+    box-shadow: 0 0 10px 2px var(--ember-orange), 0 0 20px 4px #ff4500;
+    animation: rise-ember infinite ease-in;
+}
+@keyframes rise-ember {
+    from { transform: translateY(0) scale(1); opacity: 0.8; }
+    to { transform: translateY(-110vh) scale(0.3); opacity: 0; }
+}
+
+/* Barre d'administration en haut */
+.admin-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--admin-bar-bg);
+    backdrop-filter: blur(8px);
+    padding: 12px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 999;
+    border-bottom: 2px solid var(--fire-red);
+    box-shadow: 0 3px 15px rgba(0,0,0,0.6);
+}
+.admin-bar button {
+    background-color: var(--fire-red);
+    color: var(--smoke-white);
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.admin-bar button ion-icon { font-size: 1.2em; }
+.admin-bar button:hover {
+    background-color: #c42d2f; /* Plus sombre */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+.admin-bar button:active { transform: translateY(0px); }
+
+/* Conteneur principal du navigateur de fichiers */
+#file-browser-container {
+    padding: 25px; margin: 0 auto 25px auto; max-width: 1200px;
+    background-color: rgba(30, 30, 33, 0.6); border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+/* Contrôles de navigation (Précédent/Suivant/Chemin) */
+.navigation-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--fire-red);
+    padding-bottom: 10px;
+}
+.navigation-controls button {
+    background: var(--item-bg); color: var(--ember-orange); border: 1px solid var(--ember-orange);
+    border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5em; margin-right: 10px; transition: background-color 0.2s, color 0.2s;
+}
+.navigation-controls button:hover:not(:disabled) { background: var(--ember-orange); color: var(--charcoal); }
+.navigation-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+#current-path-display {
+    color: var(--ember-orange); font-size: 1.4em; font-weight: 500;
+    flex-grow: 1;
+}
+
+/* Zone de Glisser-Déposer */
+#drag-drop-area {
+    border: 3px dashed var(--ember-orange);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    background-color: rgba(255, 145, 0, 0.1);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+body.admin-mode #drag-drop-area { cursor: pointer; }
+#drag-drop-area.dragover {
+    background-color: rgba(229, 56, 59, 0.2);
+    border-color: var(--fire-red);
+    border-style: solid;
+}
+#drag-drop-area p {
+    font-size: 1.1em;
+    color: var(--smoke-white);
+    margin-bottom: 10px;
+}
+#drag-drop-area ion-icon {
+    font-size: 3em;
+    color: var(--ember-orange);
+}
+#drag-drop-area p ion-icon.spin { /* Pour l'icône de chargement */
+    font-size: 1em; /* Ajuster la taille si besoin */
+    margin-left: 5px;
+}
+
+
+/* Liste des fichiers et dossiers */
+#file-list {
+    list-style: none; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+#file-list li {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: var(--item-bg);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    color: var(--smoke-white);
+    border-left: 4px solid transparent;
+    overflow: hidden; /* Pour les noms de fichiers longs */
+}
+#file-list li.folder-card {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--charcoal);
+    border-top: 5px solid var(--card-border);
+    min-height: 150px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+#file-list li.folder-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    border-top-color: var(--fire-red);
+}
+#file-list li.file-item:hover {
+    background-color: var(--hover-bg);
+    border-left: 4px solid var(--ember-orange);
+    transform: translateX(3px);
+}
+#file-list li .item-icon {
+    margin-right: 15px; font-size: 1.5em; color: var(--ember-orange); flex-shrink: 0;
+}
+#file-list li.folder-card .item-icon {
+    font-size: 3em; margin-right: 0; margin-bottom: 10px;
+}
+#file-list li .item-name {
+    flex-grow: 1; word-break: break-all; /* Gérer les longs noms */
+}
+#file-list li.folder-card .item-name {
+    font-weight: 500; font-size: 1.1em;
+}
+#file-list li .item-actions {
+    margin-left: auto; display: none; gap: 8px;
+}
+#file-list li.folder-card .item-actions {
+    margin-left: 0; margin-top: 15px; width: 100%; justify-content: center;
+}
+body.admin-mode #file-list li .item-actions { display: flex; }
+#file-list li .item-actions button {
+    background: none; border: none; color: var(--light-gray); cursor: pointer;
+    font-size: 1.2em; padding: 6px; border-radius: 50%;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+#file-list li .item-actions button:hover {
+    color: var(--fire-red); background-color: rgba(255,255,255,0.1);
+}
+/* Message pour dossier vide */
+.empty-folder-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    cursor: default;
+    background-color: transparent !important; /* Surcharger style de base li */
+    border-left: none !important; /* Surcharger style de base li */
+    color: var(--light-gray);
+    font-style: italic;
+}
+
+
+/* MODALE DE VISUALISATION DE FICHIERS (Thème Pompier Renforcé) */
+.modal { /* S'applique à #file-viewer-modal */
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0; top: 0; width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(10, 0, 0, 0.85); /* Fond très sombre, légèrement rougeâtre */
+    backdrop-filter: blur(8px);
+}
+.modal .modal-content { /* Conflit potentiel si .modal-content est utilisé ailleurs */
+    background-color: var(--charcoal);
+    color: var(--smoke-white);
+    margin: 5% auto;
+    padding: 25px 30px;
+    border: 3px solid var(--fire-red);
+    border-radius: 10px;
+    width: 90%;
+    max-width: 900px;
+    box-shadow: 0 0 15px var(--modal-glow-soft), 0 0 30px var(--modal-glow-strong), 0 8px 25px rgba(0,0,0,0.7);
+    position: relative;
+    animation: fadeInModalHeavy 0.5s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal.fullscreen .modal-content {
+    width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh;
+    margin: 0; padding: 10px 15px; border-radius: 0; border: none; box-shadow: none;
+}
+.modal.fullscreen #modal-file-name {
+    font-size: 1.2em; margin-bottom: 8px; padding-bottom: 6px;
+    color: var(--smoke-white); text-shadow: none;
+}
+.modal.fullscreen #modal-file-content { height: calc(100vh - 70px); }
+.modal.fullscreen #modal-file-content iframe { border: none; }
+.modal.fullscreen .close-button {
+    color: var(--smoke-white); background-color: rgba(0,0,0,0.3);
+    border-radius: 50%; width: 35px; height: 35px; line-height: 35px; text-align: center;
+    font-size: 28px; top: 15px; right: 20px; /* Assurer positionnement correct */
+}
+.modal.fullscreen .close-button:hover { color: var(--ember-orange); transform: scale(1.1) rotate(0deg) !important; /* Annuler la rotation en plein écran */ }
+.modal.fullscreen #modal-controls { background-color: rgba(var(--charcoal), 0.9); padding: 8px 0; }
+.modal.fullscreen #modal-controls button { padding: 6px 10px; font-size: 0.85em; }
+
+@keyframes fadeInModalHeavy {
+    from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#file-viewer-modal .close-button { /* Cibler spécifiquement le bouton de cette modale */
+    color: var(--ember-orange);
+    position: absolute;
+    top: 15px; right: 20px;
+    font-size: 40px; font-weight: bold;
+    transition: color 0.2s ease, transform 0.3s ease;
+    line-height: 1; z-index: 10;
+    text-shadow: 0 0 8px var(--ember-orange);
+}
+#file-viewer-modal .close-button:hover,
+#file-viewer-modal .close-button:focus {
+    color: var(--fire-red);
+    transform: scale(1.15) rotate(90deg);
+    text-decoration: none; cursor: pointer;
+}
+
+#modal-controls {
+    display: flex; justify-content: center; gap: 12px;
+    margin-bottom: 20px; padding: 10px 0;
+    border-top: 1px solid var(--hover-bg);
+    border-bottom: 1px solid var(--hover-bg);
+    order: 2; /* Après le contenu */
+}
+#modal-controls button {
+    background-color: var(--fire-red); color: var(--smoke-white);
+    border: 1px solid var(--ember-orange); border-radius: 5px;
+    padding: 8px 15px; cursor: pointer;
+    font-size: 0.9em; font-weight: 500;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 -2px 0px rgba(0,0,0,0.2);
+    display: inline-flex; /* Pour aligner icône et texte */
+    align-items: center;
+}
+#modal-controls button ion-icon {
+    font-size: 1.3em; margin-right: 8px; /* Espace accru */
+}
+#modal-controls button:hover {
+    background-color: var(--ember-orange); color: var(--charcoal);
+    border-color: var(--fire-red); transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 -1px 0px rgba(0,0,0,0.1);
+}
+#modal-controls button:active {
+    transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 -1px 0px rgba(0,0,0,0.2);
+}
+
+#modal-file-name {
+    color: var(--ember-orange); margin-bottom: 15px;
+    font-size: 1.8em; font-weight: 700;
+    border-bottom: 3px solid var(--fire-red); padding-bottom: 10px;
+    text-align: center; word-break: break-all;
+    text-shadow: 0 0 5px var(--ember-orange), 0 0 10px var(--fire-red);
+    order: 0; /* Titre en premier */
+}
+#modal-file-content {
+    flex-grow: 1; overflow-y: auto; min-height: 0;
+    padding: 10px 0; order: 1; /* Contenu après le titre */
+}
+#modal-file-content img {
+    max-width: 100%; height: auto; display: block; margin: 15px auto;
+    border-radius: 6px; border: 3px solid var(--ember-orange);
+    background-color: var(--item-bg); box-shadow: 0 0 15px var(--ember-orange);
+}
+#modal-file-content pre {
+    background-color: rgba(0,0,0,0.5); padding: 20px; border-radius: 6px;
+    border: 1px solid var(--hover-bg); white-space: pre-wrap; word-wrap: break-word;
+    max-height: 65vh; overflow-y: auto; color: var(--smoke-white);
+    font-size: 0.95em; line-height: 1.7; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+#modal-file-content iframe {
+    width: 100%; height: 75vh; border: 3px solid var(--fire-red);
+    border-radius: 6px; background-color: var(--smoke-white);
+}
+#modal-file-content a {
+    color: var(--ember-orange); text-decoration: none; font-weight: 600;
+    border-bottom: 1px dashed var(--ember-orange);
+    transition: color 0.2s, border-bottom-color 0.2s;
+}
+#modal-file-content a:hover { color: var(--fire-red); border-bottom-color: var(--fire-red); }
+
+
+/* Navigation inférieure */
+.navigation {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
+    background: var(--smoke-white); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: flex; justify-content: center; border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 -8px 32px 0 rgba(0, 0, 0, 0.37); z-index: 1000;
+}
+.navigation ul {
+    position: relative; display: flex; width: 100%; max-width: 400px;
+    height: 100%; padding: 0; margin: 0; --indicator-x-pos: 0px;
+}
+.navigation ul li { position: relative; list-style: none; flex: 1; }
+.navigation ul li:not(:last-child) { border-right: 1px solid var(--charcoal); }
+.navigation ul li a {
+    position: relative; display: flex; justify-content: center; align-items: center;
+    flex-direction: column; width: 100%; text-align: center;
+    text-decoration: none; height: 100%;
+    -webkit-tap-highlight-color: transparent; gap: 4px; overflow: hidden;
+}
+.navigation ul li a .icon {
+    font-size: 1.6em; color: var(--charcoal);
+    transition: opacity 0.2s ease, color 0.3s ease; opacity: 1;
+}
+.navigation ul li a .text {
+    font-weight: 500; font-size: 0.8em; letter-spacing: 0.05em; color: var(--charcoal);
+    transition: color 0.3s ease, font-weight 0.3s ease; text-transform: uppercase;
+}
+.navigation ul li.active a .icon { opacity: 0; transition: opacity 0.1s ease-in; }
+.navigation ul li.active a .text { color: var(--fire-red); font-weight: 700; }
+.navigation ul li[data-page="admin"].admin-logged-in a .text { color: var(--admin-mode-indicator) !important; }
+
+.indicator {
+    position: absolute; top: 0; left: 0; width: 70px; height: 70px;
+    background: var(--fire-red); border-radius: 50%;
+    border: 6px solid var(--charcoal); display: flex; align-items: center; justify-content: center;
+    transform: translateX(var(--indicator-x-pos)) translateY(40px) scale(0);
+    opacity: 0; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    z-index: 1;
+}
+.navigation ul.indicator-ready .indicator {
+    transform: translateX(var(--indicator-x-pos)) translateY(-50%) scale(1); opacity: 1;
+}
+.indicator ion-icon { color: white; font-size: 2.2em; }
+.shockwave {
+    position: absolute; top: -3px; left: -3px; width: 100%; height: 100%;
+    border: 3px solid var(--fire-red); border-radius: 50%;
+    opacity: 0; transform: scale(0.5);
+}
+.indicator.landed .shockwave { animation: shockwave-effect 0.5s ease-out; }
+@keyframes shockwave-effect {
+    from { transform: scale(1); opacity: 0.7; }
+    to { transform: scale(2.5); opacity: 0; }
+}
+.particles { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 1px; height: 1px; }
+.particle {
+    position: absolute; bottom: 0; left: 0; width: 6px; height: 6px;
+    background-color: var(--ember-orange); border-radius: 50%; opacity: 0;
+}
+.navigation ul li.active .particle { animation: erupt-particle 0.8s ease-out; }
+@keyframes erupt-particle {
+    0% { transform: translateY(0) scale(0.5); opacity: 0.8; }
+    100% { transform: translateY(-80px) scale(0); opacity: 0; }
+}
+.particle:nth-child(1) { animation-delay: 0s; left: -10px; }
+.particle:nth-child(2) { animation-delay: 0.1s; width: 4px; height: 4px; }
+.particle:nth-child(3) { animation-delay: 0.05s; left: 10px; background-color: var(--fire-red); }
+.particle:nth-child(4) { animation-delay: 0.2s; left: -20px; width: 5px; height: 5px; }
+.particle:nth-child(5) { animation-delay: 0.15s; left: 20px; }
+
+
+/* MODALE D'INTERACTION PERSONNALISÉE (Prompts/Confirms) */
+.custom-interaction-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(10, 0, 0, 0.88); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease-out;
+}
+.custom-interaction-modal-overlay.visible { opacity: 1; pointer-events: auto; }
+.custom-interaction-modal-content {
+    background-color: var(--charcoal); color: var(--smoke-white);
+    padding: 30px 35px; border-radius: 8px; border: 3px solid var(--fire-red);
+    box-shadow: 0 0 25px var(--modal-glow-strong), 0 0 40px var(--modal-glow-soft), 0 10px 30px rgba(0,0,0,0.8);
+    width: 90%; max-width: 500px; text-align: center;
+    transform: scale(0.95); transition: transform 0.3s ease-out;
+}
+.custom-interaction-modal-overlay.visible .custom-interaction-modal-content { transform: scale(1); }
+.custom-interaction-modal-title {
+    color: var(--ember-orange); font-size: 1.7em; font-weight: 700;
+    margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--fire-red);
+    text-shadow: 0 0 6px var(--ember-orange);
+}
+.custom-interaction-modal-message {
+    font-size: 1.1em; line-height: 1.6; margin-bottom: 25px; color: var(--smoke-white);
+}
+.custom-interaction-modal-message strong { color: var(--ember-orange); font-weight: 600; }
+.custom-interaction-modal-input {
+    width: 100%; padding: 12px 15px; margin-bottom: 25px;
+    background-color: rgba(0,0,0,0.3); border: 2px solid var(--hover-bg);
+    border-radius: 5px; color: var(--smoke-white); font-size: 1em;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.custom-interaction-modal-input:focus {
+    border-color: var(--ember-orange); box-shadow: 0 0 10px var(--ember-orange);
+}
+.custom-interaction-modal-actions { display: flex; justify-content: space-around; gap: 15px; }
+.custom-interaction-modal-actions button {
+    flex-grow: 1; padding: 12px 20px; border-radius: 5px;
+    font-size: 1em; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+#custom-interaction-modal-btn-confirm {
+    background-color: var(--fire-red); color: var(--smoke-white);
+    border: 1px solid var(--ember-orange);
+}
+#custom-interaction-modal-btn-confirm:hover {
+    background-color: var(--ember-orange); color: var(--charcoal);
+    border-color: var(--fire-red); transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+#custom-interaction-modal-btn-cancel {
+    background-color: var(--item-bg); color: var(--smoke-white);
+    border: 1px solid var(--hover-bg);
+}
+#custom-interaction-modal-btn-cancel:hover {
+    background-color: var(--hover-bg); color: var(--ember-orange);
+    transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Styles responsives */
+@media (max-width: 768px) {
+    #file-list { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+    #file-list li.folder-card { min-height: 130px; }
+    #file-list li.folder-card .item-icon { font-size: 2.5em; }
+    .navigation-controls { flex-wrap: wrap; }
+    #current-path-display { font-size: 1.2em; width: 100%; margin-top: 5px; text-align: center; }
+    .admin-bar button { font-size: 0.85em; padding: 8px 15px; }
+
+    .modal .modal-content { margin: 10% auto; padding: 20px; width: 95%;}
+    #modal-file-name { font-size: 1.5em; }
+    #modal-controls button { font-size: 0.8em; padding: 6px 10px; }
+
+    .custom-interaction-modal-content { padding: 20px 25px; max-width: 90%;}
+    .custom-interaction-modal-title { font-size: 1.5em; }
+    .custom-interaction-modal-message { font-size: 1em; }
+    .custom-interaction-modal-input { padding: 10px; font-size: 0.9em; }
+    .custom-interaction-modal-actions button { padding: 10px 15px; font-size: 0.9em; }
+}
+
+@media (max-width: 600px) {
+    body { padding-top: 60px; } /* Réduire l'espace pour la barre admin si elle wrap */
+    .admin-bar { padding: 10px 15px; gap: 10px; flex-wrap: wrap; /* Permettre le wrap */ }
+    .admin-bar button { padding: 8px 12px; font-size: 0.8em; }
+    .admin-bar button ion-icon { font-size: 1.1em; }
+
+    .modal .modal-content { width: 95%; margin: 10% auto; padding: 15px; } /* Ajustement pour modale fichier */
+    .modal.fullscreen .modal-content { padding: 10px; }
+    .modal.fullscreen #modal-file-content { height: calc(100vh - 80px); }
+
+    #file-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    #file-list li.folder-card .item-name { font-size: 1em; }
+    #modal-file-name {font-size: 1.3em;}
+
+    .custom-interaction-modal-content { padding: 15px 20px; }
+    .custom-interaction-modal-title { font-size: 1.3em; }
+}
+
+@media (max-width: 420px) {
+    body { padding-bottom: 85px; } /* Espace pour nav inférieure */
+    .admin-bar { flex-direction: column; align-items: stretch; } /* Boutons admin en colonne */
+    .admin-bar button { width: 100%; justify-content: center; }
+    #adminLogoutBtn { margin-left: 0; margin-top: 10px; } /* Ajustement pour logout en colonne */
+
+    .navigation { height: 70px; }
+    .navigation ul {max-width: 100%;}
+    .indicator { width: 60px; height: 60px; }
+    .indicator ion-icon { font-size: 2em; }
+    .navigation ul li a .icon { font-size: 1.5em; }
+    .navigation ul li a .text { font-size: 0.65em; }
+
+    #file-list li .item-actions { flex-direction: row; gap: 5px; }
+    #file-list li.folder-card .item-actions { justify-content: space-around; }
+
+    .modal .modal-content {width: 95%; margin: 5% auto; padding: 10px;} /* Modale fichier */
+    .modal.fullscreen .modal-content { padding: 5px; }
+    .modal.fullscreen #modal-file-content { height: calc(100vh - 70px); }
+
+    #modal-file-name {font-size: 1.2em; margin-bottom: 10px; padding-bottom: 6px;}
+    #modal-file-content pre {padding: 8px; font-size: 0.8em;}
+    #modal-controls { margin-bottom:10px; flex-wrap:wrap; justify-content:center; }
+    #modal-controls button {padding: 5px 8px; font-size:0.8em;}
+    #modal-controls button ion-icon { margin-right: 4px;}
+
+    .custom-interaction-modal-content { padding: 15px; }
+    .custom-interaction-modal-title { font-size: 1.2em; margin-bottom: 10px; padding-bottom: 8px; }
+    .custom-interaction-modal-message { font-size: 0.9em; margin-bottom: 15px; }
+    .custom-interaction-modal-input { padding: 8px; margin-bottom: 15px; }
+    .custom-interaction-modal-actions { flex-direction: column; gap: 10px; }
+    .custom-interaction-modal-actions button { width: 100%; }
+}
+
+/* Animation pour icône de chargement */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.spin {
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+}
